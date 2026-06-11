@@ -88,6 +88,45 @@
         </div>
     </section>
 
+    {{-- No importa qué sistema uses → Cisma Fact → SUNAT --}}
+    <section class="bg-gray-50 py-16">
+        <div class="max-w-6xl mx-auto px-6">
+            <h2 class="text-3xl font-bold text-center text-gray-900">No importa qué sistema uses</h2>
+            <p class="mt-2 text-center text-gray-500 max-w-2xl mx-auto">
+                Con Cisma Fact —desde la web o con la API— generas tus comprobantes electrónicos y los envías
+                <strong>directo a SUNAT</strong>, sin importar tu software, lenguaje de programación o dispositivo.
+            </p>
+
+            <div class="mt-12 flex flex-col items-center justify-center gap-6 lg:flex-row lg:gap-4">
+                {{-- Tus plataformas --}}
+                <div class="w-full max-w-xs">
+                    <p class="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-400">Tu sistema / plataforma</p>
+                    <div class="grid grid-cols-3 gap-3">
+                        @foreach(['🪟 Windows', '🐧 Linux', '🍎 Mac', '🌐 Web', '🤖 Android', '📱 iOS'] as $p)
+                            <div class="rounded-lg border border-gray-200 bg-white px-2 py-3 text-center text-xs font-medium text-gray-600 shadow-sm">{{ $p }}</div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="text-3xl text-gray-300 rotate-90 lg:rotate-0">&rarr;</div>
+
+                {{-- Cisma Fact --}}
+                <div class="rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 px-10 py-7 text-center text-white shadow-lg">
+                    <div class="text-2xl font-bold">Cisma Fact</div>
+                    <div class="mt-1 text-xs text-blue-100">Web + API · firma con tu certificado</div>
+                </div>
+
+                <div class="text-3xl text-gray-300 rotate-90 lg:rotate-0">&rarr;</div>
+
+                {{-- SUNAT --}}
+                <div class="rounded-2xl border-2 border-gray-200 bg-white px-10 py-7 text-center shadow-sm">
+                    <div class="text-2xl font-bold text-gray-800">SUNAT</div>
+                    <div class="mt-1 text-xs text-gray-400">Comprobantes válidos</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     {{-- Features --}}
     <section class="bg-gray-50 py-16">
         <div class="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
