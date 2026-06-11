@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\Empresa;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Traits\EnforcesPlanLimits;
 use App\Models\Boleta;
 use App\Models\Branch;
 use App\Models\Client;
@@ -17,6 +18,8 @@ use Illuminate\Support\Facades\Auth;
  */
 abstract class BaseNotaController extends Controller
 {
+    use EnforcesPlanLimits;
+
     public function __construct(protected DocumentService $documentService)
     {
     }
@@ -87,6 +90,11 @@ abstract class BaseNotaController extends Controller
 
     protected function handleStore(array $data)
     {
+        // Tope del plan: si la empresa ya alcanzó su límite mensual, no emite.
+        if ($limitResponse = $this->documentLimitReachedResponse()) {
+            return $limitResponse;
+        }
+
         $this->assertBranchBelongsToCompany($data['branch_id']);
 
         try {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\Empresa;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Traits\EnforcesPlanLimits;
 use App\Http\Requests\Empresa\StoreBoletaRequest;
 use App\Models\Boleta;
 use App\Models\Branch;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Auth;
 
 class BoletaController extends Controller
 {
+    use EnforcesPlanLimits;
+
     public function __construct(private DocumentService $documentService)
     {
     }
@@ -53,6 +56,11 @@ class BoletaController extends Controller
 
     public function store(StoreBoletaRequest $request)
     {
+        // Tope del plan: si la empresa ya alcanzó su límite mensual, no emite.
+        if ($limitResponse = $this->documentLimitReachedResponse()) {
+            return $limitResponse;
+        }
+
         $this->assertBranchBelongsToCompany($request->input('branch_id'));
 
         try {

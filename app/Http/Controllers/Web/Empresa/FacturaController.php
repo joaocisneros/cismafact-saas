@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\Empresa;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Traits\EnforcesPlanLimits;
 use App\Http\Requests\Empresa\StoreFacturaRequest;
 use App\Models\Branch;
 use App\Models\Client;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Auth;
 
 class FacturaController extends Controller
 {
+    use EnforcesPlanLimits;
+
     public function __construct(private DocumentService $documentService)
     {
     }
@@ -53,6 +56,11 @@ class FacturaController extends Controller
 
     public function store(StoreFacturaRequest $request)
     {
+        // Tope del plan: si la empresa ya alcanzó su límite mensual, no emite.
+        if ($limitResponse = $this->documentLimitReachedResponse()) {
+            return $limitResponse;
+        }
+
         // Seguridad: la sucursal debe pertenecer a la empresa del usuario.
         $this->assertBranchBelongsToCompany($request->input('branch_id'));
 

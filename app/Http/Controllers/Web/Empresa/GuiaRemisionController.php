@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\Empresa;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Traits\EnforcesPlanLimits;
 use App\Http\Requests\Empresa\StoreGuiaRequest;
 use App\Models\Branch;
 use App\Models\Client;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Auth;
 
 class GuiaRemisionController extends Controller
 {
+    use EnforcesPlanLimits;
+
     public function __construct(private DocumentService $documentService)
     {
     }
@@ -56,6 +59,11 @@ class GuiaRemisionController extends Controller
 
     public function store(StoreGuiaRequest $request)
     {
+        // Tope del plan: si la empresa ya alcanzó su límite mensual, no emite.
+        if ($limitResponse = $this->documentLimitReachedResponse()) {
+            return $limitResponse;
+        }
+
         $this->assertBranchBelongsToCompany($request->input('branch_id'));
 
         try {
