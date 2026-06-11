@@ -64,6 +64,7 @@
                      class="h-11 w-auto">
             </a>
             <nav class="flex items-center gap-1 sm:gap-3">
+                <a href="{{ route('docs') }}" class="hidden md:inline-block px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-600">Documentación</a>
                 <a href="#nosotros" class="hidden md:inline-block px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-600">Nosotros</a>
                 <a href="#planes" class="hidden md:inline-block px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-600">Planes</a>
                 <a href="#contacto" class="hidden md:inline-block px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-600">Contacto</a>

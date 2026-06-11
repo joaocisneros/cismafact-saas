@@ -28,6 +28,9 @@ use App\Http\Controllers\Web\Empresa\ProfileController;
 // Landing publica (si no hay sesion muestra la pagina de ventas; si hay, va al panel)
 Route::get('/', [\App\Http\Controllers\Web\LandingController::class, 'index'])->name('landing');
 
+// Documentación pública de la API (sin login).
+Route::view('/docs', 'docs')->name('docs');
+
 // Sitemap para buscadores (usa el dominio real automaticamente)
 Route::get('/sitemap.xml', function () {
     $urls = [
