@@ -101,6 +101,50 @@ class ApiGlobalController extends Controller
         return back()->with('success', "API Key {$status} exitosamente.");
     }
 
+    /**
+     * Genera un token SANDBOX (de prueba) para entregar a un programador.
+     * La llave se crea sobre la empresa marcada como demo (es_demo) y emite
+     * solo a SUNAT beta, sin tope. Cada token lleva el nombre del dev para
+     * poder identificar su consumo y bloquearlo individualmente.
+     */
+    public function generateSandboxToken(Request $request)
+    {
+        $validated = $request->validate([
+            'dev_name' => ['required', 'string', 'max:120'],
+            'expires_in_days' => ['nullable', 'integer', 'min:1', 'max:365'],
+        ]);
+
+        $demo = Company::where('es_demo', true)->first();
+
+        if (! $demo) {
+            return back()->with('error', 'No hay ninguna empresa marcada como DEMO/SANDBOX. Marca una empresa con "es_demo" primero (en el detalle de la empresa).');
+        }
+
+        $plainSecret = ApiKey::generateSecret();
+
+        $apiKey = ApiKey::create([
+            'company_id' => $demo->id,
+            'name' => 'Sandbox - ' . $validated['dev_name'],
+            'key' => ApiKey::generateKey(),
+            'secret' => \Illuminate\Support\Facades\Hash::make($plainSecret),
+            'plain_secret' => $plainSecret,
+            'abilities' => ['*'],
+            'active' => true,
+            'expires_at' => isset($validated['expires_in_days'])
+                ? now()->addDays((int) $validated['expires_in_days'])
+                : null,
+        ]);
+
+        Cache::forget('api_global_index');
+
+        // El secreto solo se muestra una vez, recién creado, para copiarlo.
+        return back()->with('sandbox_token', [
+            'name' => $apiKey->name,
+            'key' => $apiKey->key,
+            'secret' => $plainSecret,
+        ])->with('success', 'Token sandbox generado. Cópialo ahora (el secreto no se vuelve a mostrar).');
+    }
+
     public function apiKeys(Request $request)
     {
         $query = ApiKey::with('company:id,razon_social');

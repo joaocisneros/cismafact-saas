@@ -51,11 +51,13 @@ class Company extends Model
         'modo_produccion',
         'logo_path',
         'activo',
+        'es_demo',
     ];
 
     protected $casts = [
         'modo_produccion' => 'boolean',
         'activo' => 'boolean',
+        'es_demo' => 'boolean',
         // Credenciales sensibles encriptadas en reposo (responsabilidad de
         // proteger datos de los clientes). El cifrado/descifrado es transparente
         // al leer/escribir por el modelo.

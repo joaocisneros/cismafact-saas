@@ -84,6 +84,7 @@ Route::prefix('super-admin')
 
         Route::resource('companies', SuperAdminCompanyController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
         Route::post('/companies/{company}/toggle-status', [SuperAdminCompanyController::class, 'toggleStatus'])->name('companies.toggle-status');
+        Route::post('/companies/{company}/toggle-demo', [SuperAdminCompanyController::class, 'toggleDemo'])->name('companies.toggle-demo');
 
         Route::resource('users', SuperAdminUserController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
 
@@ -135,6 +136,7 @@ Route::prefix('super-admin')
         Route::get('/api-global/logs', [SuperAdminApiGlobalController::class, 'logs'])->name('api-global.logs');
         Route::get('/api-global/api-keys/{apiKey}', [SuperAdminApiGlobalController::class, 'showApiKey'])->name('api-global.show-key');
         Route::post('/api-global/api-keys/{apiKey}/toggle', [SuperAdminApiGlobalController::class, 'toggleApiKey'])->name('api-global.toggle-key');
+        Route::post('/api-global/sandbox-token', [SuperAdminApiGlobalController::class, 'generateSandboxToken'])->name('api-global.sandbox-token');
 
         Route::get('/settings', [SuperAdminSettingController::class, 'index'])->name('settings');
         Route::put('/settings', [SuperAdminSettingController::class, 'update'])->name('settings.update');

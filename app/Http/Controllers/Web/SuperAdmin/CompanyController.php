@@ -248,6 +248,18 @@ class CompanyController extends Controller
         return back()->with('success', "Empresa {$status} exitosamente.");
     }
 
+    public function toggleDemo(Company $company)
+    {
+        $company->update(['es_demo' => ! $company->es_demo]);
+        $this->forgetCompanyCaches();
+
+        $estado = $company->es_demo
+            ? 'marcada como DEMO/SANDBOX (sin tope, no cuenta como cliente real)'
+            : 'desmarcada como demo (vuelve a ser empresa normal)';
+
+        return back()->with('success', "Empresa {$estado}.");
+    }
+
     private function recentDocuments(int $companyId)
     {
         $queries = collect([

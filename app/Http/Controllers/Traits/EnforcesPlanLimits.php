@@ -20,7 +20,8 @@ trait EnforcesPlanLimits
         $company = Auth::user()?->company;
         $plan = $company?->plan;
 
-        if (! $company || ! $plan) {
+        // Las empresas SANDBOX/DEMO no tienen tope (emiten ilimitado en beta).
+        if (! $company || ! $plan || $company->es_demo) {
             return null;
         }
 

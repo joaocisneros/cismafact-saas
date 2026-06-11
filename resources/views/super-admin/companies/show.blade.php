@@ -16,6 +16,11 @@
                 <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ $company->activo ? 'bg-green-50 text-green-700 ring-1 ring-green-600/20' : 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20' }}">
                     {{ $company->activo ? 'Activa' : 'Suspendida' }}
                 </span>
+                @if ($company->es_demo)
+                    <span class="inline-flex rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-600/20">
+                        DEMO / SANDBOX
+                    </span>
+                @endif
             </div>
             <p class="mt-1 text-sm text-gray-500">RUC {{ $company->ruc }} · Registrada {{ $company->created_at->format('d/m/Y') }}</p>
         </div>
@@ -29,6 +34,12 @@
                 </button>
             </form>
             <a href="{{ route('super-admin.documents', ['company_id' => $company->id]) }}" class="rounded-lg bg-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-300">Ver Documentos</a>
+            <form method="POST" action="{{ route('super-admin.companies.toggle-demo', $company) }}">
+                @csrf
+                <button type="submit" class="rounded-lg px-4 py-2 text-sm {{ $company->es_demo ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'border border-indigo-300 text-indigo-700 hover:bg-indigo-50' }}">
+                    {{ $company->es_demo ? 'Quitar demo' : 'Marcar como demo' }}
+                </button>
+            </form>
             <button type="button" onclick="document.getElementById('modal-eliminar').classList.remove('hidden')" class="rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700">Eliminar</button>
         </div>
     </div>

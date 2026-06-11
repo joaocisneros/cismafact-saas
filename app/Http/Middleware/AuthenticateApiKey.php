@@ -68,7 +68,10 @@ class AuthenticateApiKey
         $plan = $company->plan;
         $limits = app(PlanLimitService::class);
 
-        if ($plan && $limits->limitReached(
+        // Las empresas SANDBOX/DEMO no tienen tope (prueban ilimitado en beta).
+        $sinTope = (bool) $company->es_demo;
+
+        if (! $sinTope && $plan && $limits->limitReached(
             $plan->api_request_limit,
             $limits->apiRequestsUsedThisMonth($company->id)
         )) {
@@ -79,7 +82,7 @@ class AuthenticateApiKey
             ], 429);
         }
 
-        if ($plan && $this->isDocumentCreationRequest($request) && $limits->limitReached(
+        if (! $sinTope && $plan && $this->isDocumentCreationRequest($request) && $limits->limitReached(
             $plan->monthly_document_limit,
             $limits->documentsUsedThisMonth($company->id)
         )) {

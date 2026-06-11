@@ -57,5 +57,52 @@
             API disponible para recibir solicitudes
         </div>
     </div>
+
+    {{-- ===== Token Sandbox (pruebas para programadores) ===== --}}
+    <div class="border-y border-gray-200 bg-white px-5 py-6">
+        <h3 class="text-sm font-semibold text-gray-900">Token Sandbox (pruebas)</h3>
+        <p class="mt-1 text-sm text-gray-500">
+            Genera un token de prueba para entregárselo a un programador. Emite solo a <strong>SUNAT beta</strong> (documentos sin valor legal), sin tope, ligado a tu empresa demo. Cada token lleva el nombre del dev para ver su consumo y bloquearlo individualmente.
+        </p>
+
+        @if (session('sandbox_token'))
+            @php($st = session('sandbox_token'))
+            <div class="mt-4 rounded-md border border-green-300 bg-green-50 p-4">
+                <p class="text-sm font-semibold text-green-800">✅ {{ $st['name'] }} — cópialo ahora (el secreto no se vuelve a mostrar):</p>
+                <dl class="mt-3 space-y-2 text-sm">
+                    <div>
+                        <dt class="text-xs font-medium uppercase text-gray-500">X-Api-Key</dt>
+                        <dd class="mt-1 break-all rounded bg-white px-3 py-2 font-mono text-gray-800 ring-1 ring-gray-200">{{ $st['key'] }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium uppercase text-gray-500">X-Api-Secret</dt>
+                        <dd class="mt-1 break-all rounded bg-white px-3 py-2 font-mono text-gray-800 ring-1 ring-gray-200">{{ $st['secret'] }}</dd>
+                    </div>
+                </dl>
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="mt-4 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">{{ session('error') }}</div>
+        @endif
+
+        <form method="POST" action="{{ route('super-admin.api-global.sandbox-token') }}" class="mt-4 flex flex-wrap items-end gap-3">
+            @csrf
+            <label class="text-sm font-medium text-gray-700">
+                Nombre del dev / proyecto
+                <input type="text" name="dev_name" required placeholder="Ej: Juan Pérez (ERP X)"
+                       class="mt-1 block w-64 rounded-md border border-gray-300 px-3 py-2 text-sm">
+            </label>
+            <label class="text-sm font-medium text-gray-700">
+                Caduca en (días, opcional)
+                <input type="number" name="expires_in_days" min="1" max="365" placeholder="Ej: 30"
+                       class="mt-1 block w-44 rounded-md border border-gray-300 px-3 py-2 text-sm">
+            </label>
+            <button type="submit"
+                    class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+                Generar token sandbox
+            </button>
+        </form>
+    </div>
 </div>
 @endsection
