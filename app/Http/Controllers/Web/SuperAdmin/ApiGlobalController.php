@@ -188,7 +188,10 @@ class ApiGlobalController extends Controller
 
     public function apiKeys(Request $request)
     {
-        $query = ApiKey::with('company:id,razon_social');
+        // Solo llaves de empresas reales. Los tokens de empresas demo/sandbox
+        // se gestionan en su propia tabla (sección "Token Sandbox").
+        $query = ApiKey::with('company:id,razon_social')
+            ->whereDoesntHave('company', fn ($q) => $q->where('es_demo', true));
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
@@ -213,7 +216,7 @@ class ApiGlobalController extends Controller
         }
 
         $apiKeys = $query->latest()->paginate(15)->withQueryString();
-        $companies = Company::orderBy('razon_social')->limit(300)->get(['id', 'razon_social']);
+        $companies = Company::where('es_demo', false)->orderBy('razon_social')->limit(300)->get(['id', 'razon_social']);
 
         return view('super-admin.api-global.api-keys', compact('apiKeys', 'companies'));
     }
