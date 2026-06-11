@@ -173,6 +173,19 @@ class ApiGlobalController extends Controller
         return back()->with('success', "Token extendido {$validated['days']} días. Nueva caducidad: {$apiKey->expires_at->format('d/m/Y')}.");
     }
 
+    /**
+     * Elimina una API Key (se usa para los tokens sandbox que ya no se quieren).
+     * A diferencia de "bloquear", esto la borra definitivamente.
+     */
+    public function destroyApiKey(ApiKey $apiKey)
+    {
+        $nombre = $apiKey->name;
+        $apiKey->delete();
+        Cache::forget('api_global_index');
+
+        return back()->with('success', "Token \"{$nombre}\" eliminado.");
+    }
+
     public function apiKeys(Request $request)
     {
         $query = ApiKey::with('company:id,razon_social');

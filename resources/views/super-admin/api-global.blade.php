@@ -157,6 +157,11 @@
                                                        class="w-14 rounded border border-gray-300 px-1 py-0.5 text-xs">
                                                 <button type="submit" class="text-sm text-indigo-600 hover:underline">Extender</button>
                                             </form>
+                                            <form method="POST" action="{{ route('super-admin.api-global.delete-key', $token) }}" onsubmit="return confirm('¿Eliminar este token definitivamente? No se puede deshacer.')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-sm text-gray-500 hover:text-red-600 hover:underline">Eliminar</button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>

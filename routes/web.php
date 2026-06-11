@@ -138,6 +138,7 @@ Route::prefix('super-admin')
         Route::post('/api-global/api-keys/{apiKey}/toggle', [SuperAdminApiGlobalController::class, 'toggleApiKey'])->name('api-global.toggle-key');
         Route::post('/api-global/sandbox-token', [SuperAdminApiGlobalController::class, 'generateSandboxToken'])->name('api-global.sandbox-token');
         Route::post('/api-global/api-keys/{apiKey}/extend', [SuperAdminApiGlobalController::class, 'extendApiKey'])->name('api-global.extend-key');
+        Route::delete('/api-global/api-keys/{apiKey}', [SuperAdminApiGlobalController::class, 'destroyApiKey'])->name('api-global.delete-key');
 
         Route::get('/settings', [SuperAdminSettingController::class, 'index'])->name('settings');
         Route::put('/settings', [SuperAdminSettingController::class, 'update'])->name('settings.update');
