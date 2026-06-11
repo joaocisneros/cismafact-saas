@@ -28,6 +28,30 @@
         </div>
     </dl>
 
+    @if ($apiKey->company?->es_demo)
+        {{-- Token sandbox: se muestran las credenciales completas + URL para copiarlas y entregárselas al dev. --}}
+        <div class="space-y-3 rounded-md border border-indigo-200 bg-indigo-50 p-4">
+            <p class="text-xs font-semibold uppercase text-indigo-700">Credenciales para el programador</p>
+            @foreach ([
+                'URL Base de la API' => url('/api'),
+                'X-Api-Key' => $apiKey->key,
+                'X-Api-Secret' => $apiKey->plain_secret,
+            ] as $label => $valor)
+                <div>
+                    <dt class="text-xs text-gray-500">{{ $label }}</dt>
+                    <dd class="mt-1 flex items-center gap-2">
+                        <span class="flex-1 break-all rounded bg-white px-2 py-1 font-mono text-xs text-gray-800 ring-1 ring-gray-200">{{ $valor ?: '—' }}</span>
+                        @if ($valor)
+                            <button type="button" onclick="navigator.clipboard.writeText('{{ $valor }}'); this.textContent='Copiado';"
+                                    class="whitespace-nowrap rounded bg-indigo-600 px-2 py-1 text-xs text-white hover:bg-indigo-700">Copiar</button>
+                        @endif
+                    </dd>
+                </div>
+            @endforeach
+            <p class="text-xs text-gray-500">Ambiente: <strong>SUNAT beta</strong> (pruebas). El dev manda Key y Secret como cabeceras en cada petición a la URL base.</p>
+        </div>
+    @endif
+
     <div>
         <h5 class="mb-2 text-sm font-semibold text-gray-800">Últimos usos</h5>
         <div class="max-h-64 divide-y divide-gray-100 overflow-y-auto border-y border-gray-200">

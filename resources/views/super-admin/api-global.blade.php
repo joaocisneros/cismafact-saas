@@ -64,12 +64,20 @@
         <p class="mt-1 text-sm text-gray-500">
             Genera un token de prueba para entregárselo a un programador. Emite solo a <strong>SUNAT beta</strong> (documentos sin valor legal), sin tope, ligado a tu empresa demo. Cada token lleva el nombre del dev para ver su consumo y bloquearlo individualmente.
         </p>
+        <p class="mt-2 text-sm text-gray-600">
+            URL Base de la API (el dev la necesita):
+            <span class="ml-1 break-all rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800">{{ url('/api') }}</span>
+        </p>
 
         @if (session('sandbox_token'))
             @php($st = session('sandbox_token'))
             <div class="mt-4 rounded-md border border-green-300 bg-green-50 p-4">
                 <p class="text-sm font-semibold text-green-800">✅ {{ $st['name'] }} — cópialo ahora (el secreto no se vuelve a mostrar):</p>
                 <dl class="mt-3 space-y-2 text-sm">
+                    <div>
+                        <dt class="text-xs font-medium uppercase text-gray-500">URL Base de la API</dt>
+                        <dd class="mt-1 break-all rounded bg-white px-3 py-2 font-mono text-gray-800 ring-1 ring-gray-200">{{ url('/api') }}</dd>
+                    </div>
                     <div>
                         <dt class="text-xs font-medium uppercase text-gray-500">X-Api-Key</dt>
                         <dd class="mt-1 break-all rounded bg-white px-3 py-2 font-mono text-gray-800 ring-1 ring-gray-200">{{ $st['key'] }}</dd>
@@ -145,6 +153,7 @@
                                     </td>
                                     <td class="px-3 py-2">
                                         <div class="flex flex-wrap items-center gap-2">
+                                            <button type="button" onclick="window.openAdminModal('{{ route('super-admin.api-global.show-key', $token) }}', 'Token sandbox')" class="text-sm text-blue-600 hover:underline">Ver</button>
                                             <form method="POST" action="{{ route('super-admin.api-global.toggle-key', $token) }}" onsubmit="return confirm('Cambiar estado del token?')">
                                                 @csrf
                                                 <button type="submit" class="text-sm text-{{ $token->active ? 'red' : 'green' }}-600 hover:underline">
