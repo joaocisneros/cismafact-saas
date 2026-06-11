@@ -102,6 +102,69 @@
                 Generar token sandbox
             </button>
         </form>
+
+        {{-- Lista de tokens sandbox: ver / extender / bloquear aquí mismo --}}
+        <div class="mt-6">
+            <h4 class="text-xs font-semibold uppercase text-gray-500">Tokens sandbox generados</h4>
+            @if (empty($sandboxTokens) || $sandboxTokens->isEmpty())
+                <p class="mt-2 text-sm text-gray-400">Aún no has generado tokens de prueba. Si el botón no funciona, primero marca una empresa como demo (Empresas → detalle → "Marcar como demo").</p>
+            @else
+                <div class="mt-2 overflow-x-auto border-y border-gray-200">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
+                            <tr>
+                                <th class="px-3 py-2">Dev / Token</th>
+                                <th class="px-3 py-2">Estado</th>
+                                <th class="px-3 py-2">Último uso</th>
+                                <th class="px-3 py-2">Caduca</th>
+                                <th class="px-3 py-2">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach ($sandboxTokens as $token)
+                                <tr>
+                                    <td class="px-3 py-2">
+                                        <div class="font-medium text-gray-900">{{ $token->name }}</div>
+                                        <div class="font-mono text-xs text-gray-400">{{ \Illuminate\Support\Str::limit($token->key, 18) }}</div>
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        <span class="rounded px-2 py-0.5 text-xs {{ $token->active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                                            {{ $token->active ? 'Activo' : 'Bloqueado' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-2 text-xs text-gray-500">{{ optional($token->last_used_at)->diffForHumans() ?? 'Nunca' }}</td>
+                                    <td class="px-3 py-2 text-xs">
+                                        @if (! $token->expires_at)
+                                            <span class="text-gray-400">Sin caducidad</span>
+                                        @elseif ($token->expires_at->isPast())
+                                            <span class="font-medium text-red-600">Expirado {{ $token->expires_at->format('d/m/Y') }}</span>
+                                        @else
+                                            <span class="text-gray-600">{{ $token->expires_at->format('d/m/Y') }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <form method="POST" action="{{ route('super-admin.api-global.toggle-key', $token) }}" onsubmit="return confirm('Cambiar estado del token?')">
+                                                @csrf
+                                                <button type="submit" class="text-sm text-{{ $token->active ? 'red' : 'green' }}-600 hover:underline">
+                                                    {{ $token->active ? 'Bloquear' : 'Activar' }}
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{{ route('super-admin.api-global.extend-key', $token) }}" class="flex items-center gap-1">
+                                                @csrf
+                                                <input type="number" name="days" value="30" min="1" max="365"
+                                                       class="w-14 rounded border border-gray-300 px-1 py-0.5 text-xs">
+                                                <button type="submit" class="text-sm text-indigo-600 hover:underline">Extender</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
     </div>
 </div>
 @endsection

@@ -43,7 +43,14 @@ class ApiGlobalController extends Controller
             ];
         });
 
-        return view('super-admin.api-global', $data);
+        // Tokens sandbox = API keys de empresas marcadas como demo. Se listan
+        // bajo el formulario para verlos, extenderlos o bloquearlos ahí mismo.
+        $sandboxTokens = ApiKey::whereHas('company', fn ($q) => $q->where('es_demo', true))
+            ->with('company:id,razon_social')
+            ->latest()
+            ->get();
+
+        return view('super-admin.api-global', $data + ['sandboxTokens' => $sandboxTokens]);
     }
 
     public function logs(Request $request)
