@@ -49,6 +49,10 @@
                 <h2 class="text-xl font-semibold text-gray-900">1. Introducción</h2>
                 <p class="text-gray-600">La API es REST y responde en JSON. Toda petición se hace sobre la URL base:</p>
                 <div class="rounded-lg bg-gray-900 px-4 py-3 font-mono text-sm text-gray-100">{{ url('/api') }}</div>
+                <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+                    <strong>Funciona con cualquier lenguaje de programación.</strong> Al ser una API REST sobre HTTP con JSON, la puedes consumir desde
+                    <span class="font-medium">PHP, JavaScript/Node.js, Python, Java, C#/.NET, Ruby, Go</span> y cualquier otro lenguaje que pueda hacer peticiones HTTP. No necesitas instalar nada especial: solo enviar las cabeceras de autenticación.
+                </div>
                 <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
                     <strong>Ambientes:</strong> con un <strong>token de pruebas (sandbox)</strong> emites a <strong>SUNAT beta</strong> (documentos sin valor legal) para probar sin riesgo. En producción, con tu propio certificado y RUC, los comprobantes son reales ante SUNAT.
                 </div>
@@ -178,6 +182,32 @@ curl_setopt_array($ch, [
 ]);
 $respuesta = curl_exec($ch);
 echo $respuesta;</code></pre>
+                </div>
+
+                <div>
+                    <h3 class="mb-2 text-sm font-semibold uppercase text-gray-500">Python</h3>
+                    <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-xs text-gray-100"><code>import requests
+
+resp = requests.get(
+    "{{ url('/api') }}/empresa",
+    headers={
+        "X-Api-Key": "TU_API_KEY",
+        "X-Api-Secret": "TU_API_SECRET",
+    },
+)
+print(resp.json())</code></pre>
+                </div>
+
+                <div>
+                    <h3 class="mb-2 text-sm font-semibold uppercase text-gray-500">JavaScript / Node.js</h3>
+                    <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-xs text-gray-100"><code>const resp = await fetch("{{ url('/api') }}/empresa", {
+  headers: {
+    "X-Api-Key": "TU_API_KEY",
+    "X-Api-Secret": "TU_API_SECRET",
+  },
+});
+const data = await resp.json();
+console.log(data);</code></pre>
                 </div>
             </section>
 
