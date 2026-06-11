@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Force)",
+      "Bash(Select-Object -First 30)",
+      "Bash(Format-Table Name, PSIsContainer)",
+      "Bash(xargs wc -l)",
+      "Bash(php -l app/Http/Controllers/Web/DashboardController.php)",
+      "Bash(php -l app/Http/Controllers/Web/SuperAdmin/DashboardController.php)",
+      "Bash(php artisan *)",
+      "Bash(ls \"C:/laragon/bin/php/\")",
+      "Read(//c/laragon/bin/php/**)",
+      "Bash(\"C:/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php.exe\" artisan *)",
+      "Bash(\"C:/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php.exe\" -r \"echo 'OPcache: '; var_export\\(function_exists\\('opcache_get_status'\\) && opcache_get_status\\(\\) !== false\\); echo PHP_EOL;\")",
+      "Bash(C:/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php.exe artisan tinker '--execute= *)",
+      "Bash(C:/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php.exe artisan *)",
+      "PowerShell(curl.exe -s -o NUL -w \"HTTP %{http_code} | tiempo: %{time_total}s | redirect: %{redirect_url}`n\" --max-time 20 \"http://facturacionelectronica.test/\")",
+      "PowerShell(curl.exe -s -o NUL -w \"HTTP %{http_code} | tiempo: %{time_total}s | redirect: %{redirect_url}`n\" --max-time 20 \"http://facturacionelectronica.test/super-admin/dashboard\")",
+      "Bash(\"C:/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php.exe\" -l app/Http/Controllers/Web/Empresa/SunatConfigController.php)",
+      "Bash(\"C:/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php.exe\" _test_gre.php)",
+      "Bash(\"C:/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php.exe\" _test_gre2.php)",
+      "Bash(Select-String -Pattern \"company|Company|relation|Relations\" -Context 0,0)",
+      "Bash(curl -s -I http://facturacionelectronica.test/)",
+      "Bash(curl -s http://facturacionelectronica.test/)",
+      "WebFetch(domain:www.nubefact.com)",
+      "Bash(curl -s http://facturacionelectronica.test/login)"
+    ]
+  }
+}

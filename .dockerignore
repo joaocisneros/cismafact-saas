@@ -1,0 +1,13 @@
+.git
+.vscode
+node_modules
+vendor
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+storage/logs/*
+.env
+server.err.log
+server.out.log
+php8.2.zip

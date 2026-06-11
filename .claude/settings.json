@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"C:/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php.exe\" _smoke_prep.php)",
+      "Bash(bash _smoke_run.sh)",
+      "Bash(grep -o '\"\\\\\\\\/super-admin[^\"]*\"' _smoke_routes.json)",
+      "Bash(tr -d '\"\\\\\\\\')",
+      "Bash(grep -o '\"\\\\\\\\/empresa[^\"]*\"' _smoke_routes.json)",
+      "Bash(rm -f _routes_super.txt _routes_emp.txt)",
+      "Bash(C:/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php.exe -r ' *)",
+      "Bash(\"C:/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php.exe\" _smoke_restore.php)",
+      "Bash(rm -f _smoke_prep.php _smoke_restore.php _smoke_run.sh _smoke_routes.json _smoke_pw.json _routes_super.txt _routes_emp.txt _dbg.txt _warm.txt _warm2.txt _smoke_jar_*.txt)",
+      "Bash(ls _smoke* _routes_* _dbg* _warm*)",
+      "Bash(C:/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php.exe -r '$p=@file_get_contents\\(\"storage/app/public/certificado/certificado.pem\"\\); echo $p? \\(str_contains\\($p,\"BEGIN\"\\)?\"PEM valido \\(\".strlen\\($p\\).\" bytes\\)\\\\n\":\"existe pero sin BEGIN\\\\n\"\\) : \"NO EXISTE\\\\n\";')",
+      "Bash(curl -s --resolve facturacionelectronica.test:8766:127.0.0.1 -o /dev/null -w \"HTTP=%{http_code}\\\\n\" \"http://facturacionelectronica.test:8766/login\")",
+      "Bash(\"C:/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php.exe\" -d opcache.enable=0 -d opcache.enable_cli=0 artisan serve --port=8767 --no-reload)",
+      "Bash(\"C:/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php.exe\" -d opcache.enable=0 _verify_prod_guard.php)",
+      "Bash(rm -f _verify_prod_guard.php)",
+      "Bash(\"C:/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php.exe\" -d opcache.enable=0 _verify_readiness.php)",
+      "Bash(rm -f _verify_readiness.php)",
+      "Bash(\"C:/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php.exe\" -d opcache.enable=0 -d opcache.enable_cli=0 artisan view:clear)",
+      "Bash(rm -f app/Mail/ComprobanteMail.php resources/views/emails/comprobante.blade.php)",
+      "Bash(rmdir resources/views/emails)",
+      "Bash(\"C:/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php.exe\" -d opcache.enable=0 -d opcache.enable_cli=0 artisan migrate --force)"
+    ]
+  }
+}

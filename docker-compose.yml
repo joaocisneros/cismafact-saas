@@ -1,0 +1,50 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sunat_app
+    ports:
+      - "8090:80"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8090
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: db_cisma_fact
+      DB_USERNAME: sunat
+      DB_PASSWORD: secret
+      CACHE_STORE: database
+      SESSION_DRIVER: file
+      QUEUE_CONNECTION: database
+      SUNAT_ENVIRONMENT: beta
+      SUNAT_CERTIFICATE_PATH: storage/app/public/certificado/certificado.pem
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.0
+    container_name: sunat_mysql
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_DATABASE: db_cisma_fact
+      MYSQL_USER: sunat
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_data:

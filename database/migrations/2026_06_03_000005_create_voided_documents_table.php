@@ -1,0 +1,43 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('voided_documents', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('company_id')->constrained()->onDelete('cascade');
+            $table->foreignId('branch_id')->constrained()->onDelete('cascade');
+            
+            $table->string('correlativo', 8);
+            $table->date('fecha_generacion');
+            $table->date('fecha_referencia');
+            $table->text('motivo')->nullable();
+            
+            $table->json('detalles');
+            
+            $table->string('xml_path')->nullable();
+            $table->string('cdr_path')->nullable();
+            $table->string('ticket')->nullable();
+            
+            $table->string('estado_sunat', 20)->default('PENDIENTE');
+            $table->text('respuesta_sunat')->nullable();
+            
+            $table->string('usuario_creacion')->nullable();
+            $table->timestamps();
+            
+            $table->index(['company_id', 'branch_id']);
+            $table->index(['fecha_generacion']);
+            $table->index(['estado_sunat']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('voided_documents');
+    }
+};

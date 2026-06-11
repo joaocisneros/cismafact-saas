@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /$
+Allow: /login
+Allow: /register
+
+# Zonas privadas: no indexar
+Disallow: /super-admin/
+Disallow: /empresa/
+Disallow: /dashboard
+Disallow: /api/
+Disallow: /password-reset
+Disallow: /reset-password
+
+Sitemap: /sitemap.xml
