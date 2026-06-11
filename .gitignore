@@ -24,6 +24,9 @@
 /storage/app/public/certificado/*.pem
 /storage/app/public/certificado/*.pfx
 /storage/app/public/certificado/*.p12
+# Excepcion: el certificado de DEMOSTRACION de SUNAT (publico, solo beta) si se versiona
+# para que el entorno desplegado pueda firmar comprobantes de prueba sin subirlo a mano.
+!/storage/app/public/certificado/certificado.pem
 /storage/app/temp/certificados/
 /vendor
 Homestead.json

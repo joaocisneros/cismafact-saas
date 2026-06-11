@@ -1,4 +1,6 @@
 *
 !private/
 !public/
+!public/certificado/
+!public/certificado/certificado.pem
 !.gitignore
