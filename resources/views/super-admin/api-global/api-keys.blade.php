@@ -56,7 +56,7 @@
                         <th class="text-left py-3 px-4 font-medium text-gray-500">Key</th>
                         <th class="text-left py-3 px-4 font-medium text-gray-500">Estado</th>
                         <th class="text-left py-3 px-4 font-medium text-gray-500">Último Uso</th>
-                        <th class="text-left py-3 px-4 font-medium text-gray-500">Creada</th>
+                        <th class="text-left py-3 px-4 font-medium text-gray-500">Caduca</th>
                         <th class="text-left py-3 px-4 font-medium text-gray-500">Acciones</th>
                     </tr>
                 </thead>
@@ -72,15 +72,29 @@
                             </span>
                         </td>
                         <td class="py-3 px-4 text-gray-500 text-xs">{{ optional($apiKey->last_used_at)->diffForHumans() ?? 'Nunca' }}</td>
-                        <td class="py-3 px-4 text-gray-500 text-xs">{{ $apiKey->created_at->format('d/m/Y') }}</td>
+                        <td class="py-3 px-4 text-xs">
+                            @if (! $apiKey->expires_at)
+                                <span class="text-gray-400">Sin caducidad</span>
+                            @elseif ($apiKey->expires_at->isPast())
+                                <span class="text-red-600 font-medium">Expirada {{ $apiKey->expires_at->format('d/m/Y') }}</span>
+                            @else
+                                <span class="text-gray-600">{{ $apiKey->expires_at->format('d/m/Y') }}</span>
+                            @endif
+                        </td>
                         <td class="py-3 px-4">
-                            <div class="flex gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                                 <button type="button" onclick="window.openAdminModal('{{ route('super-admin.api-global.show-key', $apiKey) }}', 'Detalle de API Key')" class="text-blue-600 hover:text-blue-800 text-sm">Ver</button>
-                                <form method="POST" action="{{ route('super-admin.api-global.toggle-key', $apiKey) }}" onsubmit="return confirm('¿{{ $apiKey->active ? 'Desactivar' : 'Activar' }} API Key?')">
+                                <form method="POST" action="{{ route('super-admin.api-global.toggle-key', $apiKey) }}" onsubmit="return confirm('Cambiar estado de la API Key?')">
                                     @csrf
                                     <button type="submit" class="text-{{ $apiKey->active ? 'red' : 'green' }}-600 hover:text-{{ $apiKey->active ? 'red' : 'green' }}-800 text-sm">
                                         {{ $apiKey->active ? 'Desactivar' : 'Activar' }}
                                     </button>
+                                </form>
+                                <form method="POST" action="{{ route('super-admin.api-global.extend-key', $apiKey) }}" class="flex items-center gap-1">
+                                    @csrf
+                                    <input type="number" name="days" value="30" min="1" max="365"
+                                           class="w-14 rounded border border-gray-300 px-1 py-0.5 text-xs">
+                                    <button type="submit" class="text-indigo-600 hover:text-indigo-800 text-sm">Extender</button>
                                 </form>
                             </div>
                         </td>

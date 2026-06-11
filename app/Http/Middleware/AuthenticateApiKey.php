@@ -44,6 +44,14 @@ class AuthenticateApiKey
             ], 401);
         }
 
+        if ($apiKey->expires_at && $apiKey->expires_at->isPast()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El token API ha caducado. Solicita uno nuevo o que extiendan su vigencia.',
+                'code' => 'API_KEY_EXPIRED',
+            ], 401);
+        }
+
         if (! $apiKey->company || ! $apiKey->company->activo) {
             return response()->json([
                 'success' => false,

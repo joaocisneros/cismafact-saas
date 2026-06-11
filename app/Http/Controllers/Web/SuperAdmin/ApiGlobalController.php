@@ -145,6 +145,27 @@ class ApiGlobalController extends Controller
         ])->with('success', 'Token sandbox generado. Cópialo ahora (el secreto no se vuelve a mostrar).');
     }
 
+    /**
+     * Amplía la vigencia de un token: suma N días a su caducidad (o desde hoy
+     * si ya venció / no tenía). Sirve para extender un token sandbox sin crear
+     * otro.
+     */
+    public function extendApiKey(Request $request, ApiKey $apiKey)
+    {
+        $validated = $request->validate([
+            'days' => ['required', 'integer', 'min:1', 'max:365'],
+        ]);
+
+        $base = $apiKey->expires_at && $apiKey->expires_at->isFuture()
+            ? $apiKey->expires_at
+            : now();
+
+        $apiKey->update(['expires_at' => $base->copy()->addDays((int) $validated['days'])]);
+        Cache::forget('api_global_index');
+
+        return back()->with('success', "Token extendido {$validated['days']} días. Nueva caducidad: {$apiKey->expires_at->format('d/m/Y')}.");
+    }
+
     public function apiKeys(Request $request)
     {
         $query = ApiKey::with('company:id,razon_social');
