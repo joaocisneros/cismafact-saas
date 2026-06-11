@@ -10,10 +10,11 @@
             <p class="mt-1 text-sm text-gray-500">Resumen ligero del servicio y accesos bajo demanda.</p>
         </div>
         <div class="flex flex-wrap gap-2">
-            <a href="{{ route('super-admin.api-global.api-keys') }}"
-               class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+            <button type="button"
+                    onclick="window.openAdminModal('{{ route('super-admin.api-global.api-keys') }}', 'API Keys')"
+                    class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
                 API Keys
-            </a>
+            </button>
             <button type="button"
                     onclick="window.openAdminModal('{{ route('super-admin.api-global.performance') }}', 'Rendimiento de API')"
                     class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
