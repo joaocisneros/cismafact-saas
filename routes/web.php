@@ -35,8 +35,9 @@ Route::view('/docs', 'docs')->name('docs');
 Route::get('/sitemap.xml', function () {
     $urls = [
         ['loc' => url('/'), 'priority' => '1.0'],
-        ['loc' => route('login'), 'priority' => '0.5'],
+        ['loc' => route('docs'), 'priority' => '0.7'],
         ['loc' => route('register'), 'priority' => '0.8'],
+        ['loc' => route('login'), 'priority' => '0.5'],
     ];
 
     $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
