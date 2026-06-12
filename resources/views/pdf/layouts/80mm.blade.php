@@ -49,8 +49,8 @@
         }
 
         .logo-img-ticket {
-            width: 120px;
-            height: 50;
+            max-width: 100px;
+            max-height: 45px;
             object-fit: contain;
             display: block;
             margin: 0 auto 2px;
