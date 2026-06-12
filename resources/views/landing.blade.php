@@ -11,6 +11,9 @@
     <meta name="author" content="Cisma Fact">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="{{ url('/') }}">
+    @if(config('services.google.site_verification'))
+        <meta name="google-site-verification" content="{{ config('services.google.site_verification') }}">
+    @endif
     <link rel="icon" href="{{ config('platform.favicon_url', asset('assets/brand/favicon.png')) }}">
 
     {{-- Open Graph (Facebook, WhatsApp, LinkedIn) --}}

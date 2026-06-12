@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    // Codigo de verificacion de Google Search Console. Se pega en el .env
+    // como GOOGLE_SITE_VERIFICATION=xxxx y aparece como <meta> en la landing.
+    'google' => [
+        'site_verification' => env('GOOGLE_SITE_VERIFICATION'),
+    ],
+
 ];
