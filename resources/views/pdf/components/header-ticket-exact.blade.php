@@ -2,14 +2,21 @@
 {{-- Props: $company, $document, $tipo_documento_nombre --}}
 
 @php
-    $logoPath = public_path('logo_factura.png');
+    // Logo PROPIO de cada empresa. Si no tiene, no se muestra logo.
+    $logoSrc = null;
+    if (!empty($company->logo_path) && \Illuminate\Support\Facades\Storage::disk('public')->exists($company->logo_path)) {
+        $logoAbs = \Illuminate\Support\Facades\Storage::disk('public')->path($company->logo_path);
+        $logoExt = strtolower(pathinfo($logoAbs, PATHINFO_EXTENSION));
+        $logoMime = $logoExt === 'png' ? 'image/png' : 'image/jpeg';
+        $logoSrc = 'data:' . $logoMime . ';base64,' . base64_encode(file_get_contents($logoAbs));
+    }
 @endphp
 
 <div class="header">
     {{-- Logo --}}
-    @if(file_exists($logoPath))
+    @if($logoSrc)
         <div class="logo-section-ticket">
-            <img src="data:image/png;base64,{{ base64_encode(file_get_contents($logoPath)) }}" alt="Logo" class="logo-img-ticket">
+            <img src="{{ $logoSrc }}" alt="Logo" class="logo-img-ticket">
         </div>
     @endif
 
