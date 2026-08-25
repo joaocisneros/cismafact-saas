@@ -4,6 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\BoletaController;
+use App\Http\Controllers\Api\CatalogoController;
+use App\Http\Controllers\Api\PanelController;
 use App\Http\Controllers\Api\PdfController;
 use App\Http\Controllers\Api\CompanyConfigController;
 use App\Http\Controllers\Api\CompanyController;
@@ -93,6 +95,26 @@ Route::match(['get', 'post'], '/empresa', function (Request $request) {
             ],
         ],
     ]);
+});
+
+/*
+ * Datos auxiliares y cifras para las aplicaciones que consumen la API.
+ * Van antes de los comprobantes porque es lo que una aplicacion pide primero:
+ * con que sucursal, que serie y que cliente va a emitir.
+ */
+Route::middleware('api.key')->group(function () {
+    Route::get('/sucursales', [CatalogoController::class, 'sucursales']);
+    Route::get('/series', [CatalogoController::class, 'series']);
+    Route::get('/clientes', [CatalogoController::class, 'clientes']);
+    Route::get('/buscar-documento', [CatalogoController::class, 'buscarDocumento']);
+
+    Route::prefix('panel')->group(function () {
+        Route::get('/indicadores', [PanelController::class, 'indicadores']);
+        Route::get('/documentos-recientes', [PanelController::class, 'documentosRecientes']);
+        Route::get('/ventas-mensuales', [PanelController::class, 'ventasMensuales']);
+        Route::get('/estado-sunat', [PanelController::class, 'estadoSunat']);
+        Route::get('/por-moneda', [PanelController::class, 'porMoneda']);
+    });
 });
 
 Route::middleware('api.key')->prefix('boletas')->group(function () {
