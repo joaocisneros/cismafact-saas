@@ -165,6 +165,15 @@ class User extends Authenticatable
     /**
      * Verificar si el usuario tiene cualquiera de los roles dados
      */
+    /**
+     * Roles que entran al panel de Super Admin: el propio super_admin con
+     * acceso total, y el contador, que solo consulta y entra como soporte.
+     */
+    public function accedeAlPanelAdmin(): bool
+    {
+        return $this->hasAnyRole(['super_admin', 'contador']);
+    }
+
     public function hasAnyRole(array $roles): bool
     {
         return $this->role && in_array($this->role->name, $roles);

@@ -13,7 +13,7 @@
             </a>
             <div>
                 <h1 class="text-2xl font-bold text-gray-800">API Keys</h1>
-                <p class="text-gray-500 mt-1">Gestionar API keys de todas las empresas</p>
+                <p class="text-gray-500 mt-1">Credenciales de todas las empresas</p>
             </div>
         </div>
     </div>
@@ -53,7 +53,7 @@
                     <tr class="border-b bg-gray-50">
                         <th class="text-left py-3 px-4 font-medium text-gray-500">Nombre</th>
                         <th class="text-left py-3 px-4 font-medium text-gray-500">Empresa</th>
-                        <th class="text-left py-3 px-4 font-medium text-gray-500">Key</th>
+                        <th class="text-left py-3 px-4 font-medium text-gray-500">Credencial</th>
                         <th class="text-left py-3 px-4 font-medium text-gray-500">Estado</th>
                         <th class="text-left py-3 px-4 font-medium text-gray-500">Último Uso</th>
                         <th class="text-left py-3 px-4 font-medium text-gray-500">Caduca</th>
@@ -101,7 +101,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="py-8 text-center text-gray-500">No se encontraron API keys.</td>
+                        <td colspan="7" class="py-8 text-center text-gray-500">No se encontraron credenciales con esos filtros.</td>
                     </tr>
                     @endforelse
                 </tbody>

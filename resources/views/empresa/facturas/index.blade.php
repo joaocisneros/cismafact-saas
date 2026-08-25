@@ -69,9 +69,13 @@
                         <td class="px-4 py-3 text-right font-medium text-gray-900">{{ $f->moneda === 'USD' ? '$' : 'S/' }} {{ number_format((float) $f->mto_imp_venta, 2) }}</td>
                         <td class="px-4 py-3">
                             <span class="rounded px-2 py-1 text-xs font-medium {{ $estadoClass }}">{{ $f->estado_sunat ?? 'PENDIENTE' }}</span>
+                            @if($f->anulado_en)
+                                <span class="ml-1 rounded bg-red-50 px-2 py-1 text-xs font-medium text-red-700"
+                                      title="Baja aceptada por SUNAT el {{ $f->anulado_en->format('d/m/Y') }}">Anulado</span>
+                            @endif
                         </td>
                         <td class="px-4 py-3 text-right">
-                            <button type="button" onclick="openAdminModal('{{ route('empresa.facturas.show', $f->id) }}', 'Factura {{ $f->numero_completo }}')" class="text-sm font-medium text-blue-600 hover:text-blue-800">Ver</button>
+                            <x-icon-action icon="ver" label="Ver factura" color="blue" type="button" onclick="openAdminModal('{{ route('empresa.facturas.show', $f->id) }}', 'Factura {{ $f->numero_completo }}')" />
                         </td>
                     </tr>
                 @empty
@@ -83,4 +87,6 @@
 
     <div>{{ $facturas->links() }}</div>
 </div>
+
+@include('partials.abrir-modal-documento', ['ruta' => 'empresa.facturas.show'])
 @endsection

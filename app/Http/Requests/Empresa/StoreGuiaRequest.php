@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Auth;
 
 class StoreGuiaRequest extends FormRequest
 {
+    use \App\Http\Requests\Empresa\Concerns\DeduceSucursalDeLaSerie;
+
     // Catálogo 20 - Motivo de traslado
     public const MOTIVOS = [
         '01' => 'Venta',
@@ -33,10 +35,13 @@ class StoreGuiaRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $companyId = Auth::user()->company_id;
+
+        // La sucursal se deduce de la serie: cada serie pertenece a una sola.
         $this->merge([
-            'company_id' => Auth::user()->company_id,
+            'company_id' => $companyId,
             'usuario_creacion' => Auth::user()->name,
-        ]);
+        ] + $this->sucursalSegunSerie($companyId, '09'));
     }
 
     public function rules(): array
@@ -52,6 +57,8 @@ class StoreGuiaRequest extends FormRequest
             'destinatario.tipo_documento' => ['required', 'string', 'in:0,1,4,6'],
             'destinatario.numero_documento' => ['required', 'string', 'max:15'],
             'destinatario.razon_social' => ['required', 'string', 'max:255'],
+            'destinatario.direccion' => ['nullable', 'string', 'max:255'],
+            'destinatario.email' => ['nullable', 'email', 'max:100'],
 
             // Datos del traslado
             'cod_traslado' => ['required', 'string', 'in:' . implode(',', array_keys(self::MOTIVOS))],

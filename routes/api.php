@@ -28,8 +28,10 @@ use App\Http\Controllers\Api\DailySummaryController;
 // Información del sistema
 Route::get('/system/info', [AuthController::class, 'systemInfo']);
 
-// Setup del sistema
-Route::prefix('setup')->group(function () {
+// Setup del sistema. Ejecuta migraciones/seeders y expone el estado interno,
+// asi que exige la cabecera X-Setup-Token (ver SETUP_TOKEN en .env). Sin ese
+// token configurado las rutas responden 404.
+Route::prefix('setup')->middleware(['setup.token', 'throttle:10,1'])->group(function () {
     Route::post('/migrate', [SetupController::class, 'migrate']);
     Route::post('/seed', [SetupController::class, 'seed']);
     Route::get('/status', [SetupController::class, 'status']);

@@ -24,20 +24,12 @@
 
     <div class="mb-4">
         <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Nueva Contraseña</label>
-        <input type="password"
-               id="password"
-               name="password"
-               required
-               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+        <x-password-input name="password" required placeholder="Mínimo 8 caracteres" />
     </div>
 
     <div class="mb-6">
         <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirmar Contraseña</label>
-        <input type="password"
-               id="password_confirmation"
-               name="password_confirmation"
-               required
-               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+        <x-password-input name="password_confirmation" required placeholder="Repite la contraseña" />
     </div>
 
     <button type="submit"

@@ -61,8 +61,14 @@
                         <td class="px-4 py-3 text-gray-700">{{ $n->client?->razon_social ?? '—' }}</td>
                         <td class="px-4 py-3 text-gray-600">{{ $n->fecha_emision?->format('d/m/Y') }}</td>
                         <td class="px-4 py-3 text-right font-medium text-gray-900">{{ $n->moneda === 'USD' ? '$' : 'S/' }} {{ number_format((float) $n->mto_imp_venta, 2) }}</td>
-                        <td class="px-4 py-3"><span class="rounded px-2 py-1 text-xs font-medium {{ $estadoClass }}">{{ $n->estado_sunat ?? 'PENDIENTE' }}</span></td>
-                        <td class="px-4 py-3 text-right"><button type="button" onclick="openAdminModal('{{ route('empresa.' . $routePrefix . '.show', $n->id) }}', '{{ $titulo }} {{ $n->serie }}-{{ $n->correlativo }}')" class="text-sm font-medium text-blue-600 hover:text-blue-800">Ver</button></td>
+                        <td class="px-4 py-3">
+                            <span class="rounded px-2 py-1 text-xs font-medium {{ $estadoClass }}">{{ $n->estado_sunat ?? 'PENDIENTE' }}</span>
+                            @if($n->anulado_en)
+                                <span class="ml-1 rounded bg-red-50 px-2 py-1 text-xs font-medium text-red-700"
+                                      title="Baja aceptada por SUNAT el {{ $n->anulado_en->format('d/m/Y') }}">Anulado</span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-3 text-right"><x-icon-action icon="ver" label="Ver comprobante" color="blue" type="button" onclick="openAdminModal('{{ route('empresa.' . $routePrefix . '.show', $n->id) }}', '{{ $titulo }} {{ $n->serie }}-{{ $n->correlativo }}')" /></td>
                     </tr>
                 @empty
                     <tr><td colspan="7" class="px-4 py-10 text-center text-gray-500">No hay {{ strtolower($titulo) }} emitidas todavía.</td></tr>
@@ -73,3 +79,5 @@
 
     <div>{{ $notas->links() }}</div>
 </div>
+
+@include('partials.abrir-modal-documento', ['ruta' => 'empresa.' . $routePrefix . '.show'])

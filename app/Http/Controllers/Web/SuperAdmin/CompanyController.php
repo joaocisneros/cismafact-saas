@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApiKey;
 use App\Models\ApiUsage;
 use App\Models\Company;
+use App\Services\SubscriptionStatusService;
 use App\Models\Correlative;
 use App\Models\Plan;
 use App\Models\Subscription;
@@ -21,6 +22,14 @@ class CompanyController extends Controller
 {
     public function index(Request $request)
     {
+        // Las suscripciones vencidas se marcan al correr el cron (00:10) o cuando
+        // el cliente intenta entrar. Hasta entonces esta pantalla mostraba la
+        // empresa como "Activa" mientras Suscripciones ya la daba por vencida.
+        // Sincronizar aqui cuesta poco: solo alcanza a las que tienen la fecha
+        // pasada y siguen marcadas como vigentes, y tras el primer paso ya no
+        // vuelven a entrar en la consulta.
+        app(SubscriptionStatusService::class)->synchronizeDueSubscriptions();
+
         $query = Company::query()
             ->with('plan:id,name')
             ->withCount(['invoices', 'boletas', 'creditNotes', 'debitNotes', 'dispatchGuides', 'apiKeys']);
@@ -83,8 +92,11 @@ class CompanyController extends Controller
                 'distrito' => 'Lima',
                 'provincia' => 'Lima',
                 'departamento' => 'Lima',
-                'usuario_sol' => 'PENDIENTE',
-                'clave_sol' => 'PENDIENTE',
+                // Credenciales de prueba de SUNAT (fijas y publicas). Antes se
+                // ponia 'PENDIENTE', que SUNAT no reconoce: la empresa nacia sin
+                // poder emitir ni siquiera en beta.
+                'usuario_sol' => 'MODDATOS',
+                'clave_sol' => 'moddatos',
                 'activo' => true,
                 'modo_produccion' => false,
             ]);
@@ -108,6 +120,7 @@ class CompanyController extends Controller
                 ['tipo_documento' => '09', 'serie' => 'T001'],
             ] as $documentSeries) {
                 Correlative::create([
+                    'company_id' => $company->id,
                     'branch_id' => $branch->id,
                     ...$documentSeries,
                     'correlativo_actual' => 0,
@@ -240,7 +253,14 @@ class CompanyController extends Controller
 
     public function toggleStatus(Company $company)
     {
-        $company->update(['activo' => ! $company->activo]);
+        $activar = ! $company->activo;
+
+        // 'suspendida_manualmente' distingue "la apagaste tu" de "vencio su
+        // suscripcion". Sin esa marca, synchronize() la reactivaba sola.
+        $company->update([
+            'activo' => $activar,
+            'suspendida_manualmente' => ! $activar,
+        ]);
         $this->forgetCompanyCaches();
 
         $status = $company->activo ? 'reactivada' : 'suspendida';

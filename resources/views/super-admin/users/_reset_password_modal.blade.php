@@ -8,14 +8,12 @@
 
     <label class="block text-sm font-medium text-gray-700">
         Nueva contraseña
-        <input type="password" name="new_password" required minlength="8" autocomplete="new-password"
-               class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
+        <x-password-input name="new_password" required autocomplete="new-password" class="mt-1" />
     </label>
 
     <label class="block text-sm font-medium text-gray-700">
         Confirmar contraseña
-        <input type="password" name="new_password_confirmation" required minlength="8" autocomplete="new-password"
-               class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
+        <x-password-input name="new_password_confirmation" required autocomplete="new-password" placeholder="Repite la contraseña" class="mt-1" />
     </label>
 
     <p class="text-xs text-gray-500">Al guardar también se eliminarán el bloqueo y los intentos fallidos.</p>

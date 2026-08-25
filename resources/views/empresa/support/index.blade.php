@@ -9,9 +9,9 @@
             <h1 class="text-2xl font-bold text-gray-800">Mis Tickets</h1>
             <p class="text-gray-500 mt-1">Historial de tickets de soporte</p>
         </div>
-        <a href="{{ route('empresa.support.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
-            + Nuevo Ticket
-        </a>
+        <button type="button"
+                onclick="window.openAdminModal('{{ route('empresa.support.create') }}?modal=1', 'Nuevo ticket')"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">+ Nuevo Ticket</button>
     </div>
 
     <div class="grid grid-cols-3 gap-4">
@@ -50,7 +50,7 @@
                 </thead>
                 <tbody>
                     @forelse($tickets as $ticket)
-                    <tr class="border-b hover:bg-gray-50 cursor-pointer" onclick="window.location='{{ route('empresa.support.show', $ticket) }}'">
+                    <tr class="border-b hover:bg-gray-50 cursor-pointer" onclick="window.openAdminModal('{{ route('empresa.support.show', $ticket) }}?modal=1', 'Ticket #{{ $ticket->id }}')">
                         <td class="py-3 px-4">{{ $ticket->id }}</td>
                         <td class="py-3 px-4 font-medium">{{ $ticket->subject }}</td>
                         <td class="py-3 px-4">

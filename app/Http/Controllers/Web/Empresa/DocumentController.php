@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Storage;
 
 class DocumentController extends Controller
 {
+    use \App\Http\Controllers\Traits\GeneraPdfDelComprobante;
+
     private const LIST_COLUMNS = [
         'id',
         'company_id',
@@ -119,18 +121,18 @@ class DocumentController extends Controller
         $pathField = $this->pathFieldFor($file);
         $path = $document->$pathField;
 
-        if ($file === 'pdf' && (!$path || !Storage::disk('public')->exists($path))) {
-            $path = $this->generatePdf($document);
+        if ($file === 'pdf') {
+            $path = $this->rutaDelPdf($document);
         }
 
-        if (!$path || !Storage::disk('public')->exists($path)) {
-            return back()->with('error', 'Archivo no encontrado.');
+        if (!$path || !Storage::disk('comprobantes')->exists($path)) {
+            return back()->with('error', $this->motivoArchivoAusente($document, $file));
         }
 
         $extension = pathinfo($path, PATHINFO_EXTENSION);
         $filename = "{$type}_{$document->numero_completo}.{$extension}";
 
-        return Storage::disk('public')->download($path, $filename);
+        return Storage::disk('comprobantes')->download($path, $filename);
     }
 
     public function view(string $type, int $id, string $file)
@@ -139,8 +141,14 @@ class DocumentController extends Controller
         $pathField = $this->pathFieldFor($file);
         $path = $document->$pathField;
 
-        if (!$path || !Storage::disk('public')->exists($path)) {
-            return back()->with('error', 'Archivo no encontrado.');
+        // El PDF se rehace si falta: es lo mismo que hace la descarga, y sin
+        // esto "Ver" fallaba en todos los comprobantes sin pdf_path guardado.
+        if ($file === 'pdf') {
+            $path = $this->rutaDelPdf($document);
+        }
+
+        if (!$path || !Storage::disk('comprobantes')->exists($path)) {
+            return back()->with('error', $this->motivoArchivoAusente($document, $file));
         }
 
         $extension = pathinfo($path, PATHINFO_EXTENSION);
@@ -152,7 +160,7 @@ class DocumentController extends Controller
             default => 'application/octet-stream',
         };
 
-        $contents = Storage::disk('public')->get($path);
+        $contents = Storage::disk('comprobantes')->get($path);
 
         return response($contents)
             ->header('Content-Type', $mimeType)

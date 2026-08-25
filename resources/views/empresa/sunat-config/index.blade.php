@@ -3,6 +3,11 @@
 @section('title', 'Configuración SUNAT')
 
 @section('content')
+
+    <div class="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+        ¿Dudas con el certificado, la Clave SOL o la diferencia entre pruebas y producción?
+        <a href="{{ route('empresa.ayuda-emision') }}" class="font-medium underline">Lee la guía de emisión</a>.
+    </div>
 <div class="space-y-6" x-data="{ metodo: '{{ old('metodo_emision', $company->metodo_emision ?? 'cisma_fact') }}' }">
     <h2 class="text-lg font-semibold text-gray-800">Configuración SUNAT</h2>
 
@@ -21,45 +26,96 @@
         </div>
     @endif
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-white rounded-xl shadow-sm p-4 text-center">
-            <div class="w-10 h-10 {{ !empty($company->usuario_sol) ? 'bg-green-100' : 'bg-red-100' }} rounded-full flex items-center justify-center mx-auto mb-2">
-                <svg class="w-5 h-5 {{ !empty($company->usuario_sol) ? 'text-green-600' : 'text-red-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+    @php
+        // En pruebas la plataforma pone certificado y credenciales por su cuenta,
+        // asi que no tiene sentido enseñar aqui todo el bloque de produccion.
+        $enBeta = ! $company->modo_produccion;
+    @endphp
+
+    @if($enBeta)
+        <div class="rounded-xl border-2 border-amber-200 bg-amber-50 p-5">
+            <div class="flex items-start gap-3">
+                <span class="text-2xl leading-none">🧪</span>
+                <div>
+                    <p class="text-sm font-semibold text-amber-900">Estás en modo prueba</p>
+                    <p class="text-sm text-amber-800 mt-1">
+                        Ya puedes emitir. <strong>No hay nada que configurar.</strong>
+                        Estas facturas no tienen valor legal.
+                    </p>
+                </div>
             </div>
-            <p class="text-sm font-medium {{ !empty($company->usuario_sol) ? 'text-green-600' : 'text-red-600' }}">
-                {{ !empty($company->usuario_sol) ? 'SUNAT Configurado' : 'SUNAT Pendiente' }}
-            </p>
         </div>
-        <div class="bg-white rounded-xl shadow-sm p-4 text-center">
-            <div class="w-10 h-10 {{ !empty($company->certificado_pem) ? 'bg-green-100' : 'bg-red-100' }} rounded-full flex items-center justify-center mx-auto mb-2">
-                <svg class="w-5 h-5 {{ !empty($company->certificado_pem) ? 'text-green-600' : 'text-red-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-                </svg>
+
+        {{-- Lo que la plataforma esta usando ahora mismo para las pruebas. Solo
+             informativo: en beta el cliente no tiene que rellenar nada. --}}
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-md font-semibold text-gray-800 mb-4">Datos de prueba en uso</h3>
+
+            <dl class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <dt class="text-xs text-gray-500">Ambiente</dt>
+                    <dd class="mt-1 font-medium text-amber-700">● Beta (pruebas)</dd>
+                </div>
+                {{-- No se enseña el usuario de pruebas de SUNAT: no es de esta
+                     empresa, es un valor compartido, y verlo solo confunde. --}}
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <dt class="text-xs text-gray-500">Credenciales</dt>
+                    <dd class="mt-1 font-medium text-green-700">Listas</dd>
+                    <dd class="text-xs text-gray-500 mt-0.5">Las pone la plataforma</dd>
+                </div>
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <dt class="text-xs text-gray-500">Certificado</dt>
+                    <dd class="mt-1 font-medium text-green-700">Listo</dd>
+                    <dd class="text-xs text-gray-500 mt-0.5">Para firmar tus pruebas</dd>
+                </div>
+            </dl>
+        </div>
+    @else
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+                <div class="w-10 h-10 {{ !empty($company->usuario_sol) ? 'bg-green-100' : 'bg-red-100' }} rounded-full flex items-center justify-center mx-auto mb-2">
+                    <svg class="w-5 h-5 {{ !empty($company->usuario_sol) ? 'text-green-600' : 'text-red-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <p class="text-sm font-medium {{ !empty($company->usuario_sol) ? 'text-green-600' : 'text-red-600' }}">
+                    {{ !empty($company->usuario_sol) ? 'SUNAT Configurado' : 'SUNAT Pendiente' }}
+                </p>
             </div>
-            <p class="text-sm font-medium {{ !empty($company->certificado_pem) ? 'text-green-600' : 'text-red-600' }}">
-                {{ !empty($company->certificado_pem) ? 'Certificado Instalado' : 'Certificado Pendiente' }}
-            </p>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm p-4 text-center">
-            <div class="w-10 h-10 {{ $company->activo ? 'bg-green-100' : 'bg-red-100' }} rounded-full flex items-center justify-center mx-auto mb-2">
-                <svg class="w-5 h-5 {{ $company->activo ? 'text-green-600' : 'text-red-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
+            <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+                <div class="w-10 h-10 {{ !empty($company->certificado_pem) ? 'bg-green-100' : 'bg-red-100' }} rounded-full flex items-center justify-center mx-auto mb-2">
+                    <svg class="w-5 h-5 {{ !empty($company->certificado_pem) ? 'text-green-600' : 'text-red-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                    </svg>
+                </div>
+                <p class="text-sm font-medium {{ !empty($company->certificado_pem) ? 'text-green-600' : 'text-red-600' }}">
+                    {{ !empty($company->certificado_pem) ? 'Certificado Instalado' : 'Certificado Pendiente' }}
+                </p>
             </div>
-            <p class="text-sm font-medium {{ $company->activo ? 'text-green-600' : 'text-red-600' }}">
-                {{ $company->activo ? 'Empresa Activa' : 'Empresa Inactiva' }}
-            </p>
+            <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+                <div class="w-10 h-10 {{ $company->activo ? 'bg-green-100' : 'bg-red-100' }} rounded-full flex items-center justify-center mx-auto mb-2">
+                    <svg class="w-5 h-5 {{ $company->activo ? 'text-green-600' : 'text-red-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <p class="text-sm font-medium {{ $company->activo ? 'text-green-600' : 'text-red-600' }}">
+                    {{ $company->activo ? 'Empresa Activa' : 'Empresa Inactiva' }}
+                </p>
+            </div>
         </div>
-    </div>
+    @endif
 
     <form method="POST" action="{{ route('empresa.sunat-config.update') }}" enctype="multipart/form-data" class="space-y-6">
         @csrf
         @method('PUT')
 
+        {{-- En pruebas no se enseña NADA de esto: certificado, credenciales y
+             guias de remision son cosas de produccion, y en beta solo estorban.
+             El formulario sigue existiendo para no romper el guardado. --}}
+        @unless($enBeta)
+
         {{-- Método de emisión: define si la empresa emite desde Cisma Fact o manual en SUNAT --}}
-        <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="bg-white rounded-xl shadow-sm p-6 hidden">
             <h3 class="text-md font-semibold text-gray-800 mb-1">Método de Emisión</h3>
             <p class="text-xs text-gray-500 mb-4">Define cómo emite comprobantes esta empresa.</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -93,6 +149,10 @@
 
         {{-- Configuración de emisión (solo para método Cisma Fact) --}}
         <div x-show="metodo === 'cisma_fact'" x-cloak class="space-y-6">
+
+        {{-- Credenciales SOL y certificado: son datos REALES, y solo se piden
+             al pasar a produccion. En pruebas la plataforma pone los suyos. --}}
+        @unless($enBeta)
         <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="text-md font-semibold text-gray-800 mb-1">Credenciales SOL</h3>
             <p class="text-xs text-gray-500 mb-4">Para emitir facturas, boletas y notas.</p>
@@ -102,7 +162,7 @@
                     <input type="text" name="usuario_sol" id="usuario_sol"
                            value="{{ old('usuario_sol', $company->usuario_sol) }}"
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                           placeholder="MODDATOS">
+                           placeholder="Tu usuario secundario">
                 </div>
                 <div>
                     <label for="clave_sol" class="block text-sm font-medium text-gray-700 mb-1">Clave SOL</label>
@@ -178,6 +238,7 @@
                 </div>
             </div>
         </div>
+        @endunless {{-- /solo en produccion: SOL + certificado --}}
 
         <div class="bg-white rounded-xl shadow-sm p-6" x-data="{ greOpen: false }">
             <button type="button" @click="greOpen = !greOpen" class="flex w-full items-center justify-between text-left">
@@ -250,41 +311,143 @@
                 Cancelar
             </a>
         </div>
+
+        @else
+            {{-- En beta el formulario no enseña campos, pero metodo_emision es
+                 obligatorio en el validador: se manda el valor actual tal cual. --}}
+            <input type="hidden" name="metodo_emision" value="{{ $company->metodo_emision ?? 'cisma_fact' }}">
+        @endunless
     </form>
 
-    {{-- Botón de prueba de conexión real con SUNAT (formulario aparte) --}}
+    {{-- Comprobacion de conexion. En pruebas no se enseña como un boton grande:
+         no es algo que el cliente tenga que hacer, solo sirve para diagnosticar
+         si algo falla. --}}
     <form method="POST" action="{{ route('empresa.sunat-config.test') }}" x-show="metodo === 'cisma_fact'" x-cloak>
         @csrf
-        <button type="submit" class="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium">
-            🔌 Probar conexión con SUNAT
-        </button>
-        <span class="text-xs text-gray-500 ml-2">Valida tus credenciales con SUNAT sin emitir ningún documento.</span>
+        @if($enBeta)
+            <button type="submit" class="text-sm text-gray-500 underline decoration-dotted hover:text-gray-700">
+                ¿Algo falla? Comprobar que SUNAT responde
+            </button>
+        @else
+            <button type="submit" class="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium">
+                🔌 Probar conexión con SUNAT
+            </button>
+            <span class="text-xs text-gray-500 ml-2">Valida tus credenciales con SUNAT sin emitir ningún documento.</span>
+        @endif
     </form>
 
     {{-- Pasar a producción: solo en modo Cisma Fact y mientras la empresa esté en beta --}}
     @unless($company->modo_produccion)
     <div x-show="metodo === 'cisma_fact'" x-cloak x-data="{ confirmar: false }"
          class="rounded-xl border-2 border-red-200 bg-red-50 p-6">
-        <h3 class="text-md font-semibold text-red-800">🚀 Pasar a producción</h3>
+        <h3 class="text-md font-semibold text-red-800">🚀 Empezar a facturar de verdad</h3>
         <p class="text-sm text-red-700 mt-1">
-            Cuando termines de probar, esto deja todo listo para emisión <strong>real</strong>:
-            elimina los comprobantes de prueba, reinicia la numeración (correlativos) y activa el modo producción.
-            <strong>Esta acción no se puede deshacer.</strong>
+            Se borran las facturas de prueba y la numeración empieza en 1.
         </p>
 
         <button type="button" x-show="!confirmar" @click="confirmar = true"
                 class="mt-4 px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">
-            Pasar a producción
+            Empezar
         </button>
 
-        <form x-show="confirmar" x-cloak method="POST" action="{{ route('empresa.sunat-config.go-production') }}" class="mt-4 space-y-3">
+        <form x-show="confirmar" x-cloak method="POST" enctype="multipart/form-data"
+              action="{{ route('empresa.sunat-config.go-production') }}" class="mt-4 space-y-5">
             @csrf
-            <p class="text-sm text-red-800">Para confirmar, escribe <strong>PRODUCCION</strong> y presiona el botón:</p>
-            <input type="text" name="confirmacion" placeholder="PRODUCCION" autocomplete="off"
-                   class="w-full md:w-64 px-4 py-2.5 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none uppercase">
+
+            {{-- Los datos reales se piden aqui, no antes: mientras la empresa
+                 prueba no necesita ninguno de estos. --}}
+            <div class="rounded-lg border border-red-200 bg-white p-5 space-y-4">
+                {{-- El "de donde saco esto" se deja en un desplegable: quien ya
+                     tiene sus datos no necesita leerlo. --}}
+                {{-- Datos fiscales reales: en pruebas se pudo registrar con un RUC
+                     cualquiera, y estos son los que iran en cada comprobante. --}}
+                <div>
+                    <p class="text-sm font-semibold text-gray-800">1. Tus datos fiscales reales</p>
+                    <p class="mt-0.5 text-xs text-gray-500">Son los que aparecerán en cada comprobante ante SUNAT.</p>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div>
+                        <label for="prod_ruc" class="mb-1 block text-sm font-medium text-gray-700">RUC</label>
+                        <input type="text" name="ruc" id="prod_ruc" maxlength="11" inputmode="numeric"
+                               value="{{ old('ruc', $company->ruc) }}"
+                               class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-red-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="prod_razon_social" class="mb-1 block text-sm font-medium text-gray-700">Razón social</label>
+                        <input type="text" name="razon_social" id="prod_razon_social" maxlength="255"
+                               value="{{ old('razon_social', $company->razon_social) }}"
+                               class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-red-500">
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-100 pt-4">
+                    <p class="text-sm font-semibold text-gray-800">2. Tu certificado digital</p>
+                    <details class="mt-1">
+                        <summary class="cursor-pointer text-xs text-blue-600 hover:underline">¿De dónde lo saco?</summary>
+                        <p class="text-xs text-gray-600 mt-2 leading-relaxed">
+                            Si eres <strong>MYPE</strong> (hasta 300 UIT de ventas), SUNAT te lo da gratis: entra con tu
+                            Clave SOL, abre tu <strong>Buzón SOL</strong> y busca el mensaje
+                            «Emisión de Certificado Digital Tributario».<br>
+                            Si no, se compra a una entidad certificadora acreditada.
+                        </p>
+                    </details>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="prod_certificado_pfx" class="block text-sm font-medium text-gray-700 mb-1">Certificado .pfx</label>
+                        <input type="file" name="certificado_pfx" id="prod_certificado_pfx" accept=".pfx,.p12"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm">
+                        @if($company->certificado_pem)
+                            <p class="text-xs text-green-600 mt-1">✓ Ya hay un certificado cargado. Sube uno nuevo solo si quieres reemplazarlo.</p>
+                        @endif
+                    </div>
+                    <div>
+                        <label for="prod_certificado_password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña del certificado</label>
+                        <input type="password" name="certificado_password" id="prod_certificado_password" autocomplete="new-password"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
+                               placeholder="********">
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-100 pt-4">
+                    <p class="text-sm font-semibold text-gray-800">3. Tus claves SOL</p>
+                    <details class="mt-1">
+                        <summary class="cursor-pointer text-xs text-blue-600 hover:underline">¿De dónde las saco?</summary>
+                        <p class="text-xs text-gray-600 mt-2 leading-relaxed">
+                            Entra a SUNAT con tu Clave SOL principal → <em>Administración de usuarios secundarios</em> →
+                            crea uno y actívale el perfil de <strong>facturación electrónica</strong>. Es gratis.
+                        </p>
+                    </details>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="prod_usuario_sol" class="block text-sm font-medium text-gray-700 mb-1">Usuario SOL</label>
+                        <input type="text" name="usuario_sol" id="prod_usuario_sol" autocomplete="off"
+                               value="{{ old('usuario_sol', strcasecmp((string) $company->usuario_sol, 'MODDATOS') === 0 ? '' : $company->usuario_sol) }}"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
+                               placeholder="Tu usuario secundario">
+                    </div>
+                    <div>
+                        <label for="prod_clave_sol" class="block text-sm font-medium text-gray-700 mb-1">Clave SOL</label>
+                        <input type="password" name="clave_sol" id="prod_clave_sol" autocomplete="new-password"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
+                               placeholder="********">
+                    </div>
+                </div>
+            </div>
+
+            {{-- Ya no hay que escribir PRODUCCION a mano: basta el boton, con un
+                 aviso del navegador. El campo se manda igual porque el servidor
+                 lo sigue exigiendo, asi nadie llega aqui por una URL suelta. --}}
+            <input type="hidden" name="confirmacion" value="PRODUCCION">
             <div class="flex gap-2">
-                <button type="submit" class="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">
-                    Confirmar y pasar a producción
+                <button type="submit"
+                        onclick="return confirm('Vas a pasar a producción.\n\nSe BORRAN las facturas de prueba y la numeración vuelve a empezar en 1. No se puede deshacer.\n\n¿Continuar?')"
+                        class="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">
+                    Pasar a producción
                 </button>
                 <button type="button" @click="confirmar = false" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
                     Cancelar

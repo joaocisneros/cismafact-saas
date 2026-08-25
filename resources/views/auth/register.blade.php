@@ -3,110 +3,80 @@
 @section('title', 'Crear Cuenta')
 
 @section('content')
-<div class="mb-6">
+@php
+    // Un solo estilo para todos los campos, y borde rojo si ese campo falló.
+    $campo = fn ($nombre) => 'w-full rounded-lg border px-4 py-2.5 outline-none transition focus:ring-2 focus:ring-blue-500 '
+        . ($errors->has($nombre) ? 'border-red-400' : 'border-gray-300 focus:border-blue-500');
+@endphp
+
+<div class="mb-5">
     <h2 class="text-2xl font-bold text-gray-800">Crea tu cuenta</h2>
-    <p class="text-sm text-gray-500 mt-1">Registra tu empresa y empieza a facturar hoy mismo.</p>
+    <p class="mt-1 text-sm text-gray-500">Registra tu empresa y empieza a facturar hoy mismo.</p>
 </div>
 
-<form method="POST" action="{{ route('register.post') }}" x-data="{ show: false, metodo: '{{ old('metodo_emision', 'cisma_fact') }}' }">
+<form method="POST" action="{{ route('register.post') }}" x-data="{ show: false }" class="space-y-4">
     @csrf
 
-    <div class="mb-4">
-        <label for="razon_social" class="block text-sm font-medium text-gray-700 mb-1">Razón Social</label>
-        <input type="text"
-               id="razon_social"
-               name="razon_social"
-               value="{{ old('razon_social') }}"
-               required
-               autofocus
-               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-               placeholder="Empresa S.A.C.">
+    <div>
+        <label for="name" class="mb-1.5 block text-sm font-medium text-gray-700">Tu nombre</label>
+        <input type="text" id="name" name="name" value="{{ old('name') }}" required autofocus maxlength="255"
+               placeholder="Juan Pérez" class="{{ $campo('name') }}">
+        @error('name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
     </div>
 
-    <div class="mb-4">
-        <label for="ruc" class="block text-sm font-medium text-gray-700 mb-1">RUC</label>
-        <input type="text"
-               id="ruc"
-               name="ruc"
-               value="{{ old('ruc') }}"
-               required
-               maxlength="11"
-               pattern="\d{11}"
-               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-               placeholder="20123456789">
-        <p class="text-xs text-gray-500 mt-1">11 dígitos del RUC</p>
+    <div>
+        <label for="razon_social" class="mb-1.5 block text-sm font-medium text-gray-700">Razón social</label>
+        <input type="text" id="razon_social" name="razon_social" value="{{ old('razon_social') }}" required maxlength="255"
+               placeholder="Mi Empresa S.A.C." class="{{ $campo('razon_social') }}">
+        @error('razon_social')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
     </div>
 
-    <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">¿Cómo vas a emitir?</label>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <label class="flex cursor-pointer items-start gap-2 rounded-lg border p-3 transition"
-                   :class="metodo === 'cisma_fact' ? 'border-blue-500 bg-blue-50' : 'border-gray-300'">
-                <input type="radio" name="metodo_emision" value="cisma_fact" x-model="metodo" class="mt-0.5">
-                <span>
-                    <span class="block text-sm font-medium text-gray-800">Con Cisma Fact</span>
-                    <span class="block text-xs text-gray-500">Emites desde la plataforma (requiere certificado).</span>
-                </span>
-            </label>
-            <label class="flex cursor-pointer items-start gap-2 rounded-lg border p-3 transition"
-                   :class="metodo === 'sunat_manual' ? 'border-blue-500 bg-blue-50' : 'border-gray-300'">
-                <input type="radio" name="metodo_emision" value="sunat_manual" x-model="metodo" class="mt-0.5">
-                <span>
-                    <span class="block text-sm font-medium text-gray-800">SUNAT Manual</span>
-                    <span class="block text-xs text-gray-500">Emites en el portal de SUNAT.</span>
-                </span>
-            </label>
+    <div>
+        <label for="ruc" class="mb-1.5 block text-sm font-medium text-gray-700">RUC</label>
+        <input type="text" id="ruc" name="ruc" value="{{ old('ruc') }}" required
+               maxlength="11" inputmode="numeric" pattern="\d{11}"
+               placeholder="20123456789" class="{{ $campo('ruc') }}">
+        @error('ruc')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+    </div>
+
+    <div>
+        <label for="email" class="mb-1.5 block text-sm font-medium text-gray-700">Correo electrónico <span class="font-normal text-gray-400">— será tu usuario</span></label>
+        <input type="email" id="email" name="email" value="{{ old('email') }}" required
+               placeholder="tucorreo@empresa.com" class="{{ $campo('email') }}">
+        @error('email')
+            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+        @enderror
+    </div>
+
+    {{-- Las dos contraseñas caben en una fila y usan el mismo componente que
+         el resto del sistema, con su icono para mostrarlas. --}}
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label for="password" class="mb-1.5 block text-sm font-medium text-gray-700">Contraseña</label>
+            <x-password-input name="password" required />
         </div>
-        <p class="text-xs text-gray-500 mt-1">Puedes cambiarlo después en Configuración.</p>
-    </div>
-
-    <div class="mb-4">
-        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
-        <input type="email"
-               id="email"
-               name="email"
-               value="{{ old('email') }}"
-               required
-               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-               placeholder="admin@empresa.com">
-        <p class="text-xs text-gray-500 mt-1">Será tu usuario para iniciar sesión</p>
-    </div>
-
-    <div class="mb-4">
-        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-        <div class="relative">
-            <input :type="show ? 'text' : 'password'"
-                   id="password"
-                   name="password"
-                   required
-                   placeholder="Mínimo 8 caracteres"
-                   class="w-full px-4 py-2.5 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-            <button type="button" @click="show = !show" tabindex="-1"
-                    class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600 text-sm"
-                    x-text="show ? 'Ocultar' : 'Ver'"></button>
+        <div>
+            <label for="password_confirmation" class="mb-1.5 block text-sm font-medium text-gray-700">Confirmar contraseña</label>
+            <x-password-input name="password_confirmation" required placeholder="Repite la contraseña" />
         </div>
     </div>
 
-    <div class="mb-6">
-        <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirmar Contraseña</label>
-        <input :type="show ? 'text' : 'password'"
-               id="password_confirmation"
-               name="password_confirmation"
-               required
-               placeholder="Repite tu contraseña"
-               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-    </div>
+    @error('password')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
 
     <button type="submit"
-            class="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition font-medium">
-        Crear Cuenta
+            class="mt-2 w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white transition hover:bg-blue-700">
+        Crear cuenta
     </button>
+
+    {{-- El certificado y el paso a producción se configuran después, ya dentro.
+         Preguntarlo en el registro espantaba: quien acaba de llegar no sabe qué es. --}}
+    <p class="text-center text-xs text-gray-500">
+        Empiezas en modo de pruebas, sin costo y sin certificado.
+    </p>
 </form>
 
-<div class="mt-6 text-center">
-    <p class="text-sm text-gray-600">
-        ¿Ya tienes cuenta?
-        <a href="{{ route('login') }}" class="text-blue-600 hover:text-blue-800 font-medium">Inicia sesión</a>
-    </p>
-</div>
+<p class="mt-5 text-center text-sm text-gray-600">
+    ¿Ya tienes cuenta?
+    <a href="{{ route('login') }}" class="font-medium text-blue-600 hover:text-blue-800">Inicia sesión</a>
+</p>
 @endsection

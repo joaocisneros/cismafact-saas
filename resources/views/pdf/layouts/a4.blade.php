@@ -41,12 +41,14 @@
         }
 
         .logo-img {
-            width: 145px;
-            height: 78;
-            object-fit: contain;
+            /* max-* en vez de width/height fijos: dompdf NO aplica object-fit,
+               asi que con medidas fijas el logo se estira. Con max-* respeta la
+               proporcion y encaja dentro de la caja, sea cuadrado o alargado.
+               Ademas 'height: 78' venia sin unidad, que no es CSS valido. */
+            max-width: 145px;
+            max-height: 78px;
             vertical-align: top;
             margin-right: 5px;
-           /*  border: 1px solid #000; */
         }
 
         .company-section {

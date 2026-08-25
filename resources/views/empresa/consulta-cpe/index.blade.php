@@ -4,10 +4,47 @@
 
 @section('content')
 <div class="space-y-6">
+    @php
+        // La Consulta de Validez de SUNAT solo existe en produccion: pregunta si
+        // un comprobante es valido en los registros reales, y los de prueba no
+        // estan ahi. Se avisa antes de pulsar, no despues, y con el enlace a
+        // donde se arregla.
+        $empresaCpe = auth()->user()->company;
+        $disponibleCpe = (bool) $empresaCpe?->modo_produccion;
+        $faltanCredenciales = $disponibleCpe && ! ($empresaCpe->api_sunat_client_id && $empresaCpe->api_sunat_client_secret);
+    @endphp
+
     <div>
         <h1 class="text-2xl font-bold text-gray-800">Consulta CPE</h1>
         <p class="text-gray-500 mt-1">Verifica en SUNAT el estado real de tus comprobantes emitidos.</p>
     </div>
+
+    @unless($disponibleCpe)
+        <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <p class="font-semibold">Disponible solo en producción</p>
+            <p class="mt-1">
+                Esta consulta le pregunta a SUNAT si un comprobante es válido en sus registros reales.
+                Tu empresa está en <strong>modo pruebas</strong>, donde los comprobantes no se registran ahí,
+                así que SUNAT no ofrece este servicio.
+            </p>
+            <p class="mt-2">
+                Se activará solo cuando pases a producción.
+                <a href="{{ route('empresa.sunat-config.index') }}" class="font-medium underline">Ir a Configuración SUNAT</a>
+            </p>
+        </div>
+    @elseif($faltanCredenciales)
+        <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <p class="font-semibold">Faltan las credenciales de la API de SUNAT</p>
+            <p class="mt-1">
+                Estás en producción, pero esta consulta necesita además un <strong>client id</strong> y un
+                <strong>client secret</strong> que se generan desde tu Clave SOL
+                (Menú SOL → Empresas → Servicios web). Son distintos del certificado y del usuario secundario.
+            </p>
+            <p class="mt-2">
+                <a href="{{ route('empresa.sunat-config.index') }}" class="font-medium underline">Registrarlas en Configuración SUNAT</a>
+            </p>
+        </div>
+    @endunless
 
     @if($resultado = session('consulta_resultado'))
         <div class="rounded-lg border px-4 py-3 text-sm {{ $resultado['success'] ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800' }}">
@@ -63,7 +100,9 @@
                                     @csrf
                                     <input type="hidden" name="tipo_documento" value="{{ $bloque['tipo'] }}">
                                     <input type="hidden" name="documento_id" value="{{ $doc->id }}">
-                                    <button class="text-blue-600 hover:underline">Consultar estado</button>
+                                    <button @disabled(! $disponibleCpe)
+                                            title="{{ $disponibleCpe ? 'Consultar en SUNAT' : 'Disponible solo en producción' }}"
+                                            class="{{ $disponibleCpe ? 'text-blue-600 hover:underline' : 'cursor-not-allowed text-gray-400' }}">Consultar estado</button>
                                 </form>
                             </td>
                         </tr>

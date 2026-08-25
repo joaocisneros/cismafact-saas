@@ -9,7 +9,9 @@
             <h1 class="text-2xl font-bold text-gray-800">Clientes</h1>
             <p class="text-gray-500 mt-1">Registra y administra los clientes a quienes les emites comprobantes.</p>
         </div>
-        <a href="{{ route('empresa.clients.create') }}" class="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">+ Nuevo cliente</a>
+        <button type="button"
+                onclick="window.openAdminModal('{{ route('empresa.clients.create') }}', 'Nuevo cliente')"
+                class="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">+ Nuevo cliente</button>
     </div>
 
     @if(session('success'))
@@ -44,13 +46,16 @@
                         <td class="px-5 py-4 font-medium text-gray-900">{{ $client->razon_social }}</td>
                         <td class="px-5 py-4 text-gray-600">{{ $client->telefono ?? '—' }}</td>
                         <td class="px-5 py-4 text-gray-600">{{ $client->email ?? '—' }}</td>
-                        <td class="px-5 py-4 text-right">
-                            <a href="{{ route('empresa.clients.edit', $client) }}" class="text-blue-600 hover:underline">Editar</a>
-                            <form method="POST" action="{{ route('empresa.clients.destroy', $client) }}" class="inline ml-3"
-                                  onsubmit="return confirm('¿Eliminar este cliente?')">
-                                @csrf @method('DELETE')
-                                <button class="text-red-600 hover:underline">Eliminar</button>
-                            </form>
+                        <td class="px-5 py-4">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <x-icon-action icon="editar" label="Editar cliente" color="blue" type="button"
+                                               onclick="window.openAdminModal('{{ route('empresa.clients.edit', $client) }}', 'Editar {{ $client->razon_social }}')" />
+                                <form method="POST" action="{{ route('empresa.clients.destroy', $client) }}"
+                                      onsubmit="return confirm('¿Eliminar este cliente?')">
+                                    @csrf @method('DELETE')
+                                    <x-icon-action icon="eliminar" label="Eliminar cliente" color="red" />
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 @empty

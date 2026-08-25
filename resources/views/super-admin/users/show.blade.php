@@ -114,12 +114,6 @@
         <h3 class="text-md font-semibold text-gray-800 mb-4">Acciones</h3>
         <div class="flex flex-wrap gap-3">
             @if(!$user->hasRole('super_admin'))
-                <form method="POST" action="{{ route('super-admin.users.toggle-lock', $user) }}" onsubmit="return confirm('¿{{ $user->locked_until && $user->locked_until->isFuture() ? 'Desbloquear' : 'Bloquear' }} usuario?')">
-                    @csrf
-                    <button type="submit" class="px-4 py-2 {{ $user->locked_until && $user->locked_until->isFuture() ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-600 hover:bg-yellow-700' }} text-white rounded-lg text-sm">
-                        {{ $user->locked_until && $user->locked_until->isFuture() ? 'Desbloquear' : 'Bloquear' }}
-                    </button>
-                </form>
 
                 <form method="POST" action="{{ route('super-admin.users.toggle-active', $user) }}" onsubmit="return confirm('¿{{ $user->active ? 'Desactivar' : 'Activar' }} usuario?')">
                     @csrf

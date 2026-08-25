@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
  */
 class ResumenController extends Controller
 {
+    use \App\Traits\FormatsSunatError;
     public function __construct(private DocumentService $documentService)
     {
     }
@@ -35,11 +36,12 @@ class ResumenController extends Controller
         $fecha = $request->input('fecha');
         $boletas = collect();
 
-        if ($branch && $fecha) {
-            $boletas = Boleta::where('company_id', $branch->company_id)
-                ->where('branch_id', $branch->id)
+        if ($fecha) {
+            // Todas las sucursales, y sin las que ya estan anuladas.
+            $boletas = Boleta::where('company_id', Auth::user()->company_id)
                 ->whereDate('fecha_emision', $fecha)
                 ->where('estado_sunat', 'ACEPTADO')
+                ->whereNull('anulado_en')
                 ->orderBy('serie')->orderBy('correlativo')
                 ->get(['id', 'serie', 'correlativo', 'numero_completo', 'mto_imp_venta']);
         }
@@ -57,15 +59,18 @@ class ResumenController extends Controller
 
         $branch = Branch::where('company_id', Auth::user()->company_id)->orderBy('id')->firstOrFail();
 
+        // No se filtra por sucursal: antes solo miraba la primera, asi que las
+        // boletas de las demas no se podian anular. Y se excluyen las ya
+        // anuladas, para no mandarlas dos veces.
         $boletas = Boleta::with('client:id,tipo_documento,numero_documento')
             ->where('company_id', Auth::user()->company_id)
-            ->where('branch_id', $branch->id)
             ->whereIn('id', $data['boletas'])
             ->where('estado_sunat', 'ACEPTADO')
+            ->whereNull('anulado_en')
             ->get();
 
         if ($boletas->isEmpty()) {
-            return back()->with('error', 'No se encontraron boletas válidas para anular.');
+            return back()->with('error', 'No se encontraron boletas válidas para anular. Puede que ya estén anuladas o que aún no las haya aceptado SUNAT.');
         }
 
         // Detalles con estado '3' = anulación
@@ -142,17 +147,5 @@ class ResumenController extends Controller
         }
 
         return back()->with('error', 'SUNAT respondió: ' . $this->errorText($result['error'] ?? ($result['document']->estado_sunat ?? null)));
-    }
-
-    private function errorText($error): string
-    {
-        if (is_string($error)) {
-            return $error;
-        }
-        if (is_object($error)) {
-            return $error->message ?? 'Error desconocido.';
-        }
-
-        return 'Error desconocido.';
     }
 }

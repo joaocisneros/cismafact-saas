@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Auth;
 abstract class BaseNotaController extends Controller
 {
     use EnforcesPlanLimits;
+    use \App\Http\Controllers\Traits\ResuelveSucursalPorSerie;
+    use \App\Traits\FormatsSunatError;
 
     public function __construct(protected DocumentService $documentService)
     {
@@ -102,14 +104,19 @@ abstract class BaseNotaController extends Controller
             $result = $this->documentService->sendToSunat($nota, $this->documentType());
             $nota = $result['document'] ?? $nota;
 
-            $route = 'empresa.' . $this->routePrefix() . '.show';
+            // Vuelve al listado y abre el detalle en modal, sin sacar al usuario
+            // de la pantalla en la que estaba.
+            $route = 'empresa.' . $this->routePrefix() . '.index';
+            $abrir = ['abrir_documento' => $nota->id, 'abrir_titulo' => "Nota {$nota->serie}-{$nota->correlativo}"];
 
             if ($result['success']) {
-                return redirect()->route($route, $nota->id)
+                return redirect()->route($route)
+                    ->with($abrir)
                     ->with('success', "Nota {$nota->serie}-{$nota->correlativo} emitida y aceptada por SUNAT.");
             }
 
-            return redirect()->route($route, $nota->id)
+            return redirect()->route($route)
+                ->with($abrir)
                 ->with('error', 'Nota registrada, pero SUNAT respondió con error: ' . $this->errorText($result['error'] ?? null));
         } catch (\Throwable $e) {
             return back()->withInput()->with('error', 'No se pudo emitir la nota: ' . $e->getMessage());
@@ -161,14 +168,10 @@ abstract class BaseNotaController extends Controller
     private function formData(): array
     {
         $companyId = Auth::user()->company_id;
-        $branch = Branch::where('company_id', $companyId)->orderBy('id')->first();
+        // Todas las series de la empresa, no solo las de la primera sucursal.
+        $series = $this->seriesDeLaEmpresa($companyId, $this->tipoDocumento());
 
-        $series = $branch
-            ? Correlative::where('branch_id', $branch->id)
-                ->where('tipo_documento', $this->tipoDocumento())
-                ->orderBy('serie')
-                ->get(['serie', 'correlativo_actual'])
-            : collect();
+        $branch = Branch::where('company_id', $companyId)->orderBy('id')->first();
 
         $clients = Client::where('company_id', $companyId)
             ->orderBy('razon_social')
@@ -186,7 +189,12 @@ abstract class BaseNotaController extends Controller
             ->get(['numero_completo', 'client_id'])
             ->map(fn ($b) => ['tipo' => '03', 'num' => $b->numero_completo, 'client_id' => $b->client_id]);
 
-        $referencias = $facturas->merge($boletas)->values();
+        // Se parte de collect() a proposito. Si la consulta no devuelve filas,
+        // map() sigue entregando una Eloquent\Collection (no hay items que la
+        // "degraden" a coleccion base), y su merge() llama getKey() sobre cada
+        // elemento: con arrays revienta. Empezando por una coleccion base el
+        // merge es una simple union, haya o no resultados.
+        $referencias = collect()->merge($facturas)->merge($boletas)->values();
 
         return [$branch, $series, $clients, $referencias];
     }
@@ -200,15 +208,4 @@ abstract class BaseNotaController extends Controller
         abort_unless($owns, 403, 'La sucursal no pertenece a tu empresa.');
     }
 
-    protected function errorText($error): string
-    {
-        if (is_string($error)) {
-            return $error;
-        }
-        if (is_object($error) && method_exists($error, 'getMessage')) {
-            return $error->getMessage();
-        }
-
-        return 'Error desconocido.';
-    }
 }

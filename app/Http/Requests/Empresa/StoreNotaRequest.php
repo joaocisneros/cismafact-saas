@@ -11,6 +11,11 @@ use Illuminate\Support\Facades\Auth;
  */
 abstract class StoreNotaRequest extends FormRequest
 {
+    use \App\Http\Requests\Empresa\Concerns\DeduceSucursalDeLaSerie;
+
+    /** Codigo SUNAT del comprobante (07 credito, 08 debito). */
+    abstract protected function tipoDocumento(): string;
+
     abstract protected function serieRegex(): string;
 
     abstract protected function motivosValidos(): array;
@@ -22,10 +27,13 @@ abstract class StoreNotaRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $companyId = Auth::user()->company_id;
+
+        // La sucursal se deduce de la serie: cada serie pertenece a una sola.
         $this->merge([
-            'company_id' => Auth::user()->company_id,
+            'company_id' => $companyId,
             'usuario_creacion' => Auth::user()->name,
-        ]);
+        ] + $this->sucursalSegunSerie($companyId, $this->tipoDocumento()));
     }
 
     public function rules(): array

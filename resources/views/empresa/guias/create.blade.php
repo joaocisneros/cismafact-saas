@@ -5,7 +5,7 @@
 @section('content')
 <div class="space-y-5"
      x-data="guiaForm({
-        clientes: {{ Js::from($clients->map(fn($c) => ['id'=>$c->id,'tipo'=>$c->tipo_documento,'doc'=>$c->numero_documento,'nombre'=>$c->razon_social,'dir'=>$c->direccion])) }}
+        clientes: {{ Js::from($clients->map(fn($c) => ['id'=>$c->id,'tipo'=>$c->tipo_documento,'doc'=>$c->numero_documento,'nombre'=>$c->razon_social,'dir'=>$c->direccion,'email'=>$c->email])) }}
      })">
     <div class="flex items-center justify-between">
         <div>
@@ -35,7 +35,9 @@
             <label class="text-sm font-medium text-gray-700">Serie
                 <select name="serie" required class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
                     @foreach($series as $s)
-                        <option value="{{ $s->serie }}">{{ $s->serie }} (siguiente: {{ $s->correlativo_actual + 1 }})</option>
+                        <option value="{{ $s->serie }}">
+                            {{ $s->serie }} (siguiente: {{ $s->correlativo_actual + 1 }})@if($series->pluck('branch_id')->unique()->count() > 1) — {{ $s->sucursal_nombre }}@endif
+                        </option>
                     @endforeach
                 </select>
             </label>
@@ -74,6 +76,12 @@
                 </label>
                 <label class="text-sm font-medium text-gray-700 md:col-span-2">Razón social / Nombre
                     <input name="destinatario[razon_social]" x-model="dest.nombre" required maxlength="255" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
+                </label>
+                <label class="text-sm font-medium text-gray-700 md:col-span-2">Dirección (opcional)
+                    <input name="destinatario[direccion]" x-model="dest.dir" maxlength="255" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
+                </label>
+                <label class="text-sm font-medium text-gray-700 md:col-span-2">Email (opcional)
+                    <input type="email" name="destinatario[email]" x-model="dest.email" maxlength="100" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
                 </label>
             </div>
         </div>
@@ -218,11 +226,11 @@ function guiaForm(config) {
         clientes: config.clientes,
         modalidad: '01',
         partidaUbigeo: '',
-        dest: { tipo: '6', doc: '', nombre: '', dir: '' },
+        dest: { tipo: '6', doc: '', nombre: '', dir: '', email: '' },
         items: [{ codigo: '001', descripcion: '', unidad: 'NIU', cantidad: 1 }],
         seleccionarCliente(id) {
             const c = this.clientes.find(x => String(x.id) === String(id));
-            if (c) this.dest = { tipo: c.tipo, doc: c.doc, nombre: c.nombre, dir: c.dir || '' };
+            if (c) this.dest = { tipo: c.tipo, doc: c.doc, nombre: c.nombre, dir: c.dir || '', email: c.email || '' };
         },
         agregarItem() { this.items.push({ codigo: String(this.items.length + 1).padStart(3, '0'), descripcion: '', unidad: 'NIU', cantidad: 1 }); },
         quitarItem(i) { if (this.items.length > 1) this.items.splice(i, 1); },

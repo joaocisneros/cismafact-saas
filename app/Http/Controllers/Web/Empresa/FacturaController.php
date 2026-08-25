@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Auth;
 class FacturaController extends Controller
 {
     use EnforcesPlanLimits;
+    use \App\Http\Controllers\Traits\ResuelveSucursalPorSerie;
+    use \App\Traits\FormatsSunatError;
 
     public function __construct(private DocumentService $documentService)
     {
@@ -61,7 +63,8 @@ class FacturaController extends Controller
             return $limitResponse;
         }
 
-        // Seguridad: la sucursal debe pertenecer a la empresa del usuario.
+        // La sucursal ya viene resuelta desde la serie en el FormRequest. Aqui
+        // solo se comprueba que sea de esta empresa.
         $this->assertBranchBelongsToCompany($request->input('branch_id'));
 
         try {
@@ -69,12 +72,19 @@ class FacturaController extends Controller
             $result = $this->documentService->sendToSunat($invoice, 'invoice');
             $invoice = $result['document'] ?? $invoice;
 
+            // Se vuelve al listado y alli se abre el detalle en modal, en vez de
+            // mandar al usuario a una pantalla aparte: es lo mismo que ve al
+            // pulsar "Ver" en la tabla, y no pierde el contexto.
+            $abrir = ['abrir_documento' => $invoice->id, 'abrir_titulo' => "Factura {$invoice->numero_completo}"];
+
             if ($result['success']) {
-                return redirect()->route('empresa.facturas.show', $invoice->id)
+                return redirect()->route('empresa.facturas.index')
+                    ->with($abrir)
                     ->with('success', "Factura {$invoice->numero_completo} emitida y aceptada por SUNAT.");
             }
 
-            return redirect()->route('empresa.facturas.show', $invoice->id)
+            return redirect()->route('empresa.facturas.index')
+                ->with($abrir)
                 ->with('error', 'Factura registrada, pero SUNAT respondió con error: ' . $this->errorText($result['error'] ?? null));
         } catch (\Throwable $e) {
             return back()->withInput()
@@ -117,14 +127,12 @@ class FacturaController extends Controller
     {
         $companyId = Auth::user()->company_id;
 
-        $branch = Branch::where('company_id', $companyId)->orderBy('id')->first();
+        // Todas las series de la empresa, no solo las de la primera sucursal:
+        // con varias sedes, las demas no podian emitir. La sucursal se deduce
+        // de la serie elegida (ver ResuelveSucursalPorSerie).
+        $series = $this->seriesDeLaEmpresa($companyId, '01');
 
-        $series = $branch
-            ? Correlative::where('branch_id', $branch->id)
-                ->where('tipo_documento', '01')
-                ->orderBy('serie')
-                ->get(['serie', 'correlativo_actual'])
-            : collect();
+        $branch = Branch::where('company_id', $companyId)->orderBy('id')->first();
 
         $clients = Client::where('company_id', $companyId)
             ->orderBy('razon_social')
@@ -143,15 +151,4 @@ class FacturaController extends Controller
         abort_unless($owns, 403, 'La sucursal no pertenece a tu empresa.');
     }
 
-    private function errorText($error): string
-    {
-        if (is_string($error)) {
-            return $error;
-        }
-        if (is_object($error) && method_exists($error, 'getMessage')) {
-            return $error->getMessage();
-        }
-
-        return 'Error desconocido.';
-    }
 }

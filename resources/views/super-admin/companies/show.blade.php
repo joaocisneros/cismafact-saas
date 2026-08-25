@@ -27,12 +27,14 @@
 
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('super-admin.companies.edit', $company) }}" class="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">Editar</a>
-            <form method="POST" action="{{ route('super-admin.companies.toggle-status', $company) }}">
+            <form method="POST" action="{{ route('super-admin.companies.impersonate', $company) }}"
+                  onsubmit="return confirm('Vas a entrar al panel de {{ $company->razon_social }} como su administrador, con acceso completo. Todo lo que hagas queda registrado en auditoria. Continuar?')">
                 @csrf
-                <button type="submit" class="rounded-lg px-4 py-2 text-sm text-white {{ $company->activo ? 'bg-amber-600 hover:bg-amber-700' : 'bg-green-600 hover:bg-green-700' }}">
-                    {{ $company->activo ? 'Suspender' : 'Reactivar' }}
+                <button type="submit" class="rounded-lg bg-amber-600 px-4 py-2 text-sm text-white hover:bg-amber-700">
+                    Entrar como soporte
                 </button>
             </form>
+
             <a href="{{ route('super-admin.documents', ['company_id' => $company->id]) }}" class="rounded-lg bg-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-300">Ver Documentos</a>
             <form method="POST" action="{{ route('super-admin.companies.toggle-demo', $company) }}">
                 @csrf

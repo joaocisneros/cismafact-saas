@@ -42,7 +42,7 @@ class DocumentService
                            ->firstOrFail();
             
             // Crear o buscar cliente
-            $client = $this->getOrCreateClient($data['client']);
+            $client = $this->getOrCreateClient($data['client'], $company->id);
             
             // Obtener siguiente correlativo
             $serie = $data['serie'];
@@ -124,7 +124,7 @@ class DocumentService
                            ->firstOrFail();
             
             // Crear o buscar cliente
-            $client = $this->getOrCreateClient($data['client']);
+            $client = $this->getOrCreateClient($data['client'], $company->id);
             
             // Obtener siguiente correlativo
             $serie = $data['serie'];
@@ -183,8 +183,13 @@ class DocumentService
     {
         try {
             $company = $document->company;
-            $greenterService = new GreenterService($company);
-            
+
+            // La sucursal del comprobante define la direccion y el codigo de
+            // local que se declaran a SUNAT. Si el documento no tuviera
+            // sucursal, GreenterService usa los datos de la empresa.
+            $greenterService = (new GreenterService($company))
+                ->paraSucursal($document->branch);
+
             // Preparar datos para Greenter
             $documentData = $this->prepareDocumentData($document, $documentType);
             
@@ -286,9 +291,19 @@ class DocumentService
         }
     }
 
-    protected function getOrCreateClient(array $clientData): Client
+    /**
+     * Busca el cliente DENTRO de la empresa que emite, y si no existe lo crea
+     * asociado a ella.
+     *
+     * Antes la busqueda era solo por (tipo_documento, numero_documento), sin
+     * company_id: una empresa terminaba reutilizando la ficha de cliente de
+     * otra, y los clientes creados por esta via quedaban sin company_id (de ahi
+     * las filas huerfanas que no aparecen en el panel de ninguna empresa).
+     */
+    protected function getOrCreateClient(array $clientData, int $companyId): Client
     {
         return Client::firstOrCreate([
+            'company_id' => $companyId,
             'tipo_documento' => $clientData['tipo_documento'],
             'numero_documento' => $clientData['numero_documento'],
         ], [
@@ -764,7 +779,13 @@ class DocumentService
                         'description' => $result['cdr_response']->getDescription()
                     ])
                 ]);
-                
+
+                // Una boleta se anula por Resumen, no por Comunicacion de Baja.
+                // Si el resumen aceptado llevaba lineas con estado 3, esas
+                // boletas quedan anuladas ante SUNAT y hay que marcarlas aqui:
+                // si no, seguirian declarandose en el Registro de Ventas.
+                $this->marcarBoletasAnuladasPorResumen($summary);
+
                 return [
                     'success' => true,
                     'document' => $summary->fresh(),
@@ -889,7 +910,7 @@ class DocumentService
                            ->firstOrFail();
             
             // Crear o buscar cliente
-            $client = $this->getOrCreateClient($data['client']);
+            $client = $this->getOrCreateClient($data['client'], $company->id);
             
             // Obtener siguiente correlativo
             $serie = $data['serie'];
@@ -1009,7 +1030,7 @@ class DocumentService
                            ->firstOrFail();
             
             // Crear o buscar cliente
-            $client = $this->getOrCreateClient($data['client']);
+            $client = $this->getOrCreateClient($data['client'], $company->id);
             
             // Obtener siguiente correlativo
             $serie = $data['serie'];
@@ -1128,7 +1149,7 @@ class DocumentService
             if (isset($data['destinatario_id'])) {
                 $destinatario = Client::findOrFail($data['destinatario_id']);
             } else {
-                $destinatario = $this->getOrCreateClient($data['destinatario']);
+                $destinatario = $this->getOrCreateClient($data['destinatario'], $company->id);
             }
             
             // Obtener siguiente correlativo automático (ignorar correlativo enviado)
@@ -1593,7 +1614,7 @@ class DocumentService
         }
 
         // Caso 3: fallback al certificado compartido (solo desarrollo/pruebas)
-        $compartido = @file_get_contents(storage_path('app/public/certificado/certificado.pem'));
+        $compartido = @file_get_contents(storage_path('app/private/certificado/certificado.pem'));
         if (!empty($compartido)) {
             Log::warning('Usando certificado compartido: la empresa no tiene certificado propio', [
                 'company_id' => $company->id,
@@ -1958,7 +1979,7 @@ class DocumentService
                            ->firstOrFail();
             
             // Crear o buscar el proveedor
-            $proveedor = $this->getOrCreateClient($data['proveedor']);
+            $proveedor = $this->getOrCreateClient($data['proveedor'], $company->id);
             
             // Obtener siguiente correlativo (tipo '20' para retenciones)
             $serie = $data['serie'];
@@ -2126,9 +2147,17 @@ class DocumentService
                 // Error al enviar
                 $voidedDocument->update([
                     'estado_sunat' => 'ERROR',
+                    // getCode()/getMessage(): las propiedades del objeto Error de
+                    // Greenter son protegidas, asi que leerlas directamente
+                    // guardaba siempre "UNKNOWN / Error desconocido" y se perdia
+                    // el motivo real del rechazo.
                     'respuesta_sunat' => json_encode([
-                        'code' => $result['error']->code ?? 'UNKNOWN',
-                        'message' => $result['error']->message ?? 'Error desconocido'
+                        'code' => method_exists($result['error'] ?? null, 'getCode')
+                            ? $result['error']->getCode()
+                            : ($result['error']->code ?? 'UNKNOWN'),
+                        'message' => method_exists($result['error'] ?? null, 'getMessage')
+                            ? $result['error']->getMessage()
+                            : ($result['error']->message ?? 'Error desconocido'),
                     ])
                 ]);
                 
@@ -2188,7 +2217,14 @@ class DocumentService
                     ]) : null,
                     'cdr_path' => $voidedDocument->cdr_path
                 ]);
-                
+
+                // Recien ahora el comprobante deja de ser valido: SUNAT acepto la
+                // baja. Sin esto seguia figurando como venta en los listados y,
+                // sobre todo, en el Registro de Ventas que va al contador.
+                if ($estado === 'ACEPTADO') {
+                    $this->marcarComprobantesAnulados($voidedDocument);
+                }
+
                 return [
                     'success' => true,
                     'document' => $voidedDocument->fresh()
@@ -2209,6 +2245,89 @@ class DocumentService
         }
     }
 
+    /**
+     * Marca como anulados los comprobantes incluidos en una baja aceptada.
+     *
+     * Se busca por serie y correlativo dentro de la empresa, que es como los
+     * identifica la propia comunicacion.
+     */
+    /**
+     * Marca las boletas que un resumen aceptado daba de baja (estado 3).
+     *
+     * El mismo resumen puede traer altas (estado 1) y bajas (estado 3): solo se
+     * tocan las segundas.
+     */
+    protected function marcarBoletasAnuladasPorResumen(DailySummary $summary): int
+    {
+        $marcadas = 0;
+
+        foreach ((array) $summary->detalles as $detalle) {
+            if (($detalle['estado'] ?? '1') !== '3') {
+                continue;
+            }
+
+            $numero = $detalle['serie_numero'] ?? null;
+
+            if (! $numero) {
+                continue;
+            }
+
+            $marcadas += Boleta::where('company_id', $summary->company_id)
+                ->where('numero_completo', $numero)
+                ->whereNull('anulado_en')
+                ->update([
+                    'anulado_en' => now(),
+                    'anulado_motivo' => 'Anulada por resumen diario ' . ($summary->correlativo ?? $summary->id),
+                ]);
+        }
+
+        if ($marcadas > 0) {
+            Log::info('Boletas marcadas como anuladas por resumen', [
+                'daily_summary_id' => $summary->id,
+                'marcadas' => $marcadas,
+            ]);
+        }
+
+        return $marcadas;
+    }
+
+    protected function marcarComprobantesAnulados(VoidedDocument $voidedDocument): int
+    {
+        $modelos = [
+            '01' => Invoice::class,
+            '03' => Boleta::class,
+            '07' => CreditNote::class,
+            '08' => DebitNote::class,
+        ];
+
+        $marcados = 0;
+
+        foreach ((array) $voidedDocument->detalles as $detalle) {
+            $modelo = $modelos[$detalle['tipo_documento'] ?? ''] ?? null;
+
+            if (! $modelo) {
+                continue;
+            }
+
+            $marcados += $modelo::where('company_id', $voidedDocument->company_id)
+                ->where('serie', $detalle['serie'] ?? '')
+                ->where('correlativo', $detalle['correlativo'] ?? '')
+                ->whereNull('anulado_en')
+                ->update([
+                    'anulado_en' => now(),
+                    'anulado_por_documento_id' => $voidedDocument->id,
+                    'anulado_motivo' => $detalle['motivo_especifico'] ?? $voidedDocument->motivo,
+                ]);
+        }
+
+        Log::info('Comprobantes marcados como anulados', [
+            'voided_document_id' => $voidedDocument->id,
+            'marcados' => $marcados,
+        ]);
+
+        return $marcados;
+    }
+
     public function getDocumentsForVoiding(int $companyId, int $branchId, string $fechaReferencia, ?string $tipoDocumento = null): array
     {
         $documents = [];
@@ -2219,6 +2338,8 @@ class DocumentService
                               ->where('branch_id', $branchId)
                               ->whereDate('fecha_emision', $fechaReferencia)
                               ->where('estado_sunat', 'ACEPTADO')
+                              ->whereNull('anulado_en')
+                              ->whereNull('anulado_en')   // ya anulado: no se ofrece de nuevo
                               ->get(['id', 'serie', 'correlativo', 'numero_completo', 'mto_imp_venta']);
             
             foreach ($facturas as $factura) {
@@ -2240,6 +2361,7 @@ class DocumentService
                             ->where('branch_id', $branchId)
                             ->whereDate('fecha_emision', $fechaReferencia)
                             ->where('estado_sunat', 'ACEPTADO')
+                              ->whereNull('anulado_en')
                             ->get(['id', 'serie', 'correlativo', 'numero_completo', 'mto_imp_venta']);
             
             foreach ($boletas as $boleta) {
@@ -2261,6 +2383,7 @@ class DocumentService
                                    ->where('branch_id', $branchId)
                                    ->whereDate('fecha_emision', $fechaReferencia)
                                    ->where('estado_sunat', 'ACEPTADO')
+                              ->whereNull('anulado_en')
                                    ->get(['id', 'serie', 'correlativo', 'numero_completo', 'mto_imp_venta']);
             
             foreach ($creditNotes as $creditNote) {
@@ -2276,8 +2399,35 @@ class DocumentService
             }
         }
         
-        // Se pueden agregar más tipos de documentos según requerimientos SUNAT
-        
+        // Notas de debito. Faltaban: el envio si las aceptaba, pero la busqueda
+        // nunca las traia, asi que no habia forma de llegar a anular una.
+        if (!$tipoDocumento || $tipoDocumento === '08') {
+            $debitNotes = DebitNote::where('company_id', $companyId)
+                                   ->where('branch_id', $branchId)
+                                   ->whereDate('fecha_emision', $fechaReferencia)
+                                   ->where('estado_sunat', 'ACEPTADO')
+                                   ->whereNull('anulado_en')
+                                   ->get(['id', 'serie', 'correlativo', 'numero_completo', 'mto_imp_venta']);
+
+            foreach ($debitNotes as $debitNote) {
+                $documents[] = [
+                    'id' => $debitNote->id,
+                    'tipo_documento' => '08',
+                    'serie' => $debitNote->serie,
+                    'correlativo' => $debitNote->correlativo,
+                    'numero_completo' => $debitNote->numero_completo,
+                    'monto' => $debitNote->mto_imp_venta,
+                    'tipo_nombre' => 'Nota de Débito'
+                ];
+            }
+        }
+
+        // Las guias de remision (09) NO se pueden anular por Comunicacion de
+        // Baja: SUNAT la rechaza con el error 2308 "El valor del tipo de
+        // documento es invalido" sobre el nodo VoidedDocumentsLine. Comprobado
+        // enviando una contra su ambiente de pruebas. Se anulan por la API REST
+        // del GRE, que es otro servicio.
+
         return $documents;
     }
 

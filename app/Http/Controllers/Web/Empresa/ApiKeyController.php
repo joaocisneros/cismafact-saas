@@ -20,6 +20,12 @@ class ApiKeyController extends Controller
         return view('empresa.api-keys.index', compact('apiKeys'));
     }
 
+    /** Formulario de alta, para abrirlo en el modal del panel. */
+    public function create()
+    {
+        return view('empresa.api-keys._form_modal');
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -38,7 +44,9 @@ class ApiKeyController extends Controller
             'active' => true,
         ]);
 
-        return back()->with('success', 'API Key creada. Guarda el Secret, solo se muestra una vez: ' . $plainSecret);
+        return back()
+            ->with('success', "API Key «{$request->name}» creada.")
+            ->with('api_key_nueva', $request->name);
     }
 
     public function destroy(ApiKey $apiKey)
@@ -90,7 +98,9 @@ class ApiKeyController extends Controller
             'plain_secret' => $plainSecret,
         ]);
 
-        return back()->with('success', 'Secret regenerado. Guarda el nuevo valor: ' . $plainSecret);
+        return back()
+            ->with('success', "Secret de «{$apiKey->name}» regenerado. El anterior dejó de funcionar.")
+            ->with('api_key_nueva', $apiKey->name);
     }
 
     public function documentation()

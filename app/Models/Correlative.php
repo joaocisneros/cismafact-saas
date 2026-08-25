@@ -11,6 +11,7 @@ class Correlative extends Model
     use HasFactory;
 
     protected $fillable = [
+        'company_id',
         'branch_id',
         'tipo_documento',
         'serie',

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Rendimiento API')
+@section('title', 'Rendimiento de la API')
 
 @section('content')
 <div class="space-y-6">
@@ -12,7 +12,7 @@
                 </svg>
             </a>
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">Rendimiento API</h1>
+                <h1 class="text-2xl font-bold text-gray-800">Rendimiento de la API</h1>
                 <p class="text-gray-500 mt-1">Métricas de rendimiento de los últimos 30 días</p>
             </div>
         </div>
@@ -53,16 +53,16 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Rendimiento Diario (últimos 7 días)</h2>
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Rendimiento diario (últimos 7 días)</h2>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b bg-gray-50">
                         <th class="text-left py-3 px-4 font-medium text-gray-500">Fecha</th>
-                        <th class="text-left py-3 px-4 font-medium text-gray-500">Requests</th>
-                        <th class="text-left py-3 px-4 font-medium text-gray-500">Promedio (ms)</th>
-                        <th class="text-left py-3 px-4 font-medium text-gray-500">Mínimo (ms)</th>
-                        <th class="text-left py-3 px-4 font-medium text-gray-500">Máximo (ms)</th>
+                        <th class="text-left py-3 px-4 font-medium text-gray-500">Llamadas</th>
+                        <th class="text-left py-3 px-4 font-medium text-gray-500">Promedio</th>
+                        <th class="text-left py-3 px-4 font-medium text-gray-500">Más rápida</th>
+                        <th class="text-left py-3 px-4 font-medium text-gray-500">Más lenta</th>
                         <th class="text-left py-3 px-4 font-medium text-gray-500">Gráfico</th>
                     </tr>
                 </thead>
@@ -90,7 +90,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white rounded-xl shadow-sm p-6">
-            <h2 class="text-lg font-semibold text-gray-800 mb-4">Endpoints Más Usados (30 días)</h2>
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Operaciones más usadas (30 días)</h2>
             @if($topEndpoints->count() > 0)
                 <div class="space-y-3">
                     @foreach($topEndpoints as $ep)
@@ -114,7 +114,7 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm p-6">
-            <h2 class="text-lg font-semibold text-gray-800 mb-4">Distribución por Status Code (30 días)</h2>
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Cómo terminaron las llamadas (30 días)</h2>
             @if($statusDistribution->count() > 0)
                 <div class="space-y-3">
                     @foreach($statusDistribution as $status)
@@ -136,7 +136,7 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Errores por Empresa (30 días)</h2>
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Errores por empresa (30 días)</h2>
         @if($erroresPorEmpresa->count() > 0)
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">

@@ -3,15 +3,10 @@
 namespace App\Http\Controllers\Web\SuperAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Company;
 use App\Models\Plan;
-use App\Models\Subscription;
-use App\Services\SubscriptionStatusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -34,15 +29,7 @@ class PlanController extends Controller
             ->simplePaginate(10)
             ->withQueryString();
 
-        $activePlans = Plan::where('active', true)
-            ->orderBy('monthly_price')
-            ->get(['id', 'name']);
-
-        $companies = Cache::remember('super_admin_company_plan_options', now()->addMinutes(5), fn () => Company::orderBy('razon_social')
-            ->limit(300)
-            ->get(['id', 'razon_social', 'ruc', 'plan_id']));
-
-        return view('super-admin.plans.index', compact('plans', 'activePlans', 'companies'));
+        return view('super-admin.plans.index', compact('plans'));
     }
 
     public function create(): View
@@ -98,47 +85,11 @@ class PlanController extends Controller
         return back()->with('success', $plan->active ? 'Plan activado.' : 'Plan desactivado.');
     }
 
-    public function assign(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'company_id' => ['required', 'exists:companies,id'],
-            'plan_id' => ['required', 'exists:plans,id'],
-        ]);
-
-        $plan = Plan::where('active', true)->findOrFail($validated['plan_id']);
-        $company = Company::findOrFail($validated['company_id']);
-
-        DB::transaction(function () use ($company, $plan) {
-            $subscription = $company->subscription;
-            $isPaidPlan = (float) $plan->monthly_price > 0;
-            $endsAt = $isPaidPlan
-                ? (($subscription?->ends_at && $subscription->ends_at->isFuture())
-                    ? $subscription->ends_at
-                    : now()->addMonthNoOverflow()->toDateString())
-                : null;
-
-            $company->update(['plan_id' => $plan->id]);
-
-            $subscription = Subscription::updateOrCreate(
-                ['company_id' => $company->id],
-                [
-                    'plan_id' => $plan->id,
-                    'status' => $company->activo ? 'active' : 'suspended',
-                    'starts_at' => $subscription?->starts_at ?? now()->toDateString(),
-                    'ends_at' => $endsAt,
-                    'next_billing_at' => $subscription?->auto_renew ? $endsAt : null,
-                    'monthly_price' => $plan->monthly_price,
-                    'auto_renew' => $isPaidPlan && ($subscription?->auto_renew ?? false),
-                ]
-            );
-
-            app(SubscriptionStatusService::class)->synchronize($subscription->load('company'));
-        });
-        Cache::forget('super_admin_company_plan_options');
-        Cache::forget('super_admin_dashboard_alerts');
-
-        return back()->with('success', "Plan {$plan->name} asignado a {$company->razon_social}.");
-    }
+    /*
+     * Se retiro assign(): el plan de una empresa se cambia en Suscripciones,
+     * que ademas ajusta fecha y estado en el mismo paso. Tenerlo tambien aqui
+     * era el mismo trabajo en dos sitios, y este solo tocaba el plan.
+     */
 
     private function validatedPlan(Request $request, ?Plan $plan = null): array
     {

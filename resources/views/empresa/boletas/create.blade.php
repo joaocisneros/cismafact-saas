@@ -35,7 +35,9 @@
             <label class="text-sm font-medium text-gray-700">Serie
                 <select name="serie" required class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
                     @foreach($series as $s)
-                        <option value="{{ $s->serie }}">{{ $s->serie }} (siguiente: {{ $s->correlativo_actual + 1 }})</option>
+                        <option value="{{ $s->serie }}">
+                            {{ $s->serie }} (siguiente: {{ $s->correlativo_actual + 1 }})@if($series->pluck('branch_id')->unique()->count() > 1) — {{ $s->sucursal_nombre }}@endif
+                        </option>
                     @endforeach
                 </select>
             </label>

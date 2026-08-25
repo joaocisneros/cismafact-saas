@@ -21,4 +21,9 @@ class StoreNotaDebitoRequest extends StoreNotaRequest
     {
         return array_keys(self::MOTIVOS);
     }
+    /** Codigo SUNAT del comprobante: Nota de debito = 08. */
+    protected function tipoDocumento(): string
+    {
+        return '08';
+    }
 }

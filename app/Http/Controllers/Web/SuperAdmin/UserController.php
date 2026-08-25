@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
+    /** Roles que no pertenecen a una empresa concreta. */
+    private const ROLES_SIN_EMPRESA = ['contador', 'super_admin'];
+
     public function index(Request $request)
     {
         $query = User::with([
@@ -47,7 +50,7 @@ class UserController extends Controller
     public function create()
     {
         $companies = Company::orderBy('razon_social')->get();
-        $roles = Role::where('name', '!=', 'super_admin')->get();
+        $roles = $this->rolesAsignables();
 
         if (request()->ajax() || request()->boolean('modal')) {
             return view('super-admin.users._form_modal', compact('companies', 'roles'));
@@ -62,33 +65,98 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'company_id' => 'required|exists:companies,id',
+            'company_id' => [$this->exigeEmpresa($request) ? 'required' : 'nullable', 'exists:companies,id'],
             'role_id' => 'required|exists:roles,id',
-        ]);
+        ], [], ['company_id' => 'empresa']);
 
-        $company = Company::with('plan')->findOrFail($validated['company_id']);
-        $limitService = app(PlanLimitService::class);
+        $this->rolAsignable($request);
 
-        if ($company->plan && $limitService->limitReached(
-            $company->plan->user_limit,
-            $limitService->usersUsed($company)
-        )) {
-            return back()
-                ->withInput($request->except(['password', 'password_confirmation']))
-                ->withErrors(['company_id' => 'La empresa alcanzó el límite de usuarios de su plan.']);
+        // Un contador es de la plataforma, no de una empresa: no consume cupo
+        // de usuarios de ningun plan.
+        $companyId = $this->exigeEmpresa($request) ? $validated['company_id'] : null;
+
+        if ($companyId) {
+            $company = Company::with('plan')->findOrFail($companyId);
+            $limitService = app(PlanLimitService::class);
+
+            if ($company->plan && $limitService->limitReached(
+                $company->plan->user_limit,
+                $limitService->usersUsed($company)
+            )) {
+                return back()
+                    ->withInput($request->except(['password', 'password_confirmation']))
+                    ->withErrors(['company_id' => 'La empresa alcanzó el límite de usuarios de su plan.']);
+            }
         }
 
         User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'company_id' => $validated['company_id'],
+            'company_id' => $companyId,
             'role_id' => $validated['role_id'],
             'active' => true,
         ]);
 
         return redirect()->route('super-admin.users.index')
             ->with('success', 'Usuario creado exitosamente.');
+    }
+
+    /**
+     * Solo los roles de empresa necesitan una empresa asignada. El contador
+     * trabaja sobre toda la plataforma, igual que el super admin, y va con
+     * company_id nulo.
+     */
+    private function exigeEmpresa(Request $request): bool
+    {
+        $rol = Role::find($request->input('role_id'));
+
+        return ! $rol || ! in_array($rol->name, self::ROLES_SIN_EMPRESA, true);
+    }
+
+    /**
+     * Roles que este modulo NO puede asignar nunca, se envie lo que se envie.
+     *
+     * El desplegable ya no ofrece super_admin, pero la validacion solo miraba
+     * 'exists:roles,id': bastaba con mandar ese id a mano para ascenderse. Es
+     * el motivo por el que esto se comprueba en el servidor y no en la vista.
+     */
+    /** Roles que el usuario conectado puede llegar a asignar. */
+    private function rolesAsignables()
+    {
+        $excluidos = auth()->user()->hasRole('super_admin')
+            ? ['super_admin']
+            : ['super_admin', 'contador'];
+
+        return Role::whereNotIn('name', $excluidos)->get();
+    }
+
+    private function rolAsignable(Request $request): void
+    {
+        $rol = Role::find($request->input('role_id'));
+
+        abort_if($rol && $rol->name === 'super_admin', 403,
+            'El rol Super Admin no se asigna desde este modulo.');
+
+        // Un contador solo da de alta usuarios de empresa: no puede crear otras
+        // cuentas con acceso a toda la plataforma.
+        abort_if($rol && $rol->name === 'contador' && ! auth()->user()->hasRole('super_admin'), 403,
+            'Solo el Super Admin puede crear contadores.');
+    }
+
+    /**
+     * Impide que quien no es Super Admin edite una cuenta de plataforma
+     * (super admin u otro contador). Sin esto, un contador podria cambiar el
+     * correo del dueno de la plataforma y quedarse con la cuenta.
+     */
+    private function puedeEditar(User $user): void
+    {
+        if (auth()->user()->hasRole('super_admin')) {
+            return;
+        }
+
+        abort_if($user->role && in_array($user->role->name, self::ROLES_SIN_EMPRESA, true), 403,
+            'No puedes editar cuentas de plataforma.');
     }
 
     public function show(User $user)
@@ -109,8 +177,10 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
+        $this->puedeEditar($user);
+
         $companies = Company::orderBy('razon_social')->get();
-        $roles = Role::where('name', '!=', 'super_admin')->get();
+        $roles = $this->rolesAsignables();
 
         if (request()->ajax() || request()->boolean('modal')) {
             return view('super-admin.users._form_modal', compact('user', 'companies', 'roles'));
@@ -121,14 +191,21 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $this->puedeEditar($user);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
-            'company_id' => 'required|exists:companies,id',
+            'company_id' => [$this->exigeEmpresa($request) ? 'required' : 'nullable', 'exists:companies,id'],
             'role_id' => 'required|exists:roles,id',
-        ]);
+        ], [], ['company_id' => 'empresa']);
 
-        if ((int) $user->company_id !== (int) $validated['company_id']) {
+        $this->rolAsignable($request);
+
+        // El contador no pertenece a ninguna empresa (ver exigeEmpresa()).
+        $validated['company_id'] = $this->exigeEmpresa($request) ? $validated['company_id'] : null;
+
+        if ($validated['company_id'] && (int) $user->company_id !== (int) $validated['company_id']) {
             $company = Company::with('plan')->findOrFail($validated['company_id']);
             $limitService = app(PlanLimitService::class);
 

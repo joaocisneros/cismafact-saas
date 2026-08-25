@@ -64,17 +64,20 @@
                         <td class="py-3 px-4">S/ {{ number_format($doc['mto_imp_venta'] ?? 0, 2) }}</td>
                         <td class="py-3 px-4"><x-status-badge :status="$doc['estado_sunat'] ?? 'PENDIENTE'" /></td>
                         <td class="py-3 px-4">
-                            <div class="flex gap-1">
+                            {{-- Un color por formato: en gris los tres se confunden. --}}
+                            <div class="flex items-center gap-1.5">
                                 <a href="{{ route('empresa.documents.view', [$doc['type'], $doc['id'], 'pdf']) }}"
-                                   target="_blank"
-                                   class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 bg-blue-50 rounded font-medium" title="Representación impresa del comprobante">PDF</a>
+                                   target="_blank" title="Representación impresa del comprobante"
+                                   class="rounded-md bg-red-50 px-2 py-1 text-xs font-semibold text-red-600 ring-1 ring-inset ring-red-200 transition hover:bg-red-100">PDF</a>
                                 @if(!empty($doc['xml_path']))
                                     <a href="{{ route('empresa.documents.download', [$doc['type'], $doc['id'], 'xml']) }}"
-                                       class="text-gray-600 hover:text-gray-800 text-xs px-2 py-1 bg-gray-50 rounded" title="Documento enviado a SUNAT">XML</a>
+                                       title="Documento enviado a SUNAT"
+                                       class="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-200">XML</a>
                                 @endif
                                 @if(!empty($doc['cdr_path']))
                                     <a href="{{ route('empresa.documents.download', [$doc['type'], $doc['id'], 'cdr']) }}"
-                                       class="text-gray-600 hover:text-gray-800 text-xs px-2 py-1 bg-gray-50 rounded" title="Respuesta oficial de SUNAT">CDR</a>
+                                       title="Respuesta oficial de SUNAT"
+                                       class="rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-600 ring-1 ring-inset ring-emerald-200 transition hover:bg-emerald-100">CDR</a>
                                 @endif
                             </div>
                         </td>

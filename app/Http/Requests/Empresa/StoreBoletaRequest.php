@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Auth;
 
 class StoreBoletaRequest extends FormRequest
 {
+    use \App\Http\Requests\Empresa\Concerns\DeduceSucursalDeLaSerie;
+
     public function authorize(): bool
     {
         return Auth::check() && Auth::user()->company_id !== null;
@@ -14,10 +16,13 @@ class StoreBoletaRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $companyId = Auth::user()->company_id;
+
+        // La sucursal se deduce de la serie: cada serie pertenece a una sola.
         $this->merge([
-            'company_id' => Auth::user()->company_id,
+            'company_id' => $companyId,
             'usuario_creacion' => Auth::user()->name,
-        ]);
+        ] + $this->sucursalSegunSerie($companyId, '03'));
     }
 
     public function rules(): array

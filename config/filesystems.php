@@ -38,6 +38,20 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Los comprobantes (XML, CDR y PDF) no pueden vivir en 'public': esa
+         * carpeta esta enlazada a la web y cualquiera podia descargarlos sin
+         * iniciar sesion adivinando la ruta. Aqui quedan fuera del alcance del
+         * navegador y solo se sirven por las rutas con sesion.
+         */
+        'comprobantes' => [
+            'driver' => 'local',
+            'root' => storage_path('app/comprobantes'),
+            'visibility' => 'private',
+            'throw' => false,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

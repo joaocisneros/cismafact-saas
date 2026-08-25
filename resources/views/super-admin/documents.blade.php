@@ -100,16 +100,26 @@
                             <td class="py-3 text-gray-500">{{ \Illuminate\Support\Carbon::parse($doc->created_at)->format('d/m/Y H:i') }}</td>
                             <td class="py-3"><x-status-badge :status="$doc->estado_sunat" /></td>
                             <td class="py-3">
-                                <div class="flex gap-2">
-                                    <button type="button" onclick="window.openAdminModal('{{ route('super-admin.documents.show', ['type' => $doc->type_key, 'id' => $doc->id]) }}', 'Detalle del documento')" class="text-xs text-gray-600 hover:text-gray-800">Detalle</button>
+                                {{-- PDF/XML/CDR se quedan como texto a proposito: son tres
+                                     formatos distintos y tres iconos de descarga iguales no
+                                     dirian cual es cual. --}}
+                                <div class="flex items-center gap-1.5">
+                                    <x-icon-action icon="ver" label="Ver detalle" color="blue" type="button"
+                                                   onclick="window.openAdminModal('{{ route('super-admin.documents.show', ['type' => $doc->type_key, 'id' => $doc->id]) }}', 'Detalle del documento')" />
                                     @if($doc->pdf_path)
-                                        <a href="{{ route('super-admin.documents.view', ['type' => $doc->type_key, 'id' => $doc->id, 'file' => 'pdf']) }}" target="_blank" class="text-xs font-medium text-blue-600 hover:text-blue-800">PDF</a>
+                                        <a href="{{ route('super-admin.documents.view', ['type' => $doc->type_key, 'id' => $doc->id, 'file' => 'pdf']) }}" target="_blank"
+                                           title="Representación impresa del comprobante"
+                                           class="rounded-md bg-red-50 px-2 py-1 text-xs font-semibold text-red-600 ring-1 ring-inset ring-red-200 transition hover:bg-red-100">PDF</a>
                                     @endif
                                     @if($doc->xml_path)
-                                        <a href="{{ route('super-admin.documents.download', ['type' => $doc->type_key, 'id' => $doc->id, 'file' => 'xml']) }}" class="text-xs text-gray-600 hover:text-gray-800">XML</a>
+                                        <a href="{{ route('super-admin.documents.download', ['type' => $doc->type_key, 'id' => $doc->id, 'file' => 'xml']) }}"
+                                           title="Documento enviado a SUNAT"
+                                           class="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-200">XML</a>
                                     @endif
                                     @if($doc->cdr_path)
-                                        <a href="{{ route('super-admin.documents.download', ['type' => $doc->type_key, 'id' => $doc->id, 'file' => 'cdr']) }}" class="text-xs text-gray-600 hover:text-gray-800">CDR</a>
+                                        <a href="{{ route('super-admin.documents.download', ['type' => $doc->type_key, 'id' => $doc->id, 'file' => 'cdr']) }}"
+                                           title="Respuesta oficial de SUNAT"
+                                           class="rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-600 ring-1 ring-inset ring-emerald-200 transition hover:bg-emerald-100">CDR</a>
                                     @endif
                                 </div>
                             </td>

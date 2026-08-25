@@ -24,13 +24,11 @@
         </div>
         <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">Contrasena</label>
-            <input type="password" name="password" required minlength="8"
-                   class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+            <x-password-input name="password" required class="text-sm" />
         </div>
         <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">Confirmar contrasena</label>
-            <input type="password" name="password_confirmation" required minlength="8"
-                   class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+            <x-password-input name="password_confirmation" required placeholder="Repite la contraseña" class="text-sm" />
         </div>
     </div>
 

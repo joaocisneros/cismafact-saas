@@ -60,6 +60,21 @@ class GreenterService
     {
         $stored = $this->company->certificado_pem;
 
+        // En BETA se firma siempre con el certificado de prueba de la
+        // plataforma, aunque la empresa tenga el suyo guardado. La regla queda
+        // absoluta —beta: del sistema; produccion: el propio— y se evita el caso
+        // raro de una empresa en pruebas firmando con su certificado real.
+        // El suyo no se borra: se usa en cuanto pase a produccion.
+        if (! $this->company->modo_produccion) {
+            $compartido = @file_get_contents(storage_path('app/private/certificado/certificado.pem'));
+
+            if (! empty($compartido)) {
+                return $compartido;
+            }
+
+            throw new Exception('No se encuentra el certificado de pruebas de la plataforma. Avisa al administrador.');
+        }
+
         // 1) La empresa subio su .pfx/.p12 (se guarda la ruta en disco 'local').
         if (!empty($stored) && Storage::disk('local')->exists($stored)) {
             $pfx = Storage::disk('local')->get($stored);
@@ -77,6 +92,21 @@ class GreenterService
             return $stored;
         }
 
+        // La empresa tiene una ruta guardada pero el archivo no esta en disco:
+        // no es lo mismo que "no subio certificado", y decirlo asi evita perder
+        // tiempo mirando una pantalla que muestra el certificado como cargado.
+        if (!empty($stored)) {
+            Log::error('GreenterService: el certificado registrado no existe en disco', [
+                'company_id' => $this->company->id,
+                'ruta_registrada' => $stored,
+            ]);
+
+            throw new Exception(
+                "El certificado digital registrado para esta empresa no se encuentra en el servidor (ruta: {$stored}). " .
+                'Vuelve a subir tu certificado (.pfx) en Configuración SUNAT.'
+            );
+        }
+
         // En PRODUCCION nunca se cae al certificado de prueba (SUNAT lo rechaza
         // y serían documentos reales). Se exige el certificado propio.
         if ($this->company->modo_produccion) {
@@ -84,7 +114,7 @@ class GreenterService
         }
 
         // 3) Fallback: certificado de prueba compartido (solo beta/desarrollo).
-        $compartido = @file_get_contents(storage_path('app/public/certificado/certificado.pem'));
+        $compartido = @file_get_contents(storage_path('app/private/certificado/certificado.pem'));
         if (!empty($compartido)) {
             Log::warning('GreenterService: usando certificado de prueba compartido (la empresa no subió el suyo)', [
                 'company_id' => $this->company->id,
@@ -167,6 +197,22 @@ class GreenterService
         return $api;
     }
 
+    /**
+     * Sucursal desde la que se emite el comprobante. Se fija antes de armar el
+     * documento; si no se fija, se usan los datos de la empresa.
+     */
+    protected ?\App\Models\Branch $sucursal = null;
+
+    public function paraSucursal(?\App\Models\Branch $sucursal): static
+    {
+        // Candado: solo se acepta una sucursal de esta misma empresa.
+        $this->sucursal = ($sucursal && $sucursal->company_id === $this->company->id)
+            ? $sucursal
+            : null;
+
+        return $this;
+    }
+
     public function getGreenterCompany(): GreenterCompany
     {
         $company = new GreenterCompany();
@@ -174,14 +220,20 @@ class GreenterService
                 ->setRazonSocial($this->company->razon_social)
                 ->setNombreComercial($this->company->nombre_comercial);
 
+        // La direccion y el codigo de local son los del establecimiento desde el
+        // que se emite. Antes iban fijos los de la empresa y codLocal '0000', asi
+        // que una empresa con varias sedes declaraba todo como emitido en la
+        // matriz. Sin sucursal (o si le faltan datos) se usan los de la empresa.
+        $sucursal = $this->sucursal;
+
         $address = new Address();
-        $address->setUbigueo($this->company->ubigeo)
-                ->setDepartamento($this->company->departamento)
-                ->setProvincia($this->company->provincia)
-                ->setDistrito($this->company->distrito)
+        $address->setUbigueo($sucursal?->ubigeo ?: $this->company->ubigeo)
+                ->setDepartamento($sucursal?->departamento ?: $this->company->departamento)
+                ->setProvincia($sucursal?->provincia ?: $this->company->provincia)
+                ->setDistrito($sucursal?->distrito ?: $this->company->distrito)
                 ->setUrbanizacion('-')
-                ->setDireccion($this->company->direccion)
-                ->setCodLocal('0000');
+                ->setDireccion($sucursal?->direccion ?: $this->company->direccion)
+                ->setCodLocal($sucursal?->codigo ?: '0000');
 
         $company->setAddress($address);
 

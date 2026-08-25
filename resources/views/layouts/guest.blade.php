@@ -8,6 +8,15 @@
     <link rel="icon" href="{{ config('platform.favicon_url', asset('assets/brand/favicon.png')) }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
+<style>
+    /* La barra de desplazamiento no se pinta en las pantallas de acceso: el
+       formulario ya cabe, y cuando falta poco esa barra gris al costado se ve
+       como un fallo. El desplazamiento sigue funcionando con la rueda y el
+       gesto del trackpad, asi que en pantallas bajas nada queda inalcanzable. */
+    html, body { scrollbar-width: none; -ms-overflow-style: none; }
+    html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display: none; }
+</style>
+
 <body class="min-h-screen flex bg-gray-50">
 
     {{-- Panel de marca (izquierda, oculto en móvil) --}}
@@ -45,18 +54,18 @@
     </aside>
 
     {{-- Formulario (derecha) --}}
-    <main class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10">
-        <div class="w-full max-w-md">
+    <main class="flex w-full items-center justify-center p-6 sm:p-8 lg:w-1/2">
+        <div class="w-full max-w-lg">
             {{-- Logo --}}
-            <div class="text-center mb-8">
+            <div class="mb-5 text-center">
                 <img src="{{ config('platform.logo_url', asset('assets/brand/cisma-fact.png')) }}"
                      alt="{{ config('app.name') }}"
-                     class="mx-auto h-auto w-52 max-w-full">
-                <p class="mt-3 text-sm text-gray-500">Facturación electrónica compatible con SUNAT</p>
+                     class="mx-auto h-auto w-40 max-w-full">
+                <p class="mt-2 text-sm text-gray-500">Facturación electrónica compatible con SUNAT</p>
             </div>
 
             {{-- Tarjeta --}}
-            <div class="bg-white rounded-2xl shadow-xl ring-1 ring-gray-100 p-8">
+            <div class="rounded-2xl bg-white p-7 shadow-xl ring-1 ring-gray-100">
                 @if(session('success'))
                     <div class="flex items-start gap-2 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-5 text-sm">
                         <span>✅</span><span>{{ session('success') }}</span>
@@ -76,7 +85,7 @@
                 @yield('content')
             </div>
 
-            <p class="text-center text-xs text-gray-400 mt-6">
+            <p class="mt-4 text-center text-xs text-gray-400">
                 © {{ date('Y') }} {{ config('app.name') }}. Todos los derechos reservados.
             </p>
         </div>

@@ -57,21 +57,36 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthWebController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthWebController::class, 'login'])->name('login.post');
     Route::get('/register', [RegisteredUserController::class, 'showRegistrationForm'])->name('register');
-    Route::post('/register', [RegisteredUserController::class, 'store'])->name('register.post');
+    // Limite por IP: el registro crea empresa + usuario + serie + API key, asi
+    // que sin tope se puede llenar la base con empresas basura.
+    Route::post('/register', [RegisteredUserController::class, 'store'])
+        ->middleware('throttle:5,10')
+        ->name('register.post');
     Route::get('/forgot-password', [PasswordResetLinkController::class, 'showLinkRequestForm'])->name('password.request');
-    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
+    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->middleware('throttle:5,10')
+        ->name('password.email');
     Route::get('/reset-password/{token}', [NewPasswordController::class, 'showResetForm'])->name('password.reset');
-    Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.update');
+    Route::post('/reset-password', [NewPasswordController::class, 'store'])
+        ->middleware('throttle:5,10')
+        ->name('password.update');
 });
 
 Route::post('/logout', [AuthWebController::class, 'logout'])->name('logout');
+
+// Salir de la sesión de soporte. Va fuera del grupo super-admin porque durante
+// la suplantación el usuario autenticado ya no tiene ese rol; y fuera de
+// 'company.active' para poder salir aunque la empresa esté suspendida.
+Route::middleware('auth')
+    ->post('/impersonate/stop', [\App\Http\Controllers\Web\SuperAdmin\ImpersonationController::class, 'stop'])
+    ->name('impersonate.stop');
 
 // ========================
 // DASHBOARD REDIRECT
 // ========================
 Route::middleware('auth', 'company.active')->get('/dashboard', function () {
     $user = auth()->user();
-    if ($user->hasRole('super_admin')) {
+    if ($user->accedeAlPanelAdmin()) {
         return redirect()->route('super-admin.dashboard');
     }
     return redirect()->route('empresa.dashboard');
@@ -80,36 +95,80 @@ Route::middleware('auth', 'company.active')->get('/dashboard', function () {
 // ========================
 // SUPER ADMIN
 // ========================
+// El grupo lo comparten dos roles: 'super_admin' con acceso total y 'contador',
+// que solo consulta empresas, documentos y reportes (y puede entrar como
+// soporte). Todo lo que el contador NO debe tocar lleva ademas
+// 'role:super_admin', que se acumula sobre el del grupo.
 Route::prefix('super-admin')
-    ->middleware(['auth', 'role:super_admin', 'company.active', 'audit.admin'])
+    ->middleware(['auth', 'role:super_admin,contador', 'company.active', 'audit.admin'])
     ->name('super-admin.')
     ->group(function () {
         Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
 
-        Route::resource('companies', SuperAdminCompanyController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
-        Route::post('/companies/{company}/toggle-status', [SuperAdminCompanyController::class, 'toggleStatus'])->name('companies.toggle-status');
-        Route::post('/companies/{company}/toggle-demo', [SuperAdminCompanyController::class, 'toggleDemo'])->name('companies.toggle-demo');
+        // Crear, editar, borrar o suspender empresas: solo Super Admin.
+        // OJO al orden: 'companies/create' tiene que registrarse ANTES que
+        // 'companies/{company}', o Laravel toma "create" como el id de una
+        // empresa y responde 404.
+        // Eliminar una empresa corta la facturacion de un cliente: eso es
+        // decision comercial y se queda con el Super Admin.
+        //
+        // Suspender/reactivar el acceso de una empresa ya NO vive aqui: se hace
+        // desde Suscripciones, que es donde esta el motivo real (pago o impago).
+        // Antes habia tres botones llamados "Suspender" en tres modulos
+        // distintos y dos de ellos hacian lo mismo por caminos que se pisaban.
+        Route::middleware('role:super_admin')->group(function () {
+            Route::resource('companies', SuperAdminCompanyController::class)->only(['destroy']);
+            Route::post('/companies/{company}/toggle-demo', [SuperAdminCompanyController::class, 'toggleDemo'])->name('companies.toggle-demo');
+        });
 
+        // Consultar, dar de alta y editar empresas: el contador tambien entra.
+        Route::resource('companies', SuperAdminCompanyController::class)->only(['create', 'store', 'index', 'show', 'edit', 'update']);
+
+        // Soporte: entrar al panel de la empresa como su administrador.
+        Route::post('/companies/{company}/impersonate', [\App\Http\Controllers\Web\SuperAdmin\ImpersonationController::class, 'start'])
+            ->name('companies.impersonate');
+
+        // Alta y edicion de usuarios: el contador entra, pero UserController le
+        // impide tocar cuentas de plataforma y asignar roles de plataforma.
         Route::resource('users', SuperAdminUserController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
+        Route::get('/users/{user}/activity', [SuperAdminUserController::class, 'activity'])->name('users.activity');
 
-        Route::post('/users/{user}/toggle-lock', [SuperAdminUserController::class, 'toggleLock'])->name('users.toggle-lock');
+        // Listado de certificados: solo lectura, sirve para ver cual esta por vencer.
+        Route::get('/certificates', [\App\Http\Controllers\Web\SuperAdmin\CertificateController::class, 'index'])->name('certificates');
+
+        // Borrar, bloquear o cambiarle la contrasena a un usuario es tomar
+        // control de su cuenta: se queda con el Super Admin.
+        Route::middleware('role:super_admin')->group(function () {
+
         Route::post('/users/{user}/toggle-active', [SuperAdminUserController::class, 'toggleActive'])->name('users.toggle-active');
         Route::get('/users/{user}/reset-password', [SuperAdminUserController::class, 'resetPasswordForm'])->name('users.reset-password.form');
         Route::post('/users/{user}/reset-password', [SuperAdminUserController::class, 'resetPassword'])->name('users.reset-password');
-        Route::get('/users/{user}/activity', [SuperAdminUserController::class, 'activity'])->name('users.activity');
         Route::delete('/users/{user}', [SuperAdminUserController::class, 'destroy'])->name('users.destroy');
 
+        }); // fin del bloque solo Super Admin (acciones sobre cuentas ajenas)
 
+        // Reportes y documentos: el contador tambien entra.
         Route::get('/statistics', [SuperAdminStatisticController::class, 'index'])->name('statistics');
         Route::get('/export/statistics/{format}', [SuperAdminExportController::class, 'exportStatistics'])->name('export.statistics');
-
-        Route::get('/certificates', [\App\Http\Controllers\Web\SuperAdmin\CertificateController::class, 'index'])->name('certificates');
 
         Route::get('/documents', [SuperAdminDocumentController::class, 'index'])->name('documents');
         Route::get('/documents/{type}/{id}', [SuperAdminDocumentController::class, 'show'])->name('documents.show');
         Route::get('/documents/{type}/{id}/download/{file}', [SuperAdminDocumentController::class, 'download'])->name('documents.download');
         Route::get('/documents/{type}/{id}/view/{file}', [SuperAdminDocumentController::class, 'view'])->name('documents.view');
         Route::post('/documents/{type}/{id}/consult', [SuperAdminDocumentController::class, 'consult'])->name('documents.consult');
+
+        // Tickets de soporte: el contador atiende consultas de clientes. No hay
+        // borrado, solo responder, cerrar y reabrir.
+        Route::get('/support', [SuperAdminSupportController::class, 'index'])->name('support');
+        Route::get('/support/{ticket}', [SuperAdminSupportController::class, 'show'])->name('support.show');
+        Route::post('/support/{ticket}/reply', [SuperAdminSupportController::class, 'reply'])->name('support.reply');
+        Route::post('/support/{ticket}/priority', [SuperAdminSupportController::class, 'changePriority'])->name('support.priority');
+        Route::post('/support/{ticket}/close', [SuperAdminSupportController::class, 'close'])->name('support.close');
+        Route::post('/support/{ticket}/reopen', [SuperAdminSupportController::class, 'reopen'])->name('support.reopen');
+
+        // Planes, suscripciones, pagos, API, configuracion y auditoria:
+        // solo Super Admin.
+        Route::middleware('role:super_admin')->group(function () {
 
         Route::get('/plans', [SuperAdminPlanController::class, 'index'])->name('plans');
         Route::get('/plans/create', [SuperAdminPlanController::class, 'create'])->name('plans.create');
@@ -118,7 +177,6 @@ Route::prefix('super-admin')
         Route::put('/plans/{plan}', [SuperAdminPlanController::class, 'update'])->name('plans.update');
         Route::delete('/plans/{plan}', [SuperAdminPlanController::class, 'destroy'])->name('plans.destroy');
         Route::post('/plans/{plan}/toggle', [SuperAdminPlanController::class, 'toggle'])->name('plans.toggle');
-        Route::post('/plans/assign-company', [SuperAdminPlanController::class, 'assign'])->name('plans.assign-company');
 
         Route::get('/subscriptions', [SuperAdminSubscriptionController::class, 'index'])->name('subscriptions.index');
         Route::get('/subscriptions/create', [SuperAdminSubscriptionController::class, 'create'])->name('subscriptions.create');
@@ -141,34 +199,47 @@ Route::prefix('super-admin')
         Route::get('/api-global/api-keys/{apiKey}', [SuperAdminApiGlobalController::class, 'showApiKey'])->name('api-global.show-key');
         Route::post('/api-global/api-keys/{apiKey}/toggle', [SuperAdminApiGlobalController::class, 'toggleApiKey'])->name('api-global.toggle-key');
         Route::post('/api-global/sandbox-token', [SuperAdminApiGlobalController::class, 'generateSandboxToken'])->name('api-global.sandbox-token');
+        Route::post('/api-global/empresas/{company}/toggle', [SuperAdminApiGlobalController::class, 'toggleCompanyApi'])->name('api-global.toggle-company');
         Route::post('/api-global/api-keys/{apiKey}/extend', [SuperAdminApiGlobalController::class, 'extendApiKey'])->name('api-global.extend-key');
         Route::delete('/api-global/api-keys/{apiKey}', [SuperAdminApiGlobalController::class, 'destroyApiKey'])->name('api-global.delete-key');
+
+        // Credenciales de prueba para programadores externos. Tiene modulo
+        // propio: repartir accesos no es lo mismo que vigilar el servicio.
+        Route::get('/tokens-prueba', [\App\Http\Controllers\Web\SuperAdmin\TokenPruebaController::class, 'index'])->name('tokens-prueba.index');
+        Route::post('/tokens-prueba', [\App\Http\Controllers\Web\SuperAdmin\TokenPruebaController::class, 'store'])->name('tokens-prueba.store');
 
         Route::get('/settings', [SuperAdminSettingController::class, 'index'])->name('settings');
         Route::put('/settings', [SuperAdminSettingController::class, 'update'])->name('settings.update');
 
-        Route::get('/support', [SuperAdminSupportController::class, 'index'])->name('support');
-        Route::get('/support/{ticket}', [SuperAdminSupportController::class, 'show'])->name('support.show');
-        Route::post('/support/{ticket}/reply', [SuperAdminSupportController::class, 'reply'])->name('support.reply');
-        Route::post('/support/{ticket}/close', [SuperAdminSupportController::class, 'close'])->name('support.close');
-        Route::post('/support/{ticket}/reopen', [SuperAdminSupportController::class, 'reopen'])->name('support.reopen');
-
         Route::get('/audit', [SuperAdminAuditController::class, 'index'])->name('audit.index');
+
+        }); // fin del bloque solo Super Admin
+
+        // El perfil propio lo tiene cualquiera que entre a este panel.
+        Route::get('/profile', [\App\Http\Controllers\Web\SuperAdmin\ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile', [\App\Http\Controllers\Web\SuperAdmin\ProfileController::class, 'update'])->name('profile.update');
     });
 
 // ========================
 // EMPRESA
 // ========================
 Route::prefix('empresa')
-    ->middleware(['auth', 'role:company_admin', 'company.active'])
+    // 'audit.admin' aqui solo graba cuando hay una sesion de soporte abierta:
+    // asi queda registro de lo que el Super Admin hace dentro de la empresa.
+    ->middleware(['auth', 'role:company_admin,company_user', 'company.active', 'audit.admin'])
     ->name('empresa.')
     ->group(function () {
         Route::get('/dashboard', [EmpresaDashboardController::class, 'index'])->name('dashboard');
 
+        // Datos fiscales, credenciales SUNAT, API keys y equipo son cosa del
+        // dueño de la empresa. Un empleado emite y consulta, pero no toca nada
+        // que comprometa a la empresa entera.
+        Route::middleware('role:company_admin')->group(function () {
+
         Route::get('/company/edit', [EmpresaCompanyController::class, 'edit'])->name('company.edit');
         Route::put('/company', [EmpresaCompanyController::class, 'update'])->name('company.update');
 
-        Route::resource('api-keys', ApiKeyController::class)->only(['index', 'store', 'destroy']);
+        Route::resource('api-keys', ApiKeyController::class)->only(['index', 'create', 'store', 'destroy']);
         Route::post('/api-keys/{apiKey}/regenerate', [ApiKeyController::class, 'regenerate'])->name('api-keys.regenerate');
         Route::post('/api-keys/{apiKey}/toggle', [ApiKeyController::class, 'toggle'])->name('api-keys.toggle');
         Route::get('/api-keys/{apiKey}/secret', [ApiKeyController::class, 'showSecret'])->name('api-keys.show-secret');
@@ -179,6 +250,21 @@ Route::prefix('empresa')
         Route::put('/sunat-config', [SunatConfigController::class, 'update'])->name('sunat-config.update');
         Route::post('/sunat-config/test', [SunatConfigController::class, 'test'])->name('sunat-config.test');
         Route::post('/sunat-config/go-production', [SunatConfigController::class, 'goToProduction'])->name('sunat-config.go-production');
+
+        // Equipo de la empresa. El tope lo pone el plan (Free 1, Pro 5,
+        // Business 20) y lo comprueba UsuarioController.
+        Route::get('/usuarios', [\App\Http\Controllers\Web\Empresa\UsuarioController::class, 'index'])->name('usuarios.index');
+        Route::get('/usuarios/create', [\App\Http\Controllers\Web\Empresa\UsuarioController::class, 'create'])->name('usuarios.create');
+        Route::post('/usuarios', [\App\Http\Controllers\Web\Empresa\UsuarioController::class, 'store'])->name('usuarios.store');
+        Route::get('/usuarios/{usuario}/edit', [\App\Http\Controllers\Web\Empresa\UsuarioController::class, 'edit'])->name('usuarios.edit');
+        Route::put('/usuarios/{usuario}', [\App\Http\Controllers\Web\Empresa\UsuarioController::class, 'update'])->name('usuarios.update');
+        Route::post('/usuarios/{usuario}/toggle-active', [\App\Http\Controllers\Web\Empresa\UsuarioController::class, 'toggleActive'])->name('usuarios.toggle-active');
+
+        // El plan y su consumo son informacion comercial de la empresa:
+        // la ve el dueño, no cada empleado.
+        Route::get('/plan', [\App\Http\Controllers\Web\Empresa\PlanController::class, 'index'])->name('plan.index');
+
+        }); // fin del bloque solo dueño de empresa
 
         // Guía visual: cómo se emite y qué credenciales se necesitan
         Route::get('/ayuda-emision', function () {
@@ -218,6 +304,9 @@ Route::prefix('empresa')
         Route::get('/guias/create', [\App\Http\Controllers\Web\Empresa\GuiaRemisionController::class, 'create'])->name('guias.create');
         Route::post('/guias', [\App\Http\Controllers\Web\Empresa\GuiaRemisionController::class, 'store'])->name('guias.store');
         Route::get('/guias/{id}', [\App\Http\Controllers\Web\Empresa\GuiaRemisionController::class, 'show'])->whereNumber('id')->name('guias.show');
+        // Registrar una baja hecha en el portal SOL: SUNAT no permite anular
+        // guias desde el sistema del contribuyente.
+        Route::post('/guias/{id}/registrar-baja', [\App\Http\Controllers\Web\Empresa\GuiaRemisionController::class, 'registrarBaja'])->whereNumber('id')->name('guias.registrar-baja');
         Route::post('/guias/{id}/send-sunat', [\App\Http\Controllers\Web\Empresa\GuiaRemisionController::class, 'sendToSunat'])->whereNumber('id')->name('guias.send-sunat');
         Route::post('/guias/{id}/check-status', [\App\Http\Controllers\Web\Empresa\GuiaRemisionController::class, 'checkStatus'])->whereNumber('id')->name('guias.check-status');
 
@@ -248,6 +337,22 @@ Route::prefix('empresa')
         Route::resource('clients', \App\Http\Controllers\Web\Empresa\ClientController::class)
             ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 
+        // Reporte de ventas del periodo para entregar al contador.
+        Route::get('/reportes/contador', [\App\Http\Controllers\Web\Empresa\ReporteContadorController::class, 'index'])
+            ->name('reportes.contador');
+        Route::get('/reportes/contador/descargar', [\App\Http\Controllers\Web\Empresa\ReporteContadorController::class, 'descargar'])
+            ->name('reportes.contador.descargar');
+
+        // Sucursales (establecimientos declarados ante SUNAT)
+        Route::get('/branches', [\App\Http\Controllers\Web\Empresa\BranchController::class, 'index'])->name('branches.index');
+        // 'create' antes que '{branch}': si no, Laravel toma "create" como id.
+        Route::get('/branches/create', [\App\Http\Controllers\Web\Empresa\BranchController::class, 'create'])->name('branches.create');
+        Route::get('/branches/{branch}/edit', [\App\Http\Controllers\Web\Empresa\BranchController::class, 'edit'])->name('branches.edit');
+        Route::post('/branches', [\App\Http\Controllers\Web\Empresa\BranchController::class, 'store'])->name('branches.store');
+        Route::put('/branches/{branch}', [\App\Http\Controllers\Web\Empresa\BranchController::class, 'update'])->name('branches.update');
+        Route::post('/branches/{branch}/toggle', [\App\Http\Controllers\Web\Empresa\BranchController::class, 'toggle'])->name('branches.toggle');
+        Route::delete('/branches/{branch}', [\App\Http\Controllers\Web\Empresa\BranchController::class, 'destroy'])->name('branches.destroy');
+
         // Correlativos (series por sucursal)
         Route::get('/correlatives', [\App\Http\Controllers\Web\Empresa\CorrelativeController::class, 'index'])->name('correlatives.index');
         Route::post('/correlatives', [\App\Http\Controllers\Web\Empresa\CorrelativeController::class, 'store'])->name('correlatives.store');
@@ -262,7 +367,6 @@ Route::prefix('empresa')
         Route::get('/notifications/{id}/read', [\App\Http\Controllers\Web\Empresa\NotificationController::class, 'markAsRead'])->name('notifications.read');
         Route::post('/notifications/read-all', [\App\Http\Controllers\Web\Empresa\NotificationController::class, 'markAllRead'])->name('notifications.read-all');
 
-        Route::get('/plan', [\App\Http\Controllers\Web\Empresa\PlanController::class, 'index'])->name('plan.index');
 
         Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');

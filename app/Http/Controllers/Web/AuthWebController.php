@@ -126,7 +126,7 @@ class AuthWebController extends Controller
 
     private function getRedirectPath($user): string
     {
-        if ($user->hasRole('super_admin')) {
+        if ($user->accedeAlPanelAdmin()) {
             return route('super-admin.dashboard');
         }
         return route('empresa.dashboard');

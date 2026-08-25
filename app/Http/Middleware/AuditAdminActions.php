@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\AuditLog;
+use App\Support\Impersonation;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -35,6 +36,21 @@ class AuditAdminActions
             return $response;
         }
 
+        // Entrar y salir de soporte ya se registran con su propio detalle en
+        // ImpersonationController; no hace falta el registro generico.
+        if (in_array($request->route()?->getName(), ['super-admin.companies.impersonate', 'impersonate.stop'], true)) {
+            return $response;
+        }
+
+        $enSoporte = Impersonation::activa();
+
+        // En el panel de empresa este middleware solo debe actuar durante una
+        // sesion de soporte: registrar cada accion de cada cliente llenaria la
+        // tabla sin aportar nada.
+        if (! $enSoporte && ! $request->user()?->hasRole('super_admin')) {
+            return $response;
+        }
+
         try {
             $parameters = $request->route()?->parameters() ?? [];
             $subject = collect($parameters)->first(fn ($value) => is_object($value) && isset($value->id));
@@ -52,8 +68,14 @@ class AuditAdminActions
                 'path' => $request->path(),
                 'subject_type' => $subject ? class_basename($subject) : null,
                 'subject_id' => $subject?->id,
-                'description' => $request->route()?->getName(),
-                'data' => $request->except(self::SENSITIVE_FIELDS),
+                // En soporte, el usuario autenticado es el de la empresa: se deja
+                // constancia de quien estaba realmente detras de la accion.
+                'description' => $enSoporte
+                    ? '[SOPORTE: ' . Impersonation::nombreSuplantador() . '] ' . $request->route()?->getName()
+                    : $request->route()?->getName(),
+                'data' => $enSoporte
+                    ? $request->except(self::SENSITIVE_FIELDS) + ['_impersonador_id' => Impersonation::idSuplantador()]
+                    : $request->except(self::SENSITIVE_FIELDS),
                 'ip_address' => $request->ip(),
                 'user_agent' => mb_substr((string) $request->userAgent(), 0, 500),
                 'response_status' => $response->getStatusCode(),

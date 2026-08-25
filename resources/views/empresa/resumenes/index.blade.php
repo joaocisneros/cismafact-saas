@@ -44,7 +44,7 @@
                         <td class="px-4 py-3 text-gray-600">{{ \Illuminate\Support\Carbon::parse($r->fecha_resumen)->format('d/m/Y') }}</td>
                         <td class="px-4 py-3 text-gray-600">{{ count($r->detalles ?? []) }}</td>
                         <td class="px-4 py-3"><span class="rounded px-2 py-1 text-xs font-medium {{ $cls }}">{{ $r->estado_sunat }}</span></td>
-                        <td class="px-4 py-3 text-right"><a href="{{ route('empresa.resumenes.show', $r->id) }}" class="text-sm font-medium text-blue-600 hover:text-blue-800">Ver</a></td>
+                        <td class="px-4 py-3 text-right"><x-icon-action icon="ver" label="Ver resumen" color="blue" :href="route('empresa.resumenes.show', $r->id)" /></td>
                     </tr>
                 @empty
                     <tr><td colspan="5" class="px-4 py-10 text-center text-gray-500">No has generado resúmenes todavía.</td></tr>

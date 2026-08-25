@@ -15,7 +15,9 @@ use Illuminate\Support\Facades\Auth;
 
 class GuiaRemisionController extends Controller
 {
+    use \App\Traits\FormatsSunatError;
     use EnforcesPlanLimits;
+    use \App\Http\Controllers\Traits\ResuelveSucursalPorSerie;
 
     public function __construct(private DocumentService $documentService)
     {
@@ -71,12 +73,18 @@ class GuiaRemisionController extends Controller
             $result = $this->documentService->sendDispatchGuideToSunat($guia);
             $guia = $result['document'] ?? $guia;
 
+            // Vuelve al listado y abre el detalle en modal, sin sacar al usuario
+            // de la pantalla en la que estaba.
+            $abrir = ['abrir_documento' => $guia->id, 'abrir_titulo' => "Guía {$guia->serie}-{$guia->correlativo}"];
+
             if ($result['success']) {
-                return redirect()->route('empresa.guias.show', $guia->id)
+                return redirect()->route('empresa.guias.index')
+                    ->with($abrir)
                     ->with('success', "Guía {$guia->serie}-{$guia->correlativo} emitida y aceptada por SUNAT.");
             }
 
-            return redirect()->route('empresa.guias.show', $guia->id)
+            return redirect()->route('empresa.guias.index')
+                ->with($abrir)
                 ->with('error', 'Guía registrada, pero SUNAT respondió con error: ' . $this->errorText($result['error'] ?? $result['message'] ?? null));
         } catch (\Throwable $e) {
             return back()->withInput()->with('error', 'No se pudo emitir la guía: ' . $e->getMessage());
@@ -147,22 +155,48 @@ class GuiaRemisionController extends Controller
             : back()->with('error', 'SUNAT respondió: ' . $this->errorText($result['error'] ?? $result['message'] ?? null));
     }
 
+    /**
+     * Deja constancia de una baja hecha en el portal de SUNAT.
+     *
+     * No se envia nada: SUNAT no permite anular una GRE desde el sistema del
+     * contribuyente ("la comunicacion se debe realizar a traves de la opcion que
+     * contemple el SEE - SOL"). Esto solo evita que una guia ya dada de baja
+     * siga figurando como vigente en los listados.
+     */
+    public function registrarBaja(Request $request, int $id)
+    {
+        $guia = DispatchGuide::where('company_id', Auth::user()->company_id)->findOrFail($id);
+
+        if ($guia->anulado_en) {
+            return back()->with('error', 'Esta guía ya figura como dada de baja.');
+        }
+
+        $datos = $request->validate([
+            'motivo' => ['required', 'string', 'min:3', 'max:250'],
+        ], [], ['motivo' => 'motivo']);
+
+        $guia->update([
+            'anulado_en' => now(),
+            'anulado_motivo' => $datos['motivo'],
+            'anulado_registrado_por' => Auth::user()->name,
+        ]);
+
+        return back()->with('success',
+            "Guía {$guia->numero_completo} marcada como dada de baja. Recuerda que la baja ante SUNAT "
+            . 'se realiza en su portal con tu Clave SOL; aquí solo queda el registro.');
+    }
+
     private function formData(): array
     {
         $companyId = Auth::user()->company_id;
-        $branch = Branch::where('company_id', $companyId)->orderBy('id')->first();
+        $series = $this->seriesDeLaEmpresa($companyId, '09');
 
-        $series = $branch
-            ? Correlative::where('branch_id', $branch->id)
-                ->where('tipo_documento', '09')
-                ->orderBy('serie')
-                ->get(['serie', 'correlativo_actual'])
-            : collect();
+        $branch = Branch::where('company_id', $companyId)->orderBy('id')->first();
 
         $clients = Client::where('company_id', $companyId)
             ->orderBy('razon_social')
             ->limit(500)
-            ->get(['id', 'tipo_documento', 'numero_documento', 'razon_social', 'direccion']);
+            ->get(['id', 'tipo_documento', 'numero_documento', 'razon_social', 'direccion', 'email']);
 
         return [$branch, $series, $clients];
     }
@@ -174,17 +208,5 @@ class GuiaRemisionController extends Controller
             ->exists();
 
         abort_unless($owns, 403, 'La sucursal no pertenece a tu empresa.');
-    }
-
-    private function errorText($error): string
-    {
-        if (is_string($error)) {
-            return $error;
-        }
-        if (is_object($error) && method_exists($error, 'getMessage')) {
-            return $error->getMessage();
-        }
-
-        return 'Error desconocido.';
     }
 }

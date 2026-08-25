@@ -84,10 +84,10 @@
                         </td>
                         <td class="px-4 py-3 text-gray-700">S/ {{ number_format((float) $subscription->monthly_price, 2) }}</td>
                         <td class="px-4 py-3">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <a href="{{ route('super-admin.subscriptions.edit', $subscription) }}"
-                                   @click.prevent="loadAdminModal('{{ route('super-admin.subscriptions.edit', $subscription) }}', 'Editar suscripción')"
-                                   class="text-sm font-medium text-gray-600 hover:text-gray-900">Editar</a>
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                <x-icon-action icon="editar" label="Editar suscripción" color="slate"
+                                               :href="route('super-admin.subscriptions.edit', $subscription)"
+                                               @click.prevent="loadAdminModal('{{ route('super-admin.subscriptions.edit', $subscription) }}', 'Editar suscripción')" />
                                 <form method="POST" action="{{ route('super-admin.subscriptions.renew', $subscription) }}" class="flex items-center gap-1">
                                     @csrf
                                     <select name="months" class="rounded border border-gray-300 px-1 py-1 text-xs">
@@ -95,21 +95,21 @@
                                             <option value="{{ $months }}">{{ $months }} mes{{ $months > 1 ? 'es' : '' }}</option>
                                         @endforeach
                                     </select>
-                                    <button class="text-sm font-medium text-blue-600 hover:text-blue-800">Renovar</button>
+                                    <x-icon-action icon="renovar" label="Renovar suscripción" color="blue" />
                                 </form>
                                 @if(in_array($subscription->status, ['active', 'trial'], true))
                                     <form method="POST" action="{{ route('super-admin.subscriptions.status', $subscription) }}">
                                         @csrf
                                         @method('PATCH')
                                         <input type="hidden" name="status" value="suspended">
-                                        <button class="text-sm font-medium text-amber-600 hover:text-amber-800">Suspender</button>
+                                        <x-icon-action icon="suspender" label="Suspender suscripción" color="amber" />
                                     </form>
                                 @elseif($subscription->status === 'suspended' && (! $subscription->ends_at || $subscription->ends_at->isToday() || $subscription->ends_at->isFuture()))
                                     <form method="POST" action="{{ route('super-admin.subscriptions.status', $subscription) }}">
                                         @csrf
                                         @method('PATCH')
                                         <input type="hidden" name="status" value="active">
-                                        <button class="text-sm font-medium text-green-600 hover:text-green-800">Activar</button>
+                                        <x-icon-action icon="activar" label="Activar suscripción" color="emerald" />
                                     </form>
                                 @endif
                             </div>

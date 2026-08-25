@@ -15,7 +15,9 @@ use Illuminate\Support\Facades\Auth;
 
 class BoletaController extends Controller
 {
+    use \App\Traits\FormatsSunatError;
     use EnforcesPlanLimits;
+    use \App\Http\Controllers\Traits\ResuelveSucursalPorSerie;
 
     public function __construct(private DocumentService $documentService)
     {
@@ -68,12 +70,18 @@ class BoletaController extends Controller
             $result = $this->documentService->sendToSunat($boleta, 'boleta');
             $boleta = $result['document'] ?? $boleta;
 
+            // Vuelve al listado y abre el detalle en modal, sin sacar al usuario
+            // de la pantalla en la que estaba.
+            $abrir = ['abrir_documento' => $boleta->id, 'abrir_titulo' => "Boleta {$boleta->numero_completo}"];
+
             if ($result['success']) {
-                return redirect()->route('empresa.boletas.show', $boleta->id)
+                return redirect()->route('empresa.boletas.index')
+                    ->with($abrir)
                     ->with('success', "Boleta {$boleta->numero_completo} emitida y aceptada por SUNAT.");
             }
 
-            return redirect()->route('empresa.boletas.show', $boleta->id)
+            return redirect()->route('empresa.boletas.index')
+                ->with($abrir)
                 ->with('error', 'Boleta registrada, pero SUNAT respondió con error: ' . $this->errorText($result['error'] ?? null));
         } catch (\Throwable $e) {
             return back()->withInput()->with('error', 'No se pudo emitir la boleta: ' . $e->getMessage());
@@ -113,14 +121,9 @@ class BoletaController extends Controller
     private function formData(): array
     {
         $companyId = Auth::user()->company_id;
-        $branch = Branch::where('company_id', $companyId)->orderBy('id')->first();
+        $series = $this->seriesDeLaEmpresa($companyId, '03');
 
-        $series = $branch
-            ? Correlative::where('branch_id', $branch->id)
-                ->where('tipo_documento', '03')
-                ->orderBy('serie')
-                ->get(['serie', 'correlativo_actual'])
-            : collect();
+        $branch = Branch::where('company_id', $companyId)->orderBy('id')->first();
 
         $clients = Client::where('company_id', $companyId)
             ->orderBy('razon_social')
@@ -137,17 +140,5 @@ class BoletaController extends Controller
             ->exists();
 
         abort_unless($owns, 403, 'La sucursal no pertenece a tu empresa.');
-    }
-
-    private function errorText($error): string
-    {
-        if (is_string($error)) {
-            return $error;
-        }
-        if (is_object($error) && method_exists($error, 'getMessage')) {
-            return $error->getMessage();
-        }
-
-        return 'Error desconocido.';
     }
 }

@@ -18,6 +18,8 @@ use Illuminate\Validation\Rule;
 
 class DocumentController extends Controller
 {
+    use \App\Http\Controllers\Traits\GeneraPdfDelComprobante;
+
     public function index(Request $request)
     {
         $request->validate([
@@ -89,14 +91,19 @@ class DocumentController extends Controller
 
         $path = $doc->$pathField;
 
-        if (!$path || !Storage::disk('public')->exists($path)) {
-            abort(404);
+        // El PDF se rehace si falta, igual que en el panel de la empresa.
+        if ($file === 'pdf') {
+            $path = $this->rutaDelPdf($doc);
+        }
+
+        if (!$path || !Storage::disk('comprobantes')->exists($path)) {
+            abort(404, $this->motivoArchivoAusente($doc, $file));
         }
 
         $extension = pathinfo($path, PATHINFO_EXTENSION);
         $filename = "{$type}_{$doc->numero_completo}.{$extension}";
 
-        return Storage::disk('public')->download($path, $filename);
+        return Storage::disk('comprobantes')->download($path, $filename);
     }
 
     public function view($type, $id, $file)
@@ -124,8 +131,13 @@ class DocumentController extends Controller
 
         $path = $doc->$pathField;
 
-        if (!$path || !Storage::disk('public')->exists($path)) {
-            abort(404);
+        // El PDF se rehace si falta, igual que en el panel de la empresa.
+        if ($file === 'pdf') {
+            $path = $this->rutaDelPdf($doc);
+        }
+
+        if (!$path || !Storage::disk('comprobantes')->exists($path)) {
+            abort(404, $this->motivoArchivoAusente($doc, $file));
         }
 
         $extension = pathinfo($path, PATHINFO_EXTENSION);
@@ -137,7 +149,7 @@ class DocumentController extends Controller
             default => 'application/octet-stream',
         };
 
-        $contents = Storage::disk('public')->get($path);
+        $contents = Storage::disk('comprobantes')->get($path);
         $filename = $doc->numero_completo . '.' . $extension;
 
         return response($contents)

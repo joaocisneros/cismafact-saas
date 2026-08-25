@@ -17,6 +17,12 @@ Schedule::command('subscriptions:sync')
     ->dailyAt('00:10')
     ->withoutOverlapping();
 
+// El aviso sale despues de sincronizar, para que el que acaba de vencer ya
+// figure como tal cuando se le escribe.
+Schedule::command('suscripciones:notificar-vencimiento')
+    ->dailyAt('07:00')
+    ->withoutOverlapping();
+
 Schedule::command('certificados:notificar-vencimiento')
     ->dailyAt('07:00')
     ->withoutOverlapping();

@@ -56,6 +56,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Token de las rutas de setup
+    |--------------------------------------------------------------------------
+    |
+    | Las rutas /api/setup/* ejecutan migraciones y seeders. Solo funcionan si
+    | se define SETUP_TOKEN y la peticion envia la cabecera X-Setup-Token con
+    | ese valor. Si se deja vacio (por defecto), esas rutas responden 404.
+    |
+    */
+
+    'setup_token' => env('SETUP_TOKEN', ''),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

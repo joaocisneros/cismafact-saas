@@ -8,9 +8,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CreditNote extends Model
 {
+    /** Anulado ante SUNAT: la baja fue aceptada, no solo enviada. */
+    public function getAnuladoAttribute(): bool
+    {
+        return $this->anulado_en !== null;
+    }
+
     use HasFactory;
 
     protected $fillable = [
+        'anulado_en', 'anulado_por_documento_id', 'anulado_motivo',
         'company_id',
         'branch_id',
         'client_id',
@@ -54,6 +61,7 @@ class CreditNote extends Model
     ];
 
     protected $casts = [
+        'anulado_en' => 'datetime',
         'fecha_emision' => 'date',
         'forma_pago_cuotas' => 'array',
         'valor_venta' => 'decimal:2',

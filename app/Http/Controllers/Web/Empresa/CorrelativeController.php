@@ -44,15 +44,18 @@ class CorrelativeController extends Controller
             'tipo_documento' => ['required', Rule::in(array_keys(self::TIPOS))],
             'serie' => [
                 'required', 'string', 'size:4',
-                Rule::unique('correlatives')->where(fn ($q) => $q->where('branch_id', $request->branch_id)),
+                // Unica por EMPRESA, no por sucursal: dos sedes con la misma serie
+                // emitirian el mismo numero con el mismo RUC y SUNAT lo rechaza.
+                Rule::unique('correlatives')->where(fn ($q) => $q->where('company_id', $companyId)),
             ],
             'correlativo_actual' => ['nullable', 'integer', 'min:0'],
         ], [
             'serie.size' => 'La serie debe tener exactamente 4 caracteres (ej: F001).',
-            'serie.unique' => 'Esa serie ya existe en la sucursal seleccionada.',
+            'serie.unique' => 'Esa serie ya está en uso en tu empresa. Cada serie solo puede pertenecer a una sucursal.',
         ]);
 
         Correlative::create([
+            'company_id' => $companyId,
             'branch_id' => $validated['branch_id'],
             'tipo_documento' => $validated['tipo_documento'],
             'serie' => strtoupper($validated['serie']),

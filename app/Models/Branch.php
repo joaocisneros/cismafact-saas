@@ -94,6 +94,9 @@ class Branch extends Model
 
         if (!$correlative) {
             $correlative = $this->correlatives()->create([
+                // company_id forma parte del unico (company, tipo, serie): sin el
+                // quedaria NULL y dos empresas podrian chocar en el indice.
+                'company_id' => $this->company_id,
                 'tipo_documento' => $tipoDocumento,
                 'serie' => $serie,
                 'correlativo_actual' => 0,

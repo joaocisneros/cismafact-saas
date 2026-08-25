@@ -7,11 +7,14 @@ use Carbon\Carbon;
 
 class FileService
 {
+    /** Disco privado donde viven XML, CDR y PDF. Ver config/filesystems.php. */
+    private const DISCO = 'comprobantes';
+
     public function saveXml($document, string $xmlContent): string
     {
         $this->ensureDirectoryExists($document, 'xml');
         $path = $this->generatePath($document, 'xml');
-        Storage::disk('public')->put($path, $xmlContent);
+        Storage::disk(self::DISCO)->put($path, $xmlContent);
         return $path;
     }
 
@@ -19,7 +22,7 @@ class FileService
     {
         $this->ensureDirectoryExists($document, 'zip');
         $path = $this->generatePath($document, 'zip');
-        Storage::disk('public')->put($path, $cdrContent);
+        Storage::disk(self::DISCO)->put($path, $cdrContent);
         return $path;
     }
 
@@ -27,7 +30,7 @@ class FileService
     {
         $this->ensureDirectoryExists($document, 'pdf');
         $path = $this->generatePath($document, 'pdf', $format);
-        Storage::disk('public')->put($path, $pdfContent);
+        Storage::disk(self::DISCO)->put($path, $pdfContent);
         return $path;
     }
 
@@ -99,8 +102,8 @@ class FileService
             return null;
         }
         
-        return Storage::disk('public')->exists($document->xml_path) 
-            ? Storage::disk('public')->path($document->xml_path)
+        return Storage::disk(self::DISCO)->exists($document->xml_path) 
+            ? Storage::disk(self::DISCO)->path($document->xml_path)
             : null;
     }
 
@@ -110,8 +113,8 @@ class FileService
             return null;
         }
         
-        return Storage::disk('public')->exists($document->cdr_path)
-            ? Storage::disk('public')->path($document->cdr_path)
+        return Storage::disk(self::DISCO)->exists($document->cdr_path)
+            ? Storage::disk(self::DISCO)->path($document->cdr_path)
             : null;
     }
 
@@ -121,18 +124,18 @@ class FileService
             return null;
         }
         
-        return Storage::disk('public')->exists($document->pdf_path)
-            ? Storage::disk('public')->path($document->pdf_path)
+        return Storage::disk(self::DISCO)->exists($document->pdf_path)
+            ? Storage::disk(self::DISCO)->path($document->pdf_path)
             : null;
     }
 
     public function downloadXml($document)
     {
-        if (!$document->xml_path || !Storage::disk('public')->exists($document->xml_path)) {
+        if (!$document->xml_path || !Storage::disk(self::DISCO)->exists($document->xml_path)) {
             return null;
         }
         
-        return Storage::disk('public')->download(
+        return Storage::disk(self::DISCO)->download(
             $document->xml_path,
             $document->numero_completo . '.xml'
         );
@@ -140,11 +143,11 @@ class FileService
 
     public function downloadCdr($document)
     {
-        if (!$document->cdr_path || !Storage::disk('public')->exists($document->cdr_path)) {
+        if (!$document->cdr_path || !Storage::disk(self::DISCO)->exists($document->cdr_path)) {
             return null;
         }
         
-        return Storage::disk('public')->download(
+        return Storage::disk(self::DISCO)->download(
             $document->cdr_path,
             'R-' . $document->numero_completo . '.zip'
         );
@@ -152,11 +155,11 @@ class FileService
 
     public function downloadPdf($document)
     {
-        if (!$document->pdf_path || !Storage::disk('public')->exists($document->pdf_path)) {
+        if (!$document->pdf_path || !Storage::disk(self::DISCO)->exists($document->pdf_path)) {
             return null;
         }
         
-        return Storage::disk('public')->download(
+        return Storage::disk(self::DISCO)->download(
             $document->pdf_path,
             $document->numero_completo . '.pdf'
         );
@@ -184,7 +187,7 @@ class FileService
         foreach ($tiposComprobantes as $tipoComprobante) {
             foreach ($tiposArchivos as $tipoArchivo) {
                 $directory = "{$tipoComprobante}/{$tipoArchivo}";
-                Storage::disk('public')->makeDirectory($directory);
+                Storage::disk(self::DISCO)->makeDirectory($directory);
             }
         }
     }
@@ -199,8 +202,8 @@ class FileService
         
         $directory = "{$tipoComprobante}/{$tipoArchivo}/{$dateFolder}";
         
-        if (!Storage::disk('public')->exists($directory)) {
-            Storage::disk('public')->makeDirectory($directory);
+        if (!Storage::disk(self::DISCO)->exists($directory)) {
+            Storage::disk(self::DISCO)->makeDirectory($directory);
         }
     }
 }

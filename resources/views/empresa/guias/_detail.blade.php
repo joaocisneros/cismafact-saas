@@ -116,3 +116,57 @@
         </table>
     </div>
 </div>
+
+{{-- Baja de la guia. SUNAT no permite anularla desde el sistema del
+     contribuyente: se hace en su portal con la Clave SOL. Aqui solo se deja
+     constancia para que no siga figurando como vigente. --}}
+<div class="border-t border-gray-200 p-5">
+    @if($guia->anulado_en)
+        <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <p class="font-semibold">Dada de baja</p>
+            <p class="mt-1">
+                Registrada el {{ $guia->anulado_en->format('d/m/Y H:i') }}
+                @if($guia->anulado_registrado_por) por {{ $guia->anulado_registrado_por }} @endif.
+                Motivo: {{ $guia->anulado_motivo }}
+            </p>
+        </div>
+    @elseif($guia->estado_sunat === 'ACEPTADO')
+        <div x-data="{ abierto: false }">
+            <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <p class="font-semibold">Para anular esta guía</p>
+                <p class="mt-1">
+                    SUNAT no permite dar de baja una guía desde ningún sistema externo: se hace en
+                    <strong>su portal</strong> con tu Clave SOL, en Empresas → Guía de Remisión Electrónica → Baja de GRE.
+                    Solo procede si el traslado no ha comenzado, o si cambió el destinatario antes de llegar.
+                </p>
+                <p class="mt-2">
+                    <a href="https://cpe.sunat.gob.pe/node/118" target="_blank" rel="noopener"
+                       class="font-medium underline">Ver la guía de SUNAT</a>
+                    ·
+                    <button type="button" @click="abierto = ! abierto" class="font-medium underline">
+                        Ya la di de baja allí, registrarlo aquí
+                    </button>
+                </p>
+            </div>
+
+            <form x-show="abierto" x-cloak method="POST" class="mt-3 space-y-3"
+                  action="{{ route('empresa.guias.registrar-baja', $guia->id) }}"
+                  data-success-message="Baja registrada.">
+                @csrf
+                <label class="block text-sm font-medium text-gray-700">Motivo de la baja
+                    <input name="motivo" required minlength="3" maxlength="250"
+                           placeholder="Ej.: el traslado no se realizó"
+                           class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
+                </label>
+                <p class="text-xs text-gray-500">
+                    Esto no envía nada a SUNAT: solo deja constancia de la baja que ya hiciste en su portal.
+                </p>
+                <div class="flex justify-end">
+                    <button class="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
+                        Registrar la baja
+                    </button>
+                </div>
+            </form>
+        </div>
+    @endif
+</div>

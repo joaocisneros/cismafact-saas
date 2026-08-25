@@ -8,9 +8,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Invoice extends Model
 {
+    /** Anulado ante SUNAT: la baja fue aceptada, no solo enviada. */
+    public function getAnuladoAttribute(): bool
+    {
+        return $this->anulado_en !== null;
+    }
+
     use HasFactory;
 
     protected $fillable = [
+        'anulado_en', 'anulado_por_documento_id', 'anulado_motivo',
         'company_id',
         'branch_id',
         'client_id',
@@ -66,6 +73,7 @@ class Invoice extends Model
     ];
 
     protected $casts = [
+        'anulado_en' => 'datetime',
         'fecha_emision' => 'date',
         'fecha_vencimiento' => 'date',
         'forma_pago_cuotas' => 'array',

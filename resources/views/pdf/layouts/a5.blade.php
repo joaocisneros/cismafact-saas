@@ -40,9 +40,10 @@
     }
 
     .logo-img {
-        width: 50px;
-        height: 50px;
-        object-fit: contain;
+        /* max-* : dompdf no aplica object-fit y con medidas fijas el logo
+           se estira. Asi conserva la proporcion. */
+        max-width: 50px;
+        max-height: 50px;
         vertical-align: top;
         margin-right: 8px;
     }

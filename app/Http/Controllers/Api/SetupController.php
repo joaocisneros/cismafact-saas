@@ -14,6 +14,15 @@ use Illuminate\Support\Facades\Storage;
 
 class SetupController extends Controller
 {
+    /** Unicos seeders que se pueden lanzar desde la API de setup. */
+    private const SEEDERS_PERMITIDOS = [
+        'DatabaseSeeder',
+        'RolesAndPermissionsSeeder',
+        'UbiRegionesSeeder',
+        'UbiProvinciasSeeder',
+        'UbiDistritoSeeder',
+    ];
+
     /**
      * Setup completo del sistema
      */
@@ -139,13 +148,15 @@ class SetupController extends Controller
      */
     public function seed(Request $request)
     {
+        // Solo se aceptan seeders conocidos: 'class' llega del request y
+        // db:seed instanciaria cualquier clase que se le pase.
         $request->validate([
-            'class' => 'nullable|string'
+            'class' => 'nullable|string|in:' . implode(',', self::SEEDERS_PERMITIDOS),
         ]);
 
         try {
             $seederClass = $request->input('class', 'DatabaseSeeder');
-            
+
             Artisan::call('db:seed', [
                 '--class' => $seederClass,
                 '--force' => true
@@ -443,17 +454,17 @@ class SetupController extends Controller
     private function checkCertificatesDirectory(): array
     {
         // Verificar directorios donde realmente se guardan los archivos
-        $certificadoExists = Storage::disk('public')->exists('certificado');
+        $certificadoExists = Storage::disk('local')->exists('certificado');
         $logoExists = Storage::disk('public')->exists('logo');
         
         // Crear directorios si no existen
-        if (!$certificadoExists) Storage::disk('public')->makeDirectory('certificado');
+        if (!$certificadoExists) Storage::disk('local')->makeDirectory('certificado');
         if (!$logoExists) Storage::disk('public')->makeDirectory('logo');
         
         return [
             'certificado_directory' => $certificadoExists,
             'logo_directory' => $logoExists,
-            'certificado_file_exists' => Storage::disk('public')->exists('certificado/certificado.pem'),
+            'certificado_file_exists' => Storage::disk('local')->exists('certificado/certificado.pem'),
             'storage_link_exists' => is_link(public_path('storage'))
         ];
     }

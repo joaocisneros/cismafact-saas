@@ -93,6 +93,14 @@
     </div>
 
     <div class="flex flex-wrap justify-end gap-2 border-t border-gray-200 pt-4">
+        <form method="POST" action="{{ route('super-admin.companies.impersonate', $company) }}"
+              onsubmit="return confirm('Vas a entrar al panel de {{ $company->razon_social }} como su administrador, con acceso completo. Todo lo que hagas queda registrado en auditoria. Continuar?')">
+            @csrf
+            <button type="submit"
+                    class="rounded-md bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">
+                Entrar como soporte
+            </button>
+        </form>
         <button type="button"
                 onclick="window.openAdminModal('{{ route('super-admin.companies.edit', $company) }}?modal=1', 'Editar empresa')"
                 class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">

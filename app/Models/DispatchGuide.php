@@ -8,9 +8,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DispatchGuide extends Model
 {
+    /** Dada de baja en el portal SOL de SUNAT y registrada aqui. */
+    public function getAnuladoAttribute(): bool
+    {
+        return $this->anulado_en !== null;
+    }
+
     use HasFactory;
 
     protected $fillable = [
+        'anulado_en', 'anulado_motivo', 'anulado_registrado_por',
         'company_id',
         'branch_id',
         'client_id',
@@ -46,6 +53,7 @@ class DispatchGuide extends Model
     ];
 
     protected $casts = [
+        'anulado_en' => 'datetime',
         'fecha_emision' => 'date',
         'fecha_traslado' => 'date',
         'peso_total' => 'decimal:2',

@@ -18,7 +18,7 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Asunto *</label>
-                    <input type="text" name="subject" value="{{ old('subject') }}" required
+                    <input type="text" name="subject" value="{{ old('subject', request('subject')) }}" required
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                            placeholder="Describe brevemente tu problema o consulta">
                     @error('subject')
@@ -27,22 +27,24 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Prioridad *</label>
-                    <select name="priority" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                        <option value="low" {{ old('priority') === 'low' ? 'selected' : '' }}>Baja - Consulta general</option>
-                        <option value="medium" {{ old('priority', 'medium') === 'medium' ? 'selected' : '' }}>Media - Necesito ayuda</option>
-                        <option value="high" {{ old('priority') === 'high' ? 'selected' : '' }}>Alta - Urgente / No funciona</option>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Motivo *</label>
+                    <select name="motivo" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        @foreach(\App\Models\Ticket::MOTIVOS as $valor => $etiqueta)
+                            <option value="{{ $valor }}" @selected(old('motivo', request('motivo', 'soporte')) === $valor)>{{ $etiqueta }}</option>
+                        @endforeach
                     </select>
-                    @error('priority')
+                    <p class="text-xs text-gray-500 mt-1">Nos ayuda a dirigir tu mensaje a quien corresponde.</p>
+                    @error('motivo')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
+
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Mensaje *</label>
                     <textarea name="message" rows="6" required
                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                              placeholder="Describe tu problema con detalle. Incluye pasos para reproducir si es posible.">{{ old('message') }}</textarea>
+                              placeholder="Describe tu problema con detalle. Incluye pasos para reproducir si es posible.">{{ old('message', request('message')) }}</textarea>
                     @error('message')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror

@@ -12,6 +12,8 @@ use App\Models\Correlative;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\Rule;
 
 class SunatConfigController extends Controller
 {
@@ -28,7 +30,7 @@ class SunatConfigController extends Controller
             'metodo_emision' => 'required|in:cisma_fact,sunat_manual',
             'usuario_sol' => 'nullable|string|max:20',
             'clave_sol' => 'nullable|string|max:20',
-            'certificado_pfx' => 'nullable|file|mimes:pfx,p12|max:10240',
+            'certificado_pfx' => 'nullable|file|extensions:pfx,p12|max:10240',
             'certificado_password' => 'nullable|required_with:certificado_pfx|string|max:50',
             // Credenciales API GRE (Guia de Remision)
             'gre_ruc_proveedor' => 'nullable|string|max:11',
@@ -165,6 +167,91 @@ class SunatConfigController extends Controller
             return back()->with('error', 'Para confirmar, escribe la palabra PRODUCCION.');
         }
 
+        // Los datos reales (certificado propio y credenciales SOL de la empresa)
+        // se piden aqui, en el momento de pasar a produccion. Mientras esta en
+        // pruebas no se le enseñan al cliente: alli usa el certificado y el
+        // usuario MODDATOS que pone la plataforma.
+        // Datos fiscales reales. En pruebas se pudo registrar con un RUC o una
+        // razon social cualquiera; al pasar a produccion tienen que ser los de
+        // verdad, porque son los que iran en cada comprobante ante SUNAT.
+        $request->validate([
+            'ruc' => ['required', 'string', 'size:11', 'regex:/^\d{11}$/', Rule::unique('companies', 'ruc')->ignore($company->id)],
+            'razon_social' => ['required', 'string', 'max:255'],
+        ], [
+            'ruc.required' => 'Escribe el RUC real de tu empresa.',
+            'ruc.size' => 'El RUC debe tener 11 dígitos.',
+            'ruc.regex' => 'El RUC debe tener 11 dígitos, solo números.',
+            'ruc.unique' => 'Ese RUC ya está registrado en otra empresa.',
+            'razon_social.required' => 'Escribe la razón social real de tu empresa.',
+        ]);
+
+        $rucReal = $request->input('ruc');
+
+        if ($company->emiteConCismaFact()) {
+            $request->validate([
+                'certificado_pfx' => 'nullable|file|extensions:pfx,p12|max:10240',
+                'certificado_password' => 'nullable|required_with:certificado_pfx|string|max:50',
+                'usuario_sol' => 'nullable|string|max:20',
+                'clave_sol' => 'nullable|string|max:20',
+            ], [
+                'certificado_pfx.extensions' => 'El certificado debe ser un archivo .pfx o .p12.',
+                'certificado_password.required_with' => 'Escribe la contraseña del certificado que estás subiendo.',
+            ]);
+
+            $datosReales = [];
+
+            if ($request->hasFile('certificado_pfx')) {
+                $file = $request->file('certificado_pfx');
+                $password = (string) $request->certificado_password;
+
+                $certs = [];
+                if (! openssl_pkcs12_read(file_get_contents($file->getRealPath()), $certs, $password)) {
+                    return back()
+                        ->withErrors(['certificado_password' => 'No se pudo abrir el certificado. Verifica que la contraseña sea correcta.'])
+                        ->withInput();
+                }
+
+                $datosCert = $this->extraerDatosCertificado($certs['cert'] ?? '');
+
+                // El certificado tiene que ser del mismo RUC que la empresa. Si no,
+                // SUNAT rechaza TODOS los comprobantes y el motivo no es evidente.
+                // Antes se guardaba el RUC del certificado sin compararlo nunca.
+                $rucCert = $datosCert['cert_ruc'] ?? null;
+
+                if ($rucCert && $rucCert !== $rucReal) {
+                    return back()->withInput()->withErrors([
+                        'certificado_pfx' => "El certificado pertenece al RUC {$rucCert}, pero la empresa es {$rucReal}. "
+                            . 'SUNAT rechazaría todos los comprobantes. Sube el certificado del RUC correcto.',
+                    ]);
+                }
+
+                $datosReales['certificado_pem'] = $file->store('certificados/' . $company->id, 'local');
+                $datosReales['certificado_password'] = $password;
+                $datosReales = array_merge($datosReales, $datosCert);
+            }
+
+            if ($request->filled('usuario_sol')) {
+                $datosReales['usuario_sol'] = $request->usuario_sol;
+            }
+
+            if ($request->filled('clave_sol')) {
+                $datosReales['clave_sol'] = $request->clave_sol;
+            }
+
+            if (! empty($datosReales)) {
+                $company->update($datosReales);
+                $company->refresh();
+            }
+
+            // El usuario de pruebas de SUNAT no sirve contra produccion: SUNAT
+            // responde 0111 "No tiene el perfil para enviar comprobantes".
+            if (strcasecmp(trim((string) $company->usuario_sol), 'MODDATOS') === 0) {
+                return back()->withInput()->with('error',
+                    'Todavía estás usando las credenciales de prueba. Escribe el Usuario SOL y la Clave SOL '
+                    . 'reales de tu empresa para poder emitir en producción.');
+            }
+        }
+
         // Las empresas que emiten con Cisma Fact NO pueden pasar a producción sin
         // su certificado real y sus credenciales SOL: si no, firmarían con el cert
         // de prueba y SUNAT rechazaría todo. (Las de emisión manual no lo necesitan.)
@@ -187,22 +274,36 @@ class SunatConfigController extends Controller
         }
 
         $branchIds = $company->branches()->pluck('id');
+        $razonSocialReal = $request->input('razon_social');
 
-        DB::transaction(function () use ($company, $branchIds) {
-            // 1) Borrar comprobantes de prueba de esta empresa.
+        DB::transaction(function () use ($company, $branchIds, $rucReal, $razonSocialReal) {
+            // 1) Borrar TODO lo emitido en pruebas. Antes solo se borraban los
+            //    cinco comprobantes principales y quedaban resumenes, anulaciones
+            //    y retenciones de prueba mezclados con los reales.
             Invoice::where('company_id', $company->id)->delete();
             Boleta::where('company_id', $company->id)->delete();
             CreditNote::where('company_id', $company->id)->delete();
             DebitNote::where('company_id', $company->id)->delete();
             DispatchGuide::where('company_id', $company->id)->delete();
 
-            // 2) Reiniciar correlativos a 0.
+            foreach (['daily_summaries', 'voided_documents', 'retentions'] as $tabla) {
+                if (Schema::hasTable($tabla)) {
+                    DB::table($tabla)->where('company_id', $company->id)->delete();
+                }
+            }
+
+            // 2) Reiniciar correlativos a 0: la numeracion real empieza en 1.
             Correlative::whereIn('branch_id', $branchIds)->update(['correlativo_actual' => 0]);
 
-            // 3) Activar producción.
-            $company->update(['modo_produccion' => true]);
+            // 3) Datos fiscales reales + produccion, en la misma operacion.
+            $company->update([
+                'ruc' => $rucReal,
+                'razon_social' => $razonSocialReal,
+                'modo_produccion' => true,
+            ]);
         });
 
-        return back()->with('success', '¡Listo! La empresa está en PRODUCCIÓN. Se eliminaron los comprobantes de prueba y se reiniciaron los correlativos. Ya puedes emitir comprobantes reales.');
+        return back()->with('success', '¡Listo! ' . $razonSocialReal . ' (RUC ' . $rucReal . ') está en PRODUCCIÓN. '
+            . 'Se eliminaron los comprobantes de prueba y la numeración empieza de nuevo. Ya puedes emitir comprobantes reales.');
     }
 }

@@ -362,11 +362,36 @@ trait HasCompanyConfigurations
     }
 
     /**
-     * Obtener endpoint para facturas según modo
+     * Obtener endpoint para facturas según modo.
+     *
+     * La tabla company_configurations esta vacia en la practica, asi que
+     * getSunatEndpoint() devolvia cadena vacia. Greenter recibia setService('')
+     * -> SoapClient::__setLocation('') -> se quedaba con la ubicacion por
+     * defecto del WSDL que trae la libreria, que apunta a BETA. Resultado: una
+     * empresa en PRODUCCION enviaba sus comprobantes reales al servidor de
+     * pruebas sin avisar. Por eso aqui se cae a las columnas endpoint_beta /
+     * endpoint_produccion, que si estan pobladas.
      */
     public function getInvoiceEndpoint(): string
     {
-        return $this->getSunatEndpoint('facturacion', 'endpoint');
+        $endpoint = trim((string) $this->getSunatEndpoint('facturacion', 'endpoint'));
+
+        if ($endpoint !== '') {
+            return $endpoint;
+        }
+
+        $endpoint = trim((string) ($this->modo_produccion
+            ? $this->endpoint_produccion
+            : $this->endpoint_beta));
+
+        if ($endpoint !== '') {
+            return $endpoint;
+        }
+
+        // Ultimo recurso: los endpoints oficiales de SUNAT.
+        return $this->modo_produccion
+            ? 'https://e-factura.sunat.gob.pe/ol-ti-itcpfegem/billService'
+            : 'https://e-beta.sunat.gob.pe/ol-ti-itcpfegem-beta/billService';
     }
 
     /**

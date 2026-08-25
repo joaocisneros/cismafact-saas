@@ -50,7 +50,49 @@ class ApiGlobalController extends Controller
             ->latest()
             ->get();
 
-        return view('super-admin.api-global', $data + ['sandboxTokens' => $sandboxTokens]);
+        // El eje de esta pantalla es la EMPRESA: cuanto consume de su cupo
+        // mensual y si puedes cortarle el acceso. Antes listaba credenciales
+        // sueltas, que no dicen quien esta cerca de pasarse.
+        $inicioMes = now()->startOfMonth();
+
+        $llamadasPorEmpresa = ApiUsage::selectRaw('company_id, COUNT(*) as total')
+            ->where('created_at', '>=', $inicioMes)
+            ->groupBy('company_id')
+            ->pluck('total', 'company_id');
+
+        $empresas = Company::with('plan:id,name,api_request_limit')
+            ->where('es_demo', false)
+            ->withCount([
+                'apiKeys',
+                'apiKeys as api_keys_activas_count' => fn ($q) => $q->where('active', true),
+            ])
+            ->orderBy('razon_social')
+            ->get()
+            ->map(function ($company) use ($llamadasPorEmpresa) {
+                $limite = (int) ($company->plan->api_request_limit ?? 0);
+                $usado = (int) ($llamadasPorEmpresa[$company->id] ?? 0);
+
+                return [
+                    'modelo' => $company,
+                    'plan' => $company->plan->name ?? 'Sin plan',
+                    'limite' => $limite,
+                    'usado' => $usado,
+                    'ilimitado' => $limite <= 0,
+                    'porcentaje' => $limite > 0 ? min(100, (int) round($usado * 100 / $limite)) : 0,
+                    'credenciales' => (int) $company->api_keys_count,
+                    'activas' => (int) $company->api_keys_activas_count,
+                ];
+            });
+
+        $logsRecientes = ApiUsage::with('company:id,razon_social')
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        return view('super-admin.api-global', $data + [
+            'empresas' => $empresas,
+            'logsRecientes' => $logsRecientes,
+        ]);
     }
 
     public function logs(Request $request)
@@ -96,6 +138,25 @@ class ApiGlobalController extends Controller
         }
 
         return view('super-admin.api-global.show-key', compact('apiKey', 'recentUsage', 'totalUsage'));
+    }
+
+    /**
+     * Corta o devuelve el acceso por API a una empresa entera.
+     *
+     * Actua sobre todas sus credenciales a la vez: ir bloqueandolas una por una
+     * dejaba huecos, porque basta con que quede una activa para seguir emitiendo.
+     */
+    public function toggleCompanyApi(Company $company)
+    {
+        $tieneActivas = $company->apiKeys()->where('active', true)->exists();
+
+        $company->apiKeys()->update(['active' => ! $tieneActivas]);
+
+        Cache::forget('api_global_index');
+
+        return back()->with('success', $tieneActivas
+            ? "Acceso por API cortado para {$company->razon_social}. Sus integraciones dejarán de emitir."
+            : "Acceso por API restablecido para {$company->razon_social}.");
     }
 
     public function toggleApiKey(ApiKey $apiKey)
@@ -144,12 +205,12 @@ class ApiGlobalController extends Controller
 
         Cache::forget('api_global_index');
 
-        // El secreto solo se muestra una vez, recién creado, para copiarlo.
-        return back()->with('sandbox_token', [
-            'name' => $apiKey->name,
-            'key' => $apiKey->key,
-            'secret' => $plainSecret,
-        ])->with('success', 'Token sandbox generado. Cópialo ahora (el secreto no se vuelve a mostrar).');
+        // El secreto no se repite aqui: queda guardado y se consulta cuando haga
+        // falta con el boton "Ver" de la fila. Antes se mostraba en un bloque
+        // aparte diciendo que no se volveria a mostrar, lo cual no era cierto, y
+        // ademas dejaba el secreto dentro de la sesion.
+        return back()->with('success',
+            "Token de «{$apiKey->name}» generado. Ábrelo con «Ver» para copiar sus credenciales.");
     }
 
     /**

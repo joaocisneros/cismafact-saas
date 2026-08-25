@@ -1,3 +1,11 @@
+@php
+    // El contador da de alta y edita usuarios de empresa, pero no toca
+    // cuentas de plataforma ni realiza acciones sobre cuentas ajenas
+    // (contrasena, bloqueo, borrado). El servidor lo comprueba igual; esto
+    // es para no ensenarle botones que le van a rebotar.
+    $esSuperAdmin = auth()->user()->hasRole('super_admin');
+@endphp
+
 @extends('layouts.app')
 
 @section('title', 'Gestión de Usuarios')
@@ -62,7 +70,7 @@
                     <tr class="border-b hover:bg-gray-50">
                         <td class="px-4 py-3 font-medium">{{ $user->name }}</td>
                         <td class="px-4 py-3 text-gray-500">{{ $user->email }}</td>
-                        <td class="px-4 py-3 text-gray-500">{{ $user->company->razon_social ?? 'N/A' }}</td>
+                        <td class="px-4 py-3 text-gray-500">{{ $user->company->razon_social ?? 'Plataforma' }}</td>
                         <td class="px-4 py-3">
                             <span class="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-700">
                                 {{ $user->role->display_name ?? $user->role->name ?? 'Sin rol' }}
@@ -77,29 +85,28 @@
                         </td>
                         <td class="px-4 py-3 text-gray-500">{{ $user->created_at->format('d/m/Y') }}</td>
                         <td class="px-4 py-3">
-                            <div class="flex flex-wrap gap-2">
-                                <button type="button" onclick="window.openAdminModal('{{ route('super-admin.users.show', $user) }}', 'Detalle de usuario')" class="text-sm text-blue-600 hover:text-blue-800">Ver</button>
-                                <button type="button" onclick="window.openAdminModal('{{ route('super-admin.users.edit', $user) }}', 'Editar usuario')" class="text-sm text-gray-600 hover:text-gray-800">Editar</button>
-                                @unless($user->hasRole('super_admin'))
-                                    <button type="button" onclick="window.openAdminModal('{{ route('super-admin.users.reset-password.form', $user) }}', 'Restablecer contraseña')" class="text-sm text-violet-600 hover:text-violet-800">Contraseña</button>
-                                    <form method="POST" action="{{ route('super-admin.users.toggle-lock', $user) }}">
-                                        @csrf
-                                        <button type="submit" class="text-sm {{ $user->isLocked() ? 'text-green-600 hover:text-green-800' : 'text-orange-600 hover:text-orange-800' }}">
-                                            {{ $user->isLocked() ? 'Desbloquear' : 'Bloquear' }}
-                                        </button>
-                                    </form>
+                            <div class="flex items-center gap-1.5">
+                                <x-icon-action icon="ver" label="Ver detalle" color="blue" type="button"
+                                               onclick="window.openAdminModal('{{ route('super-admin.users.show', $user) }}', 'Detalle de usuario')" />
+                                @if($esSuperAdmin || ! in_array(optional($user->role)->name, ['super_admin', 'contador'], true))
+                                    <x-icon-action icon="editar" label="Editar usuario" color="slate" type="button"
+                                                   onclick="window.openAdminModal('{{ route('super-admin.users.edit', $user) }}', 'Editar usuario')" />
+                                @endif
+                                @if($esSuperAdmin && ! $user->hasRole('super_admin'))
+                                    <x-icon-action icon="clave" label="Restablecer contraseña" color="violet" type="button"
+                                                   onclick="window.openAdminModal('{{ route('super-admin.users.reset-password.form', $user) }}', 'Restablecer contraseña')" />
                                     <form method="POST" action="{{ route('super-admin.users.toggle-active', $user) }}">
                                         @csrf
-                                        <button type="submit" class="text-sm {{ $user->active ? 'text-amber-600 hover:text-amber-800' : 'text-green-600 hover:text-green-800' }}">
-                                            {{ $user->active ? 'Suspender' : 'Activar' }}
-                                        </button>
+                                        <x-icon-action :icon="$user->active ? 'suspender' : 'activar'"
+                                                       :label="$user->active ? 'Suspender usuario' : 'Activar usuario'"
+                                                       :color="$user->active ? 'amber' : 'emerald'" />
                                     </form>
                                     <form method="POST" action="{{ route('super-admin.users.destroy', $user) }}" onsubmit="return confirm('¿Eliminar este usuario?');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-sm text-red-600 hover:text-red-800">Eliminar</button>
+                                        <x-icon-action icon="eliminar" label="Eliminar usuario" color="red" />
                                     </form>
-                                @endunless
+                                @endif
                             </div>
                         </td>
                     </tr>

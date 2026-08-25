@@ -10,7 +10,9 @@ use App\Services\SubscriptionStatusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Illuminate\Validation\Rule;
 
@@ -148,6 +150,9 @@ class SubscriptionController extends Controller
             'next_billing_at' => $subscription->auto_renew ? $newEnd : null,
         ]);
 
+        // Renovar es pagar: se levanta tambien la suspension manual.
+        $subscription->company?->update(['suspendida_manualmente' => false]);
+
         app(SubscriptionStatusService::class)->synchronize($subscription->load('company'));
         $this->forgetSubscriptionCaches();
 
@@ -157,11 +162,18 @@ class SubscriptionController extends Controller
     public function changeStatus(Request $request, Subscription $subscription): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => ['required', 'in:trial,active,suspended,cancelled,expired'],
+            'status' => ['required', 'in:trial,active,suspended,cancelled'],
         ]);
 
         DB::transaction(function () use ($subscription, $validated) {
             $subscription->update(['status' => $validated['status']]);
+
+            // Volver a poner la suscripcion en marcha es la via oficial para
+            // devolverle el acceso a una empresa suspendida a mano.
+            if (in_array($validated['status'], ['trial', 'active'], true)) {
+                $subscription->company?->update(['suspendida_manualmente' => false]);
+            }
+
             app(SubscriptionStatusService::class)->synchronize($subscription->load('company'));
         });
 
@@ -172,10 +184,10 @@ class SubscriptionController extends Controller
 
     private function validateSubscription(Request $request): array
     {
-        return $request->validate([
+        $validador = Validator::make($request->all(), [
             'company_id' => ['required', 'exists:companies,id'],
             'plan_id' => ['required', 'exists:plans,id'],
-            'status' => ['required', 'in:trial,active,suspended,cancelled,expired'],
+            'status' => ['required', 'in:trial,active,suspended,cancelled'],
             'starts_at' => ['required', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
             'next_billing_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
@@ -183,6 +195,27 @@ class SubscriptionController extends Controller
             'auto_renew' => ['nullable', 'boolean'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
+
+        // Marcar "Activa" con la fecha de fin ya pasada no sirve de nada: al
+        // guardar, el sistema la vuelve a vencer y parece que el cambio no se
+        // aplicó. Es mejor decirlo que deshacerlo en silencio.
+        $validador->after(function ($v) use ($request) {
+            $estado = $request->input('status');
+            $fin = $request->input('ends_at');
+
+            if (! in_array($estado, ['trial', 'active'], true) || ! $fin) {
+                return;
+            }
+
+            if (Carbon::parse($fin)->startOfDay()->isBefore(today())) {
+                $v->errors()->add('ends_at',
+                    'Para dejarla vigente, la fecha de fin debe ser hoy o posterior. '
+                    . 'Con una fecha pasada vuelve a marcarse como vencida al guardar. '
+                    . 'Usa «Renovar» si solo quieres extenderla.');
+            }
+        });
+
+        return $validador->validate();
     }
 
     private function subscriptionAttributes(

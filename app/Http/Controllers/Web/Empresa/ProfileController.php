@@ -6,14 +6,24 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
 
 class ProfileController extends Controller
 {
-    public function edit()
+    public function edit(Request $request)
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
+
+        // Desde el menu del avatar se pide en modal; la pagina completa sigue
+        // existiendo por si se entra directo a la URL.
+        if ($request->ajax() || $request->boolean('modal')) {
+            return view('partials.perfil-modal', [
+                'user' => $user,
+                'rutaUpdate' => 'empresa.profile.update',
+            ]);
+        }
 
         return view('empresa.profile.edit', compact('user'));
     }
@@ -32,7 +42,11 @@ class ProfileController extends Controller
 
         if ($request->filled('password')) {
             if (!Hash::check($request->current_password, $user->password)) {
-                return back()->withErrors(['current_password' => 'La contraseña actual es incorrecta.']);
+                // Desde el modal la peticion va por fetch: un redirect se leeria
+                // como "guardado". Con ValidationException responde 422.
+                throw ValidationException::withMessages([
+                    'current_password' => 'La contraseña actual es incorrecta.',
+                ]);
             }
 
             $user->update([

@@ -49,9 +49,10 @@
         }
 
         .logo-img-ticket {
-            width: 75px;
-            height: 31px;
-            object-fit: contain;
+            /* max-* en vez de medidas fijas: dompdf no aplica object-fit y con
+               width/height fijos el logo sale estirado. */
+            max-width: 75px;
+            max-height: 31px;
             display: block;
             margin: 0 auto 1px;
             padding: 1px;

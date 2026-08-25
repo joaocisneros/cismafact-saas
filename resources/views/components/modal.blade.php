@@ -9,7 +9,7 @@
      aria-modal="true">
 
     {{-- Backdrop --}}
-    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+    <div class="fixed inset-0 bg-gray-900/50 transition-opacity"
          x-show="open"
          x-transition:enter="ease-out duration-300"
          x-transition:enter-start="opacity-0"
@@ -21,7 +21,8 @@
     </div>
 
     {{-- Modal --}}
-    <div class="flex min-h-full items-center justify-center p-4">
+    {{-- relative: el fondo es fixed y sin esto se pintaba por encima del contenido --}}
+    <div class="relative flex min-h-full items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-lg transform transition-all"
              x-show="open"
              x-transition:enter="ease-out duration-300"

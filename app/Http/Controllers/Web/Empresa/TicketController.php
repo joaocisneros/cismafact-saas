@@ -13,12 +13,21 @@ class TicketController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $tickets = Ticket::where('user_id', $user->id)
+
+        // El dueño ve los tickets de toda su empresa: si un cajero reporta un
+        // fallo, quien responde por la cuenta tiene que poder seguirlo. Un
+        // empleado solo ve los suyos.
+        $suyos = fn ($query) => $user->hasRole('company_admin')
+            ? $query->where('company_id', $user->company_id)
+            : $query->where('user_id', $user->id);
+
+        $tickets = $suyos(Ticket::query())
+            ->with('user:id,name')
             ->withCount('replies')
             ->latest()
             ->paginate(15);
 
-        $counts = Ticket::where('user_id', $user->id)
+        $counts = $suyos(Ticket::query())
             ->selectRaw("
                 SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) as abiertos,
                 SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as progreso,
@@ -39,11 +48,16 @@ class TicketController extends Controller
     {
         $user = Auth::user();
 
-        if ($ticket->user_id !== $user->id) {
-            abort(403);
-        }
+        $puedeVerlo = $ticket->user_id === $user->id
+            || ($user->hasRole('company_admin') && $ticket->company_id === $user->company_id);
+
+        abort_unless($puedeVerlo, 403, 'Ese ticket no es de tu empresa.');
 
         $ticket->load(['replies.user']);
+
+        if (request()->ajax() || request()->boolean('modal')) {
+            return view('empresa.support._detail_modal', compact('ticket'));
+        }
 
         return view('empresa.support.show', compact('ticket'));
     }
@@ -91,6 +105,10 @@ class TicketController extends Controller
 
     public function create()
     {
+        if (request()->ajax() || request()->boolean('modal')) {
+            return view('empresa.support._form_modal');
+        }
+
         return view('empresa.support.create');
     }
 
@@ -99,7 +117,7 @@ class TicketController extends Controller
         $validated = $request->validate([
             'subject' => 'required|string|max:255',
             'message' => 'required|string',
-            'priority' => 'required|in:low,medium,high',
+            'motivo' => 'required|in:' . implode(',', array_keys(Ticket::MOTIVOS)),
         ]);
 
         $user = Auth::user();
@@ -109,7 +127,9 @@ class TicketController extends Controller
             'company_id' => $user->company_id,
             'subject' => $validated['subject'],
             'message' => $validated['message'],
-            'priority' => $validated['priority'],
+            // La prioridad la fija el motivo, no el cliente.
+            'priority' => Ticket::prioridadSegunMotivo($validated['motivo']),
+            'motivo' => $validated['motivo'],
             'status' => 'open',
         ]);
 

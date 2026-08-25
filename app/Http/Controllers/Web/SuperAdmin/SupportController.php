@@ -17,22 +17,32 @@ class SupportController extends Controller
             'search' => ['nullable', 'string', 'max:100'],
             'status' => ['nullable', Rule::in(['open', 'in_progress', 'closed'])],
             'priority' => ['nullable', Rule::in(['low', 'medium', 'high'])],
+            'motivo' => ['nullable', Rule::in(array_keys(Ticket::MOTIVOS))],
         ]);
 
         $query = Ticket::query()
-            ->select(['id', 'user_id', 'company_id', 'subject', 'status', 'priority', 'created_at'])
+            ->select(['id', 'user_id', 'company_id', 'subject', 'status', 'priority', 'motivo', 'created_at'])
             ->with([
                 'user:id,name',
                 'company:id,razon_social',
             ])
             ->withCount('replies');
 
+        // Por defecto solo lo pendiente: un ticket cerrado ya no pide nada, y
+        // dejarlos en la lista hace que lo que sí necesita respuesta se pierda
+        // entre lo resuelto. Los cerrados se ven eligiendo su filtro.
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        } elseif (! $request->boolean('todos')) {
+            $query->whereIn('status', ['open', 'in_progress']);
         }
 
         if ($request->filled('priority')) {
             $query->where('priority', $request->priority);
+        }
+
+        if ($request->filled('motivo')) {
+            $query->where('motivo', $request->motivo);
         }
 
         if ($search = $request->input('search')) {
@@ -103,6 +113,27 @@ class SupportController extends Controller
         $this->forgetSupportCaches();
 
         return back()->with('success', 'Respuesta enviada.');
+    }
+
+    /**
+     * Ajusta la prioridad de un ticket.
+     *
+     * La pone el sistema segun el motivo, pero quien atiende ve el caso completo
+     * y puede corregirla: un cliente que reporta un fallo como "consulta" no
+     * deberia quedarse al final de la cola.
+     */
+    public function changePriority(Request $request, Ticket $ticket)
+    {
+        $validated = $request->validate([
+            'priority' => ['required', Rule::in(['low', 'medium', 'high'])],
+        ]);
+
+        $ticket->update(['priority' => $validated['priority']]);
+        $this->forgetSupportCaches();
+
+        $nombres = ['low' => 'baja', 'medium' => 'media', 'high' => 'alta'];
+
+        return back()->with('success', "Prioridad cambiada a {$nombres[$validated['priority']]}.");
     }
 
     public function close(Ticket $ticket)

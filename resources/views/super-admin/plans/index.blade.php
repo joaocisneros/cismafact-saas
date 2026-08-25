@@ -14,37 +14,6 @@
             </button>
         </div>
 
-        <div class="grid gap-4 lg:grid-cols-3">
-            <div class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm lg:col-span-2">
-                <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Asignar plan a empresa</h3>
-                <form method="POST" action="{{ route('super-admin.plans.assign-company') }}" class="mt-4 grid gap-3 md:grid-cols-[1fr_220px_auto]">
-                    @csrf
-                    <select name="company_id" class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" required>
-                        <option value="">Seleccionar empresa</option>
-                        @foreach($companies as $company)
-                            <option value="{{ $company->id }}">{{ $company->razon_social }} - {{ $company->ruc }}</option>
-                        @endforeach
-                    </select>
-
-                    <select name="plan_id" class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" required>
-                        <option value="">Seleccionar plan</option>
-                        @foreach($activePlans as $plan)
-                            <option value="{{ $plan->id }}">{{ $plan->name }}</option>
-                        @endforeach
-                    </select>
-
-                    <button type="submit" class="rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">
-                        Asignar
-                    </button>
-                </form>
-            </div>
-
-            <div class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-                <p class="text-sm font-semibold text-gray-900">Planes base</p>
-                <p class="mt-2 text-sm text-gray-500">Free, Pro y Business quedan creados por migración. Puedes editarlos según tu demo comercial.</p>
-            </div>
-        </div>
-
         <form method="GET" class="grid gap-3 border-y border-gray-200 bg-white py-4 sm:grid-cols-[1fr_220px_auto]">
             <input name="search" value="{{ request('search') }}" placeholder="Buscar plan..."
                    class="rounded-md border border-gray-300 px-3 py-2 text-sm">
@@ -94,18 +63,19 @@
                                     </span>
                                 </td>
                                 <td class="whitespace-nowrap px-5 py-4">
-                                    <div class="flex items-center gap-3 text-sm">
-                                        <button type="button" onclick="window.openAdminModal('{{ route('super-admin.plans.edit', $plan) }}', 'Editar plan')" class="font-medium text-blue-600 hover:text-blue-800">Editar</button>
+                                    <div class="flex items-center gap-1.5">
+                                        <x-icon-action icon="editar" label="Editar plan" color="blue" type="button"
+                                                       onclick="window.openAdminModal('{{ route('super-admin.plans.edit', $plan) }}', 'Editar plan')" />
                                         <form method="POST" action="{{ route('super-admin.plans.toggle', $plan) }}">
                                             @csrf
-                                            <button type="submit" class="font-medium {{ $plan->active ? 'text-amber-600 hover:text-amber-800' : 'text-green-600 hover:text-green-800' }}">
-                                                {{ $plan->active ? 'Desactivar' : 'Activar' }}
-                                            </button>
+                                            <x-icon-action :icon="$plan->active ? 'suspender' : 'activar'"
+                                                           :label="$plan->active ? 'Desactivar plan' : 'Activar plan'"
+                                                           :color="$plan->active ? 'amber' : 'emerald'" />
                                         </form>
                                         <form method="POST" action="{{ route('super-admin.plans.destroy', $plan) }}" onsubmit="return confirm('Eliminar plan {{ $plan->name }}?')">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="font-medium text-red-600 hover:text-red-800">Eliminar</button>
+                                            <x-icon-action icon="eliminar" label="Eliminar plan" color="red" />
                                         </form>
                                     </div>
                                 </td>

@@ -31,9 +31,15 @@ class ClientController extends Controller
         return view('empresa.clients.index', compact('clients'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        return view('empresa.clients.form', ['client' => new Client()]);
+        // Desde el listado se pide en modal; la pagina completa sigue existiendo
+        // por si se entra directo a la URL.
+        $vista = ($request->ajax() || $request->boolean('modal'))
+            ? 'empresa.clients._form_modal'
+            : 'empresa.clients.form';
+
+        return view($vista, ['client' => new Client()]);
     }
 
     public function store(Request $request)
@@ -49,11 +55,15 @@ class ClientController extends Controller
             ->with('success', 'Cliente registrado correctamente.');
     }
 
-    public function edit(Client $client)
+    public function edit(Request $request, Client $client)
     {
         $this->authorizeClient($client);
 
-        return view('empresa.clients.form', compact('client'));
+        $vista = ($request->ajax() || $request->boolean('modal'))
+            ? 'empresa.clients._form_modal'
+            : 'empresa.clients.form';
+
+        return view($vista, compact('client'));
     }
 
     public function update(Request $request, Client $client)

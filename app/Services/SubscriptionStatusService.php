@@ -59,7 +59,21 @@ class SubscriptionStatusService
 
     private function synchronizeCompanyAccess(Subscription $subscription, bool $active): void
     {
-        if ($subscription->company && $subscription->company->activo !== $active) {
+        $company = $subscription->company;
+
+        if (! $company) {
+            return;
+        }
+
+        // Una empresa suspendida a mano solo la reactiva el Super Admin desde
+        // Suscripciones. Antes esto la volvia a encender en cuanto la
+        // suscripcion seguia vigente, asi que el boton "Suspender empresa" se
+        // deshacia solo en la siguiente peticion del cliente.
+        if ($active && $company->suspendida_manualmente) {
+            return;
+        }
+
+        if ($company->activo !== $active) {
             DB::table('companies')
                 ->where('id', $subscription->company_id)
                 ->update(['activo' => $active, 'updated_at' => now()]);

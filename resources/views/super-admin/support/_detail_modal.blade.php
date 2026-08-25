@@ -14,7 +14,17 @@
             </p>
         </div>
         <div class="flex items-center gap-2">
-            <span class="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700">Prioridad {{ $priorityLabels[$ticket->priority] }}</span>
+            {{-- La prioridad la fija el motivo, pero aqui se puede corregir. --}}
+            <form method="POST" action="{{ route('super-admin.support.priority', $ticket) }}"
+                  class="inline-flex items-center gap-1">
+                @csrf
+                <select name="priority" onchange="this.form.submit()"
+                        class="rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700">
+                    @foreach($priorityLabels as $valor => $etiqueta)
+                        <option value="{{ $valor }}" @selected($ticket->priority === $valor)>Prioridad {{ $etiqueta }}</option>
+                    @endforeach
+                </select>
+            </form>
             <span class="rounded px-2 py-1 text-xs font-medium {{ $statusClasses[$ticket->status] }}">{{ $statusLabels[$ticket->status] }}</span>
         </div>
     </div>

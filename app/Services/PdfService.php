@@ -522,9 +522,16 @@ class PdfService
     {
         $options = new Options();
         $options->set('defaultFont', 'Arial');
-        $options->set('isRemoteEnabled', true);
         $options->set('isHtml5ParserEnabled', true);
-        
+
+        // Las plantillas incrustan logo y QR como data URI: no hace falta que
+        // DomPDF salga a la red ni lea del disco. Dejar solo 'data://' cierra
+        // el SSRF y la lectura de archivos locales via <img>/@font-face.
+        $options->set('isRemoteEnabled', false);
+        $options->set('allowedProtocols', ['data://' => ['rules' => []]]);
+        $options->set('chroot', [storage_path('app/public')]);
+
+
         $pdf = new Dompdf($options);
         $pdf->loadHtml($html);
         

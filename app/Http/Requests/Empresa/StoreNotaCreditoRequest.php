@@ -28,4 +28,9 @@ class StoreNotaCreditoRequest extends StoreNotaRequest
     {
         return array_keys(self::MOTIVOS);
     }
+    /** Codigo SUNAT del comprobante: Nota de credito = 07. */
+    protected function tipoDocumento(): string
+    {
+        return '07';
+    }
 }

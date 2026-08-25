@@ -66,8 +66,14 @@
                             <div class="text-xs text-gray-400">{{ $g->client?->numero_documento }}</div>
                         </td>
                         <td class="px-4 py-3 text-gray-600">{{ $g->fecha_emision?->format('d/m/Y') }}</td>
-                        <td class="px-4 py-3"><span class="rounded px-2 py-1 text-xs font-medium {{ $estadoClass }}">{{ $g->estado_sunat ?? 'PENDIENTE' }}</span></td>
-                        <td class="px-4 py-3 text-right"><button type="button" onclick="openAdminModal('{{ route('empresa.guias.show', $g->id) }}', 'Guía {{ $g->serie }}-{{ $g->correlativo }}')" class="text-sm font-medium text-blue-600 hover:text-blue-800">Ver</button></td>
+                        <td class="px-4 py-3">
+                            <span class="rounded px-2 py-1 text-xs font-medium {{ $estadoClass }}">{{ $g->estado_sunat ?? 'PENDIENTE' }}</span>
+                            @if($g->anulado_en)
+                                <span class="ml-1 rounded bg-red-50 px-2 py-1 text-xs font-medium text-red-700"
+                                      title="Dada de baja en el portal SUNAT el {{ $g->anulado_en->format('d/m/Y') }}">Dada de baja</span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-3 text-right"><x-icon-action icon="ver" label="Ver guía" color="blue" type="button" onclick="openAdminModal('{{ route('empresa.guias.show', $g->id) }}', 'Guía {{ $g->serie }}-{{ $g->correlativo }}')" /></td>
                     </tr>
                 @empty
                     <tr><td colspan="5" class="px-4 py-10 text-center text-gray-500">No hay guías emitidas todavía.</td></tr>
@@ -78,4 +84,6 @@
 
     <div>{{ $guias->links() }}</div>
 </div>
+
+@include('partials.abrir-modal-documento', ['ruta' => 'empresa.guias.show'])
 @endsection

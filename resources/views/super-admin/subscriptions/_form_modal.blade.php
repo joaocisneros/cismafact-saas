@@ -34,11 +34,21 @@
     </label>
 
     <label class="text-sm font-medium text-gray-700">Estado
+        {{-- "Vencida" no se ofrece: no es una decision, es una consecuencia de
+             la fecha. La pone el sistema al pasar el vencimiento y se quita
+             sola al poner una fecha futura. Ofrecerla llevaba a dejar la
+             suscripcion en "Vencida" con fecha valida, y la empresa seguia
+             bloqueada sin motivo aparente. --}}
         <select name="status" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
-            @foreach(['trial' => 'Prueba', 'active' => 'Activa', 'suspended' => 'Suspendida', 'cancelled' => 'Cancelada', 'expired' => 'Vencida'] as $value => $label)
-                <option value="{{ $value }}" @selected(($subscription->status ?? 'active') === $value)>{{ $label }}</option>
+            @foreach(['trial' => 'Prueba', 'active' => 'Activa', 'suspended' => 'Suspendida', 'cancelled' => 'Cancelada'] as $value => $label)
+                <option value="{{ $value }}" @selected(($subscription->status ?? 'active') === $value || (($subscription->status ?? '') === 'expired' && $value === 'active'))>{{ $label }}</option>
             @endforeach
         </select>
+        @if(($subscription->status ?? '') === 'expired')
+            <span class="mt-1 block text-xs font-normal text-amber-700">
+                Está vencida. Pon una fecha de vencimiento futura y déjala en «Activa» para devolverle el acceso.
+            </span>
+        @endif
     </label>
 
     <label class="text-sm font-medium text-gray-700">Precio mensual
