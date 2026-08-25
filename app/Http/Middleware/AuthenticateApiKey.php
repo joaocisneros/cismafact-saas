@@ -115,9 +115,13 @@ class AuthenticateApiKey
         $request->attributes->set('api_key', $apiKey);
         $request->attributes->set('api_company', $apiKey->company);
 
+        // La empresa la manda el token, nunca el cuerpo de la peticion. Antes
+        // se tomaba el company_id que enviara el cliente y el del token solo
+        // servia de respaldo: con eso se podian emitir comprobantes a nombre de
+        // otra empresa, gastandole su correlativo y firmando con su certificado.
         $request->merge([
-            'company_id' => $request->input('company_id', $apiKey->company_id),
-            'branch_id' => $request->input('branch_id', $apiKey->company->branches->first()?->id),
+            'company_id' => $apiKey->company_id,
+            'branch_id' => $this->sucursalDeLaEmpresa($request, $apiKey),
         ]);
 
         $apiKey->forceFill(['last_used_at' => now()])->save();
@@ -151,5 +155,23 @@ class AuthenticateApiKey
             '#^api/(?:boletas|facturas|notas-credito|notas-debito|guias-remision|v1/(?:invoices|boletas|credit-notes|debit-notes|dispatch-guides))/?$#',
             $request->path()
         );
+    }
+
+    /**
+     * Sucursal sobre la que se va a trabajar, siempre dentro de la empresa del
+     * token. Si el cliente pide una que no es suya, se ignora y se usa el
+     * domicilio fiscal: no se le da pista de que existe.
+     */
+    private function sucursalDeLaEmpresa(Request $request, ApiKey $apiKey): ?int
+    {
+        $sucursales = $apiKey->company->branches;
+        $pedida = $request->input('branch_id');
+
+        if ($pedida !== null && $sucursales->contains('id', (int) $pedida)) {
+            return (int) $pedida;
+        }
+
+        return $sucursales->firstWhere('codigo', '0000')?->id
+            ?? $sucursales->first()?->id;
     }
 }
