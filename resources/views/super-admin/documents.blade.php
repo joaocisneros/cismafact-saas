@@ -106,11 +106,12 @@
                                 <div class="flex items-center gap-1.5">
                                     <x-icon-action icon="ver" label="Ver detalle" color="blue" type="button"
                                                    onclick="window.openAdminModal('{{ route('super-admin.documents.show', ['type' => $doc->type_key, 'id' => $doc->id]) }}', 'Detalle del documento')" />
-                                    @if($doc->pdf_path)
-                                        <a href="{{ route('super-admin.documents.view', ['type' => $doc->type_key, 'id' => $doc->id, 'file' => 'pdf']) }}" target="_blank"
-                                           title="Representación impresa del comprobante"
-                                           class="rounded-md bg-red-50 px-2 py-1 text-xs font-semibold text-red-600 ring-1 ring-inset ring-red-200 transition hover:bg-red-100">PDF</a>
-                                    @endif
+                                    {{-- El PDF no se condiciona a pdf_path: los comprobantes
+                                         emitidos por API no lo guardan al crearse y la ruta lo
+                                         genera al vuelo. Antes el boton simplemente no salia. --}}
+                                    <a href="{{ route('super-admin.documents.view', ['type' => $doc->type_key, 'id' => $doc->id, 'file' => 'pdf']) }}" target="_blank"
+                                       title="Representación impresa del comprobante"
+                                       class="rounded-md bg-red-50 px-2 py-1 text-xs font-semibold text-red-600 ring-1 ring-inset ring-red-200 transition hover:bg-red-100">PDF</a>
                                     @if($doc->xml_path)
                                         <a href="{{ route('super-admin.documents.download', ['type' => $doc->type_key, 'id' => $doc->id, 'file' => 'xml']) }}"
                                            title="Documento enviado a SUNAT"

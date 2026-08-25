@@ -38,7 +38,7 @@
         @endif
 
         @foreach(['pdf' => 'PDF', 'xml' => 'XML', 'cdr' => 'CDR'] as $file => $label)
-            @if($doc->{$file . '_path'} ?? false)
+            @if($file === 'pdf' || ($doc->{$file . '_path'} ?? false))
                 <a href="{{ $file === 'pdf'
                     ? route('super-admin.documents.view', ['type' => $type, 'id' => $doc->id, 'file' => $file])
                     : route('super-admin.documents.download', ['type' => $type, 'id' => $doc->id, 'file' => $file]) }}"
