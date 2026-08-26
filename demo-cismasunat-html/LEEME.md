@@ -116,9 +116,9 @@ comprobante configuradas.
 ## Estructura
 
 ```
-sandbox/
+demo-cismasunat-html/
 ├── index.html
-├── css/sandbox.css
+├── css/estilos.css
 └── js/
     ├── core.js            configuración, cliente HTTP y registro de llamadas
     ├── ui.js              iconos, formato, avisos y ventana modal
