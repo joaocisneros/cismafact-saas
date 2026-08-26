@@ -101,8 +101,11 @@ class PdfTemplateService
             'A5' => 'a5',
             'a5' => 'a5',
             '80mm' => '80mm',
+            // El 58mm usa la maqueta estrecha: es la misma composicion, solo
+            // cambia el ancho del papel al montar el PDF.
+            '58mm' => '50mm',
             '50mm' => '50mm',
-            'ticket' => '50mm', // Legacy ticket maps to 50mm
+            'ticket' => '50mm',
         ];
 
         return $formatMap[$format] ?? 'a4';

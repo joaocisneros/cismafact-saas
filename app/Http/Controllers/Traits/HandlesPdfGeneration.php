@@ -15,10 +15,8 @@ trait HandlesPdfGeneration
     protected function generateDocumentPdf($document, string $documentType, Request $request): JsonResponse
     {
         try {
-            $format = $request->get('format', 'A4');
-            $format = $format === 'ticket-80' ? '80mm' : $format;
-            
-            // Validar formato
+            $format = PdfService::normalizarFormato($request->get('format'));
+
             $pdfService = app(PdfService::class);
             if (!$pdfService->isValidFormat($format)) {
                 return response()->json([
@@ -71,21 +69,25 @@ trait HandlesPdfGeneration
     protected function downloadDocumentPdf($document, Request $request)
     {
         try {
-            $format = $request->get('format', 'A4');
-            
-            // Validar formato
+            $format = PdfService::normalizarFormato($request->get('format'));
+
             $pdfService = app(PdfService::class);
             if (!$pdfService->isValidFormat($format)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Formato no válido. Formatos disponibles: ' . implode(', ', $pdfService->getAvailableFormats())
+                    'message' => 'Formato no válido. Formatos disponibles: '
+                        . implode(', ', array_keys(PdfService::FORMATS)),
                 ], 400);
             }
-            
+
             $fileService = app(FileService::class);
-            $download = $fileService->downloadPdf($document);
-            
-            if (!$download) {
+
+            // Se busca el PDF de ESTE formato, no el ultimo que se guardara.
+            // Antes se devolvia siempre el archivo cacheado, asi que pedir un
+            // ticket de 80mm entregaba el A4 que se genero al emitir.
+            $download = $fileService->downloadPdfEnFormato($document, $format);
+
+            if (! $download) {
                 $document->loadMissing(['company', 'branch', 'client']);
 
                 $pdfContent = match(class_basename($document)) {
@@ -98,10 +100,16 @@ trait HandlesPdfGeneration
                 };
 
                 $pdfPath = $fileService->savePdf($document, $pdfContent, $format);
-                $document->update(['pdf_path' => $pdfPath]);
-                $download = $fileService->downloadPdf($document->refresh());
+
+                // pdf_path guarda el A4, que es el que abren las pantallas del
+                // sistema; los tickets quedan en disco junto a el.
+                if ($format === 'A4' || empty($document->pdf_path)) {
+                    $document->update(['pdf_path' => $pdfPath]);
+                }
+
+                $download = $fileService->downloadPdfEnFormato($document, $format);
             }
-            
+
             return $download;
 
         } catch (\Exception $e) {

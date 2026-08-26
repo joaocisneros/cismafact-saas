@@ -35,10 +35,41 @@ class PdfService
     const FORMATS = [
         'A4' => ['width' => 210, 'height' => 297, 'unit' => 'mm'],
         'A5' => ['width' => 148, 'height' => 210, 'unit' => 'mm'],
-        '80mm' => ['width' => 80, 'height' => 200, 'unit' => 'mm'], // Ticket común
-        '50mm' => ['width' => 50, 'height' => 150, 'unit' => 'mm'], // Ticket pequeño
-        'ticket' => ['width' => 50, 'height' => 150, 'unit' => 'mm'], // Nuevo formato optimizado
+        '80mm' => ['width' => 80, 'height' => 200, 'unit' => 'mm'],  // Ticket termico ancho
+        '58mm' => ['width' => 58, 'height' => 150, 'unit' => 'mm'],  // Ticket termico estrecho
+        '50mm' => ['width' => 50, 'height' => 150, 'unit' => 'mm'],  // Se conserva por compatibilidad
+        'ticket' => ['width' => 58, 'height' => 150, 'unit' => 'mm'],
     ];
+
+    /**
+     * Nombres con los que las aplicaciones cliente piden cada formato.
+     *
+     * Se aceptan las variantes que ya circulan ('ticket-80', 'ticket_58') para
+     * que quien tenga una integracion escrita no se quede sin PDF.
+     */
+    const ALIAS_FORMATOS = [
+        'a4' => 'A4',
+        'a5' => 'A5',
+        'ticket-80' => '80mm', 'ticket_80' => '80mm', 'ticket80' => '80mm', '80' => '80mm',
+        'ticket-58' => '58mm', 'ticket_58' => '58mm', 'ticket58' => '58mm', '58' => '58mm',
+        'ticket-50' => '50mm', 'ticket_50' => '50mm', 'ticket50' => '50mm', '50' => '50mm',
+    ];
+
+    /** Devuelve el nombre canonico del formato, o el mismo si no hay alias. */
+    public static function normalizarFormato(?string $formato): string
+    {
+        $formato = trim((string) $formato);
+
+        if ($formato === '') {
+            return 'A4';
+        }
+
+        if (isset(self::FORMATS[$formato])) {
+            return $formato;
+        }
+
+        return self::ALIAS_FORMATOS[strtolower($formato)] ?? $formato;
+    }
 
     public function generateInvoicePdf($invoice, string $format = 'A4'): string
     {

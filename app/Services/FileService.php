@@ -165,6 +165,30 @@ class FileService
         );
     }
 
+    /**
+     * Descarga el PDF de un formato concreto (A4, 80mm, 58mm...).
+     *
+     * Cada formato se guarda en su propio archivo: generatePath le pone el
+     * sufijo del formato a todo lo que no sea A4. downloadPdf() en cambio mira
+     * la columna pdf_path, que solo recuerda uno, y por eso devolvia el mismo
+     * PDF para cualquier formato que se pidiera.
+     */
+    public function downloadPdfEnFormato($document, string $format = 'A4')
+    {
+        $ruta = $this->generatePath($document, 'pdf', $format);
+
+        if (! Storage::disk(self::DISCO)->exists($ruta)) {
+            return null;
+        }
+
+        $sufijo = $format === 'A4' ? '' : '_' . $format;
+
+        return Storage::disk(self::DISCO)->download(
+            $ruta,
+            $document->numero_completo . $sufijo . '.pdf'
+        );
+    }
+
     public function createDirectoryStructure(): void
     {
         // Tipos de comprobantes
