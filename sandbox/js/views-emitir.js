@@ -1,0 +1,555 @@
+/* ===========================================================================
+   Emision de comprobantes. Un solo motor de formulario con lo propio de cada
+   tipo: factura, boleta, nota de credito, nota de debito y guia de remision.
+   ======================================================================== */
+
+var App = window.App || (window.App = {});
+App.vistas = App.vistas || {};
+
+(function () {
+
+  var TIPOS = {
+    factura: { recurso: 'facturas',       codigo: '01', nombre: 'Factura',           docCliente: '6', conItems: true },
+    boleta:  { recurso: 'boletas',        codigo: '03', nombre: 'Boleta de venta',   docCliente: '1', conItems: true },
+    nc:      { recurso: 'notas-credito',  codigo: '07', nombre: 'Nota de crédito',   docCliente: null, conItems: true, afecta: true },
+    nd:      { recurso: 'notas-debito',   codigo: '08', nombre: 'Nota de débito',    docCliente: null, conItems: true, afecta: true },
+    guia:    { recurso: 'guias-remision', codigo: '09', nombre: 'Guía de remisión',  docCliente: null, conItems: false, traslado: true }
+  };
+
+  var lineas = [];   // lineas del comprobante en edicion
+  var tipoActual = 'factura';
+
+  /* ------------------------------------------------------------- Calculo */
+
+  function calcular() {
+    var gravado = 0, exonerado = 0, inafecto = 0, exportacion = 0, igv = 0;
+
+    lineas.forEach(function (l) {
+      var valor = (Number(l.cantidad) || 0) * (Number(l.precio) || 0);
+      if (l.igv === '10') { gravado += valor; igv += valor * 0.18; }
+      else if (l.igv === '20') { exonerado += valor; }
+      else if (l.igv === '30') { inafecto += valor; }
+      else if (l.igv === '40') { exportacion += valor; }
+    });
+
+    var r = function (n) { return Math.round(n * 100) / 100; };
+    return {
+      gravado: r(gravado), exonerado: r(exonerado), inafecto: r(inafecto),
+      exportacion: r(exportacion), igv: r(igv),
+      total: r(gravado + exonerado + inafecto + exportacion + igv)
+    };
+  }
+
+  /* -------------------------------------------------------------- Piezas */
+
+  function opciones(lista, campoC, campoN, seleccionado) {
+    return lista.map(function (x) {
+      var c = x[campoC], n = x[campoN];
+      return '<option value="' + App.esc(c) + '"' + (String(c) === String(seleccionado) ? ' selected' : '') + '>'
+        + App.esc(n) + '</option>';
+    }).join('');
+  }
+
+  function filaLinea(l, i) {
+    return '<tr data-i="' + i + '">'
+      + '<td><input data-c="codigo" value="' + App.esc(l.codigo) + '" style="width:70px"></td>'
+      + '<td><input data-c="descripcion" value="' + App.esc(l.descripcion) + '"></td>'
+      + '<td><select data-c="unidad" style="width:82px">' + opciones(App.UNIDADES, 'c', 'c', l.unidad) + '</select></td>'
+      + '<td><input data-c="cantidad" type="number" step="0.001" min="0.001" value="' + App.esc(l.cantidad) + '" style="width:74px"></td>'
+      + '<td><input data-c="precio" type="number" step="0.01" min="0" value="' + App.esc(l.precio) + '" style="width:92px"></td>'
+      + '<td><select data-c="igv" style="width:112px">' + opciones(App.AFECTACIONES, 'c', 'n', l.igv) + '</select></td>'
+      + '<td class="num" data-total>' + App.money((Number(l.cantidad) || 0) * (Number(l.precio) || 0)) + '</td>'
+      + '<td><button class="del" data-quitar aria-label="Quitar línea">' + App.icono('quitar') + '</button></td>'
+      + '</tr>';
+  }
+
+  function pintarLineas() {
+    var cuerpo = document.getElementById('em-lineas');
+    if (!cuerpo) return;
+
+    cuerpo.innerHTML = lineas.length
+      ? lineas.map(filaLinea).join('')
+      : '<tr><td colspan="8" class="empty" style="padding:22px">Agrega al menos una línea.</td></tr>';
+
+    var t = calcular();
+    var totales = document.getElementById('em-totales');
+    if (totales) {
+      totales.innerHTML = ''
+        + linea('Gravado', t.gravado)
+        + (t.exonerado ? linea('Exonerado', t.exonerado) : '')
+        + (t.inafecto ? linea('Inafecto', t.inafecto) : '')
+        + (t.exportacion ? linea('Exportación', t.exportacion) : '')
+        + linea('IGV (18%)', t.igv)
+        + '<div class="l big"><span>Total</span><b>' + App.money(t.total) + '</b></div>';
+    }
+
+    function linea(k, v) {
+      return '<div class="l"><span>' + k + '</span><b>' + App.money(v) + '</b></div>';
+    }
+  }
+
+  /* ---------------------------------------------------------- Formulario */
+
+  function formulario(clave) {
+    var t = TIPOS[clave];
+    var hoy = new Date().toISOString().slice(0, 10);
+
+    var bloqueCliente = t.traslado
+      ? ''
+      : '<div class="card">'
+        +   '<div class="card-head"><h2>' + (t.afecta ? 'Cliente' : 'Cliente') + '</h2>'
+        +     '<button class="btn sm ghost" id="em-ejemplo">Usar uno de ejemplo</button></div>'
+        +   '<div class="card-body"><div class="grid c2">'
+        +     '<div class="field"><label for="em-cli-tipo">Tipo de documento</label>'
+        +       '<select id="em-cli-tipo">'
+        +         opciones(App.TIPOS_DOC_CLIENTE, 'c', 'n', t.docCliente || '6')
+        +       '</select></div>'
+        +     '<div class="field"><label for="em-cli-num">Número</label>'
+        +       '<div class="row" style="gap:6px;flex-wrap:nowrap">'
+        +         '<input class="mono" id="em-cli-num" placeholder="20601030013">'
+        +         '<button class="btn sm" id="em-cli-buscar" title="Buscar entre los clientes ya registrados">'
+        +           App.icono('buscar') + '</button>'
+        +       '</div></div>'
+        +     '<div class="field" style="grid-column:1/-1"><label for="em-cli-nom">Razón social o nombre</label>'
+        +       '<input id="em-cli-nom"></div>'
+        +     '<div class="field" style="grid-column:1/-1"><label for="em-cli-dir">Dirección</label>'
+        +       '<input id="em-cli-dir"></div>'
+        +   '</div></div>'
+        + '</div>';
+
+    var bloqueAfectado = t.afecta
+      ? '<div class="card">'
+        +   '<div class="card-head"><h2>Documento que modifica</h2>'
+        +     '<span class="hint">Debe existir y ser de esta empresa</span></div>'
+        +   '<div class="card-body"><div class="grid c2">'
+        +     '<div class="field"><label for="em-af-tipo">Tipo</label>'
+        +       '<select id="em-af-tipo">'
+        +         '<option value="01">Factura</option><option value="03">Boleta</option>'
+        +       '</select></div>'
+        +     '<div class="field"><label for="em-af-num">Número completo</label>'
+        +       '<input class="mono" id="em-af-num" placeholder="F001-000001"></div>'
+        +     '<div class="field"><label for="em-af-mot">Motivo</label>'
+        +       '<select id="em-af-mot">'
+        +         opciones(clave === 'nc' ? App.MOTIVOS_NC : App.MOTIVOS_ND, 'c', 'n')
+        +       '</select></div>'
+        +     '<div class="field"><label for="em-af-des">Descripción del motivo</label>'
+        +       '<input id="em-af-des" placeholder="Devolución total de la mercadería"></div>'
+        +   '</div></div>'
+        + '</div>'
+      : '';
+
+    var bloqueTraslado = t.traslado
+      ? '<div class="card">'
+        +   '<div class="card-head"><h2>Destinatario y traslado</h2>'
+        +     '<span class="hint">El destinatario debe estar registrado</span></div>'
+        +   '<div class="card-body"><div class="grid c2">'
+        +     '<div class="field" style="grid-column:1/-1"><label for="em-gr-dest">Destinatario</label>'
+        +       '<select id="em-gr-dest"><option value="">Cargando clientes…</option></select></div>'
+        +     '<div class="field"><label for="em-gr-mot">Motivo del traslado</label>'
+        +       '<select id="em-gr-mot">' + opciones(App.MOTIVOS_TRASLADO, 'c', 'n') + '</select></div>'
+        +     '<div class="field"><label for="em-gr-mod">Modalidad</label>'
+        +       '<select id="em-gr-mod"><option value="01">Transporte público</option>'
+        +         '<option value="02" selected>Transporte privado</option></select></div>'
+        +     '<div class="field"><label for="em-gr-fecha">Fecha del traslado</label>'
+        +       '<input type="date" id="em-gr-fecha" value="' + hoy + '"></div>'
+        +     '<div class="field"><label for="em-gr-peso">Peso total (KGM)</label>'
+        +       '<input type="number" step="0.001" min="0.001" id="em-gr-peso" value="10"></div>'
+        +     '<div class="field"><label for="em-gr-bultos">Número de bultos</label>'
+        +       '<input type="number" min="1" id="em-gr-bultos" value="1"></div>'
+        +     '<div class="field"><label for="em-gr-pubi">Ubigeo de partida</label>'
+        +       '<input class="mono" id="em-gr-pubi" value="150101" maxlength="6"></div>'
+        +     '<div class="field" style="grid-column:1/-1"><label for="em-gr-pdir">Dirección de partida</label>'
+        +       '<input id="em-gr-pdir" placeholder="Av. Demo 123, Lima"></div>'
+        +     '<div class="field"><label for="em-gr-lubi">Ubigeo de llegada</label>'
+        +       '<input class="mono" id="em-gr-lubi" value="150101" maxlength="6"></div>'
+        +     '<div class="field" style="grid-column:1/-1"><label for="em-gr-ldir">Dirección de llegada</label>'
+        +       '<input id="em-gr-ldir" placeholder="Jr. Destino 456, Lima"></div>'
+        +   '</div></div>'
+        + '</div>'
+      : '';
+
+    var bloqueItems = t.conItems
+      ? '<div class="card">'
+        +   '<div class="card-head"><h2>Líneas del comprobante</h2>'
+        +     '<div class="row" style="gap:6px">'
+        +       '<button class="btn sm ghost" id="em-catalogo">Del catálogo</button>'
+        +       '<button class="btn sm" id="em-agregar">' + App.icono('mas') + 'Añadir línea</button>'
+        +     '</div></div>'
+        +   '<div class="table-wrap"><table class="items"><thead><tr>'
+        +     '<th>Código</th><th>Descripción</th><th>Unidad</th><th>Cant.</th>'
+        +     '<th>V. unitario</th><th>Afectación IGV</th><th style="text-align:right">Valor</th><th></th>'
+        +   '</tr></thead><tbody id="em-lineas"></tbody></table></div>'
+        +   '<div class="card-body"><div class="totals" id="em-totales"></div></div>'
+        + '</div>'
+      : '';
+
+    return ''
+      + '<div class="view-inner">'
+      +   '<div class="tabs" id="em-tabs">'
+      +     Object.keys(TIPOS).map(function (k) {
+              return '<button data-t="' + k + '"' + (k === clave ? ' class="on"' : '') + '>'
+                + TIPOS[k].nombre + '</button>';
+            }).join('')
+      +   '</div>'
+
+      +   '<div class="split">'
+      +     '<div class="grid" style="gap:14px">'
+
+      +       '<div class="card">'
+      +         '<div class="card-head"><h2>Datos del comprobante</h2>'
+      +           '<span class="hint"><span class="verb post">POST</span> /' + t.recurso + '</span></div>'
+      +         '<div class="card-body"><div class="grid c2">'
+      +           '<div class="field"><label for="em-serie">Serie</label>'
+      +             '<select id="em-serie" class="mono"><option>Cargando…</option></select></div>'
+      +           '<div class="field"><label for="em-fecha">Fecha de emisión</label>'
+      +             '<input type="date" id="em-fecha" value="' + hoy + '"></div>'
+      +           (t.traslado ? '' :
+                    '<div class="field"><label for="em-moneda">Moneda</label>'
+                    + '<select id="em-moneda">' + opciones(App.MONEDAS, 'c', 'n') + '</select></div>'
+                    + '<div class="field"><label for="em-pago">Forma de pago</label>'
+                    + '<select id="em-pago"><option value="Contado">Contado</option>'
+                    + '<option value="Credito">Crédito</option></select></div>')
+      +         '</div></div>'
+      +       '</div>'
+
+      +       bloqueAfectado
+      +       bloqueCliente
+      +       bloqueTraslado
+      +       bloqueItems
+
+      +       '<div class="row end">'
+      +         '<button class="btn primary" id="em-enviar">' + App.icono('enviar') + 'Emitir y enviar a SUNAT</button>'
+      +       '</div>'
+
+      +     '</div>'
+
+      +     '<div class="grid" style="gap:14px">'
+      +       '<div class="card">'
+      +         '<div class="card-head"><h2>Cuerpo de la petición</h2>'
+      +           '<button class="btn sm ghost" id="em-copiar">' + App.icono('copiar') + 'Copiar</button></div>'
+      +         '<div class="card-body"><pre class="code" id="em-peticion">{}</pre></div>'
+      +       '</div>'
+      +       '<div class="card" id="em-caja-arch" style="display:none">'
+      +         '<div class="card-head"><h2 id="em-arch-titulo">Comprobante emitido</h2>'
+      +           '<div class="row" style="gap:6px" id="em-arch-botones"></div></div>'
+      +         '<div class="card-body" id="em-arch-visor"></div>'
+      +       '</div>'
+      +       '<div class="card" id="em-caja-resp" style="display:none">'
+      +         '<div class="card-head"><h2>Respuesta</h2><span id="em-resp-estado"></span></div>'
+      +         '<div class="card-body"><pre class="code" id="em-respuesta"></pre></div>'
+      +       '</div>'
+      +     '</div>'
+      +   '</div>'
+      + '</div>';
+  }
+
+  /* ------------------------------------------------------------- Payload */
+
+  function armar() {
+    var t = TIPOS[tipoActual];
+    var serie = document.getElementById('em-serie');
+    var opcion = serie.selectedOptions[0];
+
+    var datos = {
+      serie: serie.value,
+      branch_id: opcion ? Number(opcion.dataset.branch) : null,
+      fecha_emision: document.getElementById('em-fecha').value
+    };
+
+    if (!t.traslado) {
+      datos.moneda = document.getElementById('em-moneda').value;
+      datos.tipo_operacion = '0101';
+      datos.forma_pago_tipo = document.getElementById('em-pago').value;
+      datos.client = {
+        tipo_documento: document.getElementById('em-cli-tipo').value,
+        numero_documento: document.getElementById('em-cli-num').value.trim(),
+        razon_social: document.getElementById('em-cli-nom').value.trim(),
+        direccion: document.getElementById('em-cli-dir').value.trim()
+      };
+    }
+
+    if (t.afecta) {
+      datos.tipo_doc_afectado = document.getElementById('em-af-tipo').value;
+      datos.num_doc_afectado = document.getElementById('em-af-num').value.trim();
+      datos.cod_motivo = document.getElementById('em-af-mot').value;
+      datos.des_motivo = document.getElementById('em-af-des').value.trim()
+        || document.getElementById('em-af-mot').selectedOptions[0].textContent;
+    }
+
+    if (t.traslado) {
+      datos.destinatario_id = Number(document.getElementById('em-gr-dest').value) || null;
+      datos.cod_traslado = document.getElementById('em-gr-mot').value;
+      datos.des_traslado = document.getElementById('em-gr-mot').selectedOptions[0].textContent;
+      datos.mod_traslado = document.getElementById('em-gr-mod').value;
+      datos.fecha_traslado = document.getElementById('em-gr-fecha').value;
+      datos.peso_total = Number(document.getElementById('em-gr-peso').value);
+      datos.und_peso_total = 'KGM';
+      datos.num_bultos = Number(document.getElementById('em-gr-bultos').value);
+      datos.partida_ubigeo = document.getElementById('em-gr-pubi').value.trim();
+      datos.partida_direccion = document.getElementById('em-gr-pdir').value.trim();
+      datos.llegada_ubigeo = document.getElementById('em-gr-lubi').value.trim();
+      datos.llegada_direccion = document.getElementById('em-gr-ldir').value.trim();
+    }
+
+    if (t.conItems) {
+      datos.detalles = lineas.map(function (l) {
+        return {
+          codigo: l.codigo,
+          descripcion: l.descripcion,
+          unidad: l.unidad,
+          cantidad: Number(l.cantidad),
+          mto_valor_unitario: Number(l.precio),
+          tip_afe_igv: l.igv,
+          porcentaje_igv: l.igv === '10' ? 18 : 0
+        };
+      });
+    }
+
+    return datos;
+  }
+
+  function refrescarPeticion() {
+    var caja = document.getElementById('em-peticion');
+    if (caja) caja.innerHTML = App.json(armar());
+  }
+
+  /* --------------------------------------------------------------- Vista */
+
+  App.vistas.emitir = {
+    titulo: 'Emitir',
+    sub: 'Crear y enviar comprobantes a SUNAT',
+
+    render: function (host) {
+      lineas = [{ codigo: 'P001', descripcion: 'Laptop HP Pavilion 15 i7 16GB 512GB SSD', unidad: 'NIU', cantidad: 1, precio: 2950, igv: '10' }];
+      dibujar(host, tipoActual);
+    }
+  };
+
+  function dibujar(host, clave) {
+    tipoActual = clave;
+    var t = TIPOS[clave];
+    host.innerHTML = formulario(clave);
+
+    App.cargarSeries('em-serie', t.codigo, refrescarPeticion);
+    if (t.traslado) App.cargarClientes('em-gr-dest', refrescarPeticion);
+    if (t.conItems) pintarLineas();
+    refrescarPeticion();
+
+    /* Cambio de tipo de comprobante */
+    document.getElementById('em-tabs').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-t]');
+      if (!b || b.dataset.t === tipoActual) return;
+      dibujar(host, b.dataset.t);
+    });
+
+    /* Cualquier cambio actualiza el JSON de la derecha */
+    host.addEventListener('input', function (e) {
+      var fila = e.target.closest('tr[data-i]');
+      if (fila) {
+        var l = lineas[Number(fila.dataset.i)];
+        var campo = e.target.dataset.c;
+        if (l && campo) {
+          l[campo] = e.target.value;
+          fila.querySelector('[data-total]').textContent =
+            App.money((Number(l.cantidad) || 0) * (Number(l.precio) || 0));
+          var tot = calcular();
+          document.getElementById('em-totales').innerHTML =
+            document.getElementById('em-totales').innerHTML; // se recalcula abajo
+          pintarTotales(tot);
+        }
+      }
+      refrescarPeticion();
+    });
+    host.addEventListener('change', refrescarPeticion);
+
+    function pintarTotales(t) {
+      var caja = document.getElementById('em-totales');
+      if (!caja) return;
+      var l = function (k, v) { return '<div class="l"><span>' + k + '</span><b>' + App.money(v) + '</b></div>'; };
+      caja.innerHTML = l('Gravado', t.gravado)
+        + (t.exonerado ? l('Exonerado', t.exonerado) : '')
+        + (t.inafecto ? l('Inafecto', t.inafecto) : '')
+        + (t.exportacion ? l('Exportación', t.exportacion) : '')
+        + l('IGV (18%)', t.igv)
+        + '<div class="l big"><span>Total</span><b>' + App.money(t.total) + '</b></div>';
+    }
+
+    /* Lineas */
+    if (t.conItems) {
+      document.getElementById('em-agregar').addEventListener('click', function () {
+        lineas.push({ codigo: '', descripcion: '', unidad: 'NIU', cantidad: 1, precio: 0, igv: '10' });
+        pintarLineas(); refrescarPeticion();
+      });
+
+      document.getElementById('em-lineas').addEventListener('click', function (e) {
+        var b = e.target.closest('[data-quitar]');
+        if (!b) return;
+        lineas.splice(Number(b.closest('tr').dataset.i), 1);
+        pintarLineas(); refrescarPeticion();
+      });
+
+      document.getElementById('em-catalogo').addEventListener('click', abrirCatalogo);
+    }
+
+    /* Cliente */
+    if (!t.traslado) {
+      document.getElementById('em-ejemplo').addEventListener('click', function () {
+        var quiere = document.getElementById('em-cli-tipo').value;
+        var c = App.CLIENTES_EJEMPLO.filter(function (x) { return x.tipo === quiere; })[0]
+             || App.CLIENTES_EJEMPLO[0];
+        document.getElementById('em-cli-tipo').value = c.tipo;
+        document.getElementById('em-cli-num').value = c.numero;
+        document.getElementById('em-cli-nom').value = c.razon_social;
+        document.getElementById('em-cli-dir').value = c.direccion;
+        refrescarPeticion();
+      });
+
+      document.getElementById('em-cli-buscar').addEventListener('click', async function () {
+        var tipo = document.getElementById('em-cli-tipo').value;
+        var num = document.getElementById('em-cli-num').value.trim();
+        if (!num) { App.aviso('Escribe el número de documento'); return; }
+        this.disabled = true;
+        try {
+          var r = await App.api.buscarDocumento(tipo, num);
+          document.getElementById('em-cli-nom').value = r.data.razon_social || '';
+          document.getElementById('em-cli-dir').value = r.data.direccion || '';
+          App.aviso('Cliente encontrado', r.data.razon_social, 'ok');
+          refrescarPeticion();
+        } catch (e) {
+          App.aviso('No está registrado', 'Escribe sus datos: quedará guardado al emitir.');
+        } finally {
+          this.disabled = false;
+        }
+      });
+    }
+
+    document.getElementById('em-copiar').addEventListener('click', function () {
+      App.copiar(JSON.stringify(armar(), null, 2));
+    });
+
+    document.getElementById('em-enviar').addEventListener('click', enviar);
+  }
+
+  /* --------------------------------------------------------------- Envio */
+
+  async function enviar() {
+    var boton = document.getElementById('em-enviar');
+    var t = TIPOS[tipoActual];
+    var caja = document.getElementById('em-caja-resp');
+    var pre = document.getElementById('em-respuesta');
+    var marca = document.getElementById('em-resp-estado');
+
+    boton.disabled = true;
+    caja.style.display = '';
+    marca.innerHTML = '<span class="pill mute">enviando…</span>';
+    pre.textContent = '';
+    document.getElementById('em-caja-arch').style.display = 'none';
+
+    try {
+      var r = await App.api.emitir(t.recurso, armar());
+      var d = r.data || {};
+      marca.innerHTML = '<span class="pill ok">201 · ' + App.esc(d.estado_sunat || 'CREADO') + '</span>';
+      pre.innerHTML = App.json(r);
+      if (d.id) mostrarArchivos(t.recurso, d);
+      App.aviso(
+        t.nombre + ' ' + (d.numero_completo || '') + ' emitida',
+        d.estado_sunat === 'ACEPTADO' ? 'SUNAT la aceptó' : ('Estado: ' + (d.estado_sunat || '—')),
+        'ok'
+      );
+    } catch (e) {
+      marca.innerHTML = '<span class="pill err">' + (e.estado || 'ERROR') + '</span>';
+      pre.innerHTML = App.json(
+        (e.registro && e.registro.respuesta) || { message: e.message, errors: e.errores }
+      );
+      App.avisoError(e);
+    } finally {
+      boton.disabled = false;
+    }
+  }
+
+  /* ---------------------------------------- Archivos del recien emitido */
+
+  /**
+   * Ensena el PDF nada mas emitir. Los comprobantes creados por API no guardan
+   * el PDF al nacer: la ruta de descarga lo genera cuando se pide, asi que aqui
+   * basta con pedirlo.
+   */
+  async function mostrarArchivos(recurso, doc) {
+    var caja = document.getElementById('em-caja-arch');
+    var titulo = document.getElementById('em-arch-titulo');
+    var botones = document.getElementById('em-arch-botones');
+    var visor = document.getElementById('em-arch-visor');
+
+    caja.style.display = '';
+    titulo.textContent = doc.numero_completo || 'Comprobante emitido';
+    botones.innerHTML = ['pdf', 'xml', 'cdr'].map(function (f) {
+      return '<button class="btn sm ghost" data-f="' + f + '">'
+        + App.icono('bajar') + f.toUpperCase() + '</button>';
+    }).join('');
+    visor.innerHTML = '<div class="empty" style="padding:26px">Generando el PDF…</div>';
+
+    botones.onclick = async function (e) {
+      var b = e.target.closest('button[data-f]');
+      if (!b) return;
+      var f = b.dataset.f;
+      b.disabled = true;
+      try {
+        var blob = await App.api.descargar(recurso, doc.id, f);
+        var ext = f === 'cdr' ? 'zip' : f;
+        App.guardarBlob(blob, (f === 'cdr' ? 'R-' : '') + doc.numero_completo + '.' + ext);
+      } catch (err) {
+        App.avisoError(err);
+      } finally {
+        b.disabled = false;
+      }
+    };
+
+    try {
+      var pdf = await App.api.descargar(recurso, doc.id, 'pdf');
+      var url = URL.createObjectURL(pdf);
+      visor.innerHTML = '<iframe src="' + url + '" title="PDF de ' + App.esc(doc.numero_completo) + '" '
+        + 'style="width:100%;height:520px;border:1px solid var(--line);border-radius:5px;background:#fff"></iframe>';
+    } catch (err) {
+      // Que falle la vista previa no invalida la emision: el comprobante ya
+      // esta en SUNAT. Se dice, y los botones de descarga siguen ahi.
+      visor.innerHTML = '<div class="note">El comprobante se emitió correctamente, '
+        + 'pero no se pudo mostrar el PDF aquí: ' + App.esc(err.message)
+        + '. Prueba con el botón PDF de arriba.</div>';
+    }
+  }
+
+  /* ------------------------------------------------------------ Catalogo */
+
+  function abrirCatalogo() {
+    var cuerpo = '<div class="table-wrap"><table><thead><tr>'
+      + '<th>Código</th><th>Descripción</th><th>Unidad</th>'
+      + '<th style="text-align:right">Precio</th><th></th></tr></thead><tbody>'
+      + App.PRODUCTOS.map(function (p, i) {
+          return '<tr>'
+            + '<td class="mono">' + App.esc(p.codigo) + '</td>'
+            + '<td>' + App.esc(p.descripcion) + '</td>'
+            + '<td class="mono">' + App.esc(p.unidad) + '</td>'
+            + '<td class="num">' + App.money(p.precio) + '</td>'
+            + '<td style="text-align:right"><button class="btn sm" data-p="' + i + '">Añadir</button></td>'
+            + '</tr>';
+        }).join('')
+      + '</tbody></table></div>';
+
+    var scrim = App.modal('Catálogo de ejemplo', cuerpo,
+      '<button class="btn ghost" onclick="App.cerrarModal()">Cerrar</button>');
+
+    scrim.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-p]');
+      if (!b) return;
+      var p = App.PRODUCTOS[Number(b.dataset.p)];
+      lineas.push({
+        codigo: p.codigo, descripcion: p.descripcion, unidad: p.unidad,
+        cantidad: 1, precio: p.precio, igv: p.igv
+      });
+      pintarLineas();
+      refrescarPeticion();
+      App.aviso('Añadido', p.descripcion, 'ok');
+    });
+  }
+
+})();
