@@ -8,17 +8,19 @@
         'tipo_documento_nombre' => $tipo_documento_nombre
     ])
 
-    {{-- Reference Document --}}
-    @if(isset($documento_afectado) || isset($motivo))
+    {{-- Documento que modifica. Ojo: documento_afectado y motivo llegan como
+         arreglos desde PdfService, no como texto; imprimirlos enteros reventaba
+         la plantilla y el ticket no salia. --}}
+    @if(!empty($documento_afectado) || !empty($motivo))
         <div class="client-section">
-            @if(isset($documento_afectado))
+            @if(!empty($documento_afectado))
                 <div class="client-details">
-                    DOC. AFECTADO: {{ $documento_afectado }}
+                    DOC. AFECTADO: {{ trim(($documento_afectado['tipo'] ?? '') . ' ' . ($documento_afectado['numero'] ?? '')) }}
                 </div>
             @endif
-            @if(isset($motivo))
+            @if(!empty($motivo))
                 <div class="client-details">
-                    MOTIVO: {{ $motivo }}
+                    MOTIVO: {{ $motivo['descripcion'] ?? $motivo['codigo'] ?? '' }}
                 </div>
             @endif
         </div>
