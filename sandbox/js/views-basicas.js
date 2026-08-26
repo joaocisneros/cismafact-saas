@@ -254,7 +254,15 @@ App.vistas.comprobantes = {
       +   '</div>'
       +   '<div class="card"><div class="card-head">'
       +     '<h2 id="cp-titulo">Facturas</h2>'
-      +     '<span class="hint" id="cp-ruta"></span></div>'
+      +     '<div class="row" style="gap:9px">'
+      +       '<span class="hint" id="cp-ruta"></span>'
+      +       '<select id="cp-papel" class="mono" style="width:auto;padding:5px 26px 5px 8px;font-size:12px" '
+      +         'title="Formato del PDF al descargar">'
+      +         App.FORMATOS_PDF.map(function (f) {
+                  return '<option value="' + f.c + '">' + App.esc(f.n) + '</option>';
+                }).join('')
+      +       '</select>'
+      +     '</div></div>'
       +     '<div id="cp-tabla"><div class="empty">Cargando…</div></div>'
       +   '</div>'
       + '</div>';
@@ -317,11 +325,14 @@ App.vistas.comprobantes = {
         var formato = b.dataset.bajar;
         b.disabled = true;
         try {
-          var blob = await App.api.descargar(recurso, b.dataset.id, formato);
+          var papel = document.getElementById('cp-papel').value;
+          var blob = await App.api.descargar(recurso, b.dataset.id, formato, papel);
           var ext = formato === 'cdr' ? 'zip' : formato;
           var prefijo = formato === 'cdr' ? 'R-' : '';
-          App.guardarBlob(blob, prefijo + b.dataset.num + '.' + ext);
-          App.aviso('Descargado', prefijo + b.dataset.num + '.' + ext, 'ok');
+          var sufijo = (formato === 'pdf' && papel !== 'A4') ? '_' + papel : '';
+          var nombre = prefijo + b.dataset.num + sufijo + '.' + ext;
+          App.guardarBlob(blob, nombre);
+          App.aviso('Descargado', nombre, 'ok');
         } catch (err) {
           App.avisoError(err);
         } finally {

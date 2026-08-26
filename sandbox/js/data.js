@@ -89,3 +89,12 @@ App.MOTIVOS_TRASLADO = [
   { c: '09', n: 'Exportación' },
   { c: '13', n: 'Otros' }
 ];
+
+/* Formatos de impresion que acepta la API. Los dos de ticket son los anchos
+   reales de las impresoras termicas; el 50mm queda por compatibilidad. */
+App.FORMATOS_PDF = [
+  { c: 'A4',   n: 'A4 — hoja completa' },
+  { c: 'A5',   n: 'A5 — media hoja' },
+  { c: '80mm', n: 'Ticket 80 mm' },
+  { c: '58mm', n: 'Ticket 58 mm' }
+];

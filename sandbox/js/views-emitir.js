@@ -139,7 +139,11 @@ App.vistas = App.vistas || {};
       : '';
 
     var bloqueTraslado = t.traslado
-      ? '<div class="card">'
+      ? '<div class="note">La guía de remisión no viaja por el mismo servicio que '
+        + 'el resto: SUNAT la recibe por su API de GRE, con credenciales propias '
+        + '(usuario SOL y client_id específicos). Si la empresa no las tiene '
+        + 'configuradas, la guía se crea pero queda en <b>PENDIENTE</b>.</div>'
+        + '<div class="card">'
         +   '<div class="card-head"><h2>Destinatario y traslado</h2>'
         +     '<span class="hint">El destinatario debe estar registrado</span></div>'
         +   '<div class="card-body"><div class="grid c2">'
@@ -164,6 +168,38 @@ App.vistas = App.vistas || {};
         +       '<input class="mono" id="em-gr-lubi" value="150101" maxlength="6"></div>'
         +     '<div class="field" style="grid-column:1/-1"><label for="em-gr-ldir">Dirección de llegada</label>'
         +       '<input id="em-gr-ldir" placeholder="Jr. Destino 456, Lima"></div>'
+        +   '</div></div>'
+        + '</div>'
+        + '<div class="card" id="em-gr-privado">'
+        +   '<div class="card-head"><h2>Conductor y vehículo</h2>'
+        +     '<span class="hint">Obligatorio en transporte privado</span></div>'
+        +   '<div class="card-body"><div class="grid c2">'
+        +     '<div class="field"><label for="em-gr-cdoc">Documento del conductor</label>'
+        +       '<select id="em-gr-cdoc"><option value="1">DNI</option>'
+        +         '<option value="4">Carnet de extranjería</option>'
+        +         '<option value="7">Pasaporte</option></select></div>'
+        +     '<div class="field"><label for="em-gr-cnum">Número</label>'
+        +       '<input class="mono" id="em-gr-cnum" value="46756431"></div>'
+        +     '<div class="field"><label for="em-gr-cnom">Nombres</label>'
+        +       '<input id="em-gr-cnom" value="JUAN CARLOS"></div>'
+        +     '<div class="field"><label for="em-gr-cape">Apellidos</label>'
+        +       '<input id="em-gr-cape" value="PÉREZ LÓPEZ"></div>'
+        +     '<div class="field"><label for="em-gr-clic">Licencia de conducir</label>'
+        +       '<input class="mono" id="em-gr-clic" value="Q46756431"></div>'
+        +     '<div class="field"><label for="em-gr-placa">Placa del vehículo</label>'
+        +       '<input class="mono" id="em-gr-placa" value="ABC-123"></div>'
+        +   '</div></div>'
+        + '</div>'
+        + '<div class="card" id="em-gr-publico" style="display:none">'
+        +   '<div class="card-head"><h2>Transportista</h2>'
+        +     '<span class="hint">Obligatorio en transporte público</span></div>'
+        +   '<div class="card-body"><div class="grid c2">'
+        +     '<div class="field"><label for="em-gr-tdoc">Documento</label>'
+        +       '<select id="em-gr-tdoc"><option value="6">RUC</option></select></div>'
+        +     '<div class="field"><label for="em-gr-tnum">Número</label>'
+        +       '<input class="mono" id="em-gr-tnum" value="20548112719"></div>'
+        +     '<div class="field" style="grid-column:1/-1"><label for="em-gr-tnom">Razón social</label>'
+        +       '<input id="em-gr-tnom" value="TRANSPORTES DEMO SAC"></div>'
         +   '</div></div>'
         + '</div>'
       : '';
@@ -289,6 +325,22 @@ App.vistas = App.vistas || {};
       datos.partida_direccion = document.getElementById('em-gr-pdir').value.trim();
       datos.llegada_ubigeo = document.getElementById('em-gr-lubi').value.trim();
       datos.llegada_direccion = document.getElementById('em-gr-ldir').value.trim();
+
+      // SUNAT pide conductor y placa cuando el traslado lo hace la propia
+      // empresa, y los datos del transportista cuando lo hace un tercero.
+      if (datos.mod_traslado === '02') {
+        datos.conductor_tipo = 'Principal';
+        datos.conductor_tipo_doc = document.getElementById('em-gr-cdoc').value;
+        datos.conductor_num_doc = document.getElementById('em-gr-cnum').value.trim();
+        datos.conductor_nombres = document.getElementById('em-gr-cnom').value.trim();
+        datos.conductor_apellidos = document.getElementById('em-gr-cape').value.trim();
+        datos.conductor_licencia = document.getElementById('em-gr-clic').value.trim();
+        datos.vehiculo_placa = document.getElementById('em-gr-placa').value.trim();
+      } else {
+        datos.transportista_tipo_doc = document.getElementById('em-gr-tdoc').value;
+        datos.transportista_num_doc = document.getElementById('em-gr-tnum').value.trim();
+        datos.transportista_razon_social = document.getElementById('em-gr-tnom').value.trim();
+      }
     }
 
     if (t.conItems) {
@@ -331,7 +383,17 @@ App.vistas = App.vistas || {};
     host.innerHTML = formulario(clave);
 
     App.cargarSeries('em-serie', t.codigo, refrescarPeticion);
-    if (t.traslado) App.cargarClientes('em-gr-dest', refrescarPeticion);
+    if (t.traslado) {
+      App.cargarClientes('em-gr-dest', refrescarPeticion);
+
+      var alternar = function () {
+        var privado = document.getElementById('em-gr-mod').value === '02';
+        document.getElementById('em-gr-privado').style.display = privado ? '' : 'none';
+        document.getElementById('em-gr-publico').style.display = privado ? 'none' : '';
+      };
+      document.getElementById('em-gr-mod').addEventListener('change', alternar);
+      alternar();
+    }
     if (t.conItems) pintarLineas();
     refrescarPeticion();
 
@@ -482,21 +544,26 @@ App.vistas = App.vistas || {};
 
     caja.style.display = '';
     titulo.textContent = doc.numero_completo || 'Comprobante emitido';
-    botones.innerHTML = ['pdf', 'xml', 'cdr'].map(function (f) {
-      return '<button class="btn sm ghost" data-f="' + f + '">'
-        + App.icono('bajar') + f.toUpperCase() + '</button>';
-    }).join('');
-    visor.innerHTML = '<div class="empty" style="padding:26px">Generando el PDF…</div>';
-
+    botones.innerHTML = '<select id="em-arch-papel" class="mono" style="width:auto;padding:5px 26px 5px 8px;font-size:12px">'
+      + App.FORMATOS_PDF.map(function (f) {
+          return '<option value="' + f.c + '">' + App.esc(f.n) + '</option>';
+        }).join('')
+      + '</select>'
+      + ['pdf', 'xml', 'cdr'].map(function (f) {
+          return '<button class="btn sm ghost" data-f="' + f + '">'
+            + App.icono('bajar') + f.toUpperCase() + '</button>';
+        }).join('');
     botones.onclick = async function (e) {
       var b = e.target.closest('button[data-f]');
       if (!b) return;
       var f = b.dataset.f;
+      var papel = document.getElementById('em-arch-papel').value;
       b.disabled = true;
       try {
-        var blob = await App.api.descargar(recurso, doc.id, f);
+        var blob = await App.api.descargar(recurso, doc.id, f, papel);
         var ext = f === 'cdr' ? 'zip' : f;
-        App.guardarBlob(blob, (f === 'cdr' ? 'R-' : '') + doc.numero_completo + '.' + ext);
+        var sufijo = (f === 'pdf' && papel !== 'A4') ? '_' + papel : '';
+        App.guardarBlob(blob, (f === 'cdr' ? 'R-' : '') + doc.numero_completo + sufijo + '.' + ext);
       } catch (err) {
         App.avisoError(err);
       } finally {
@@ -504,8 +571,16 @@ App.vistas = App.vistas || {};
       }
     };
 
+    document.getElementById('em-arch-papel').onchange = function () {
+      verPdf(this.value);
+    };
+
+    verPdf('A4');
+
+    async function verPdf(papel) {
+    visor.innerHTML = '<div class="empty" style="padding:26px">Generando el PDF…</div>';
     try {
-      var pdf = await App.api.descargar(recurso, doc.id, 'pdf');
+      var pdf = await App.api.descargar(recurso, doc.id, 'pdf', papel);
       var url = URL.createObjectURL(pdf);
       visor.innerHTML = '<iframe src="' + url + '" title="PDF de ' + App.esc(doc.numero_completo) + '" '
         + 'style="width:100%;height:520px;border:1px solid var(--line);border-radius:5px;background:#fff"></iframe>';
@@ -515,6 +590,7 @@ App.vistas = App.vistas || {};
       visor.innerHTML = '<div class="note">El comprobante se emitió correctamente, '
         + 'pero no se pudo mostrar el PDF aquí: ' + App.esc(err.message)
         + '. Prueba con el botón PDF de arriba.</div>';
+    }
     }
   }
 

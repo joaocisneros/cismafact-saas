@@ -200,9 +200,13 @@ var App = window.App || (window.App = {});
     listar: function (recurso, params) { return pedir('GET', '/' + recurso + query(params)); },
     ver: function (recurso, id) { return pedir('GET', '/' + recurso + '/' + id); },
 
-    descargar: function (recurso, id, formato) {
+    /**
+     * @param {string} formato  pdf | xml | cdr
+     * @param {string} [papel]  solo para pdf: A4, A5, 80mm, 58mm
+     */
+    descargar: function (recurso, id, formato, papel) {
       var ruta = '/' + recurso + '/' + id + '/download-' + formato;
-      if (formato === 'pdf') ruta += query({ format: 'A4' });
+      if (formato === 'pdf') ruta += query({ format: papel || 'A4' });
       return pedir('GET', ruta, undefined, { binario: true });
     }
   };
