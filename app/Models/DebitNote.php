@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AisladoPorToken;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,10 +16,12 @@ class DebitNote extends Model
     }
 
     use HasFactory;
+    use AisladoPorToken;
 
     protected $fillable = [
         'anulado_en', 'anulado_por_documento_id', 'anulado_motivo',
         'company_id',
+        'api_key_id',   // token de la API con el que se emitio, si vino por ahi
         'branch_id',
         'client_id',
         'tipo_documento',

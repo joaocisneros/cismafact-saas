@@ -123,6 +123,35 @@ class ApiGlobalController extends Controller
         return view('super-admin.api-global.logs', compact('logs', 'companies'));
     }
 
+    /**
+     * Actividad de una credencial: cuanto se usa y, sobre todo, que le falla.
+     *
+     * Va aparte de las credenciales a proposito. Son dos preguntas distintas:
+     * "que le paso a este dev" no se responde en la misma ventana donde se
+     * copian la key y el secret.
+     */
+    public function apiKeyActividad(ApiKey $apiKey)
+    {
+        $apiKey->load('company');
+
+        $totalUsage = ApiUsage::where('api_key_id', $apiKey->id)->count();
+        $totalErrores = ApiUsage::where('api_key_id', $apiKey->id)->where('status_code', '>=', 400)->count();
+
+        // Con miles de llamadas no se pueden traer todas: se ensena una pagina
+        // y se deja filtrar por las que fallaron, que es lo que se busca.
+        $soloErrores = request()->get('solo') === 'errores';
+
+        $usos = ApiUsage::where('api_key_id', $apiKey->id)
+            ->when($soloErrores, fn ($q) => $q->where('status_code', '>=', 400))
+            ->latest()
+            ->paginate(25)
+            ->withQueryString();
+
+        return view('super-admin.api-global._key_actividad', compact(
+            'apiKey', 'usos', 'totalUsage', 'totalErrores', 'soloErrores'
+        ));
+    }
+
     public function showApiKey(ApiKey $apiKey)
     {
         $apiKey->load('company');
@@ -272,8 +301,16 @@ class ApiGlobalController extends Controller
         }
 
         if ($request->ajax() || $request->boolean('modal')) {
-            $apiKeys = $query->latest()->limit(20)->get();
-            return view('super-admin.api-global._api_keys_modal', compact('apiKeys'));
+            // El modal ya ensena las credenciales enteras al desplegarlas, asi
+            // que necesita la empresa (para saber si es sandbox) y el consumo.
+            $apiKeys = $query->with('company')->latest()->limit(20)->get();
+
+            $consumo = ApiUsage::selectRaw('api_key_id, COUNT(*) as total')
+                ->whereIn('api_key_id', $apiKeys->pluck('id'))
+                ->groupBy('api_key_id')
+                ->pluck('total', 'api_key_id');
+
+            return view('super-admin.api-global._api_keys_modal', compact('apiKeys', 'consumo'));
         }
 
         $apiKeys = $query->latest()->paginate(15)->withQueryString();

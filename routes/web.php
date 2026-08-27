@@ -197,6 +197,7 @@ Route::prefix('super-admin')
         Route::get('/api-global/performance', [SuperAdminApiGlobalController::class, 'performance'])->name('api-global.performance');
         Route::get('/api-global/logs', [SuperAdminApiGlobalController::class, 'logs'])->name('api-global.logs');
         Route::get('/api-global/api-keys/{apiKey}', [SuperAdminApiGlobalController::class, 'showApiKey'])->name('api-global.show-key');
+        Route::get('/api-global/api-keys/{apiKey}/actividad', [SuperAdminApiGlobalController::class, 'apiKeyActividad'])->name('api-global.key-actividad');
         Route::post('/api-global/api-keys/{apiKey}/toggle', [SuperAdminApiGlobalController::class, 'toggleApiKey'])->name('api-global.toggle-key');
         Route::post('/api-global/sandbox-token', [SuperAdminApiGlobalController::class, 'generateSandboxToken'])->name('api-global.sandbox-token');
         Route::post('/api-global/empresas/{company}/toggle', [SuperAdminApiGlobalController::class, 'toggleCompanyApi'])->name('api-global.toggle-company');

@@ -112,6 +112,11 @@
                                         <x-icon-action icon="ver" label="Ver credenciales" color="blue" type="button"
                                                        onclick="window.openAdminModal('{{ route('super-admin.api-global.show-key', $token) }}', 'Credenciales del token')" />
 
+                                        {{-- Aparte de las credenciales: son dos preguntas distintas
+                                             ("que le doy al dev" y "que le esta fallando"). --}}
+                                        <x-icon-action icon="actividad" label="Ver actividad y errores" color="violet" type="button"
+                                                       onclick="window.openAdminModal('{{ route('super-admin.api-global.key-actividad', $token) }}', 'Actividad del token')" />
+
                                         <form method="POST" action="{{ route('super-admin.api-global.toggle-key', $token) }}"
                                               onsubmit="return confirm('{{ $token->active ? 'Bloquear este token? El programador dejara de poder emitir.' : 'Activar este token?' }}')">
                                             @csrf
