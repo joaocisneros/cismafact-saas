@@ -24,6 +24,28 @@ class StoreNotaDebitoRequest extends StoreNotaRequest
     {
         return array_keys(self::MOTIVOS);
     }
+
+    /** Igual que en la API: el motivo 13 no admite lineas gravadas. */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if ($this->input('cod_motivo') !== '13') {
+                return;
+            }
+
+            foreach ((array) $this->input('detalles', []) as $i => $detalle) {
+                $afectacion = (string) ($detalle['tip_afe_igv'] ?? $detalle['igv'] ?? '10');
+
+                if (! str_starts_with($afectacion, '3')) {
+                    $validator->errors()->add(
+                        "detalles.{$i}.tip_afe_igv",
+                        'Las penalidades son inafectas al IGV. Cambia la afectacion de esta linea '
+                        . 'a inafecto, o SUNAT rechazara la nota.'
+                    );
+                }
+            }
+        });
+    }
     /** Codigo SUNAT del comprobante: Nota de debito = 08. */
     protected function tipoDocumento(): string
     {

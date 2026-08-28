@@ -9,9 +9,30 @@
         visible: null,
         secretos: {},
         copiar(valor, id) {
-            navigator.clipboard.writeText(valor);
-            this.copiado = id;
-            setTimeout(() => this.copiado = null, 1500);
+            /* navigator.clipboard solo existe en HTTPS o en localhost, y el
+               panel corre en un dominio .test: ahi el boton no hacia nada.
+               Se intenta, y si no esta se copia con un textarea temporal. */
+            const hecho = () => {
+                this.copiado = id;
+                setTimeout(() => this.copiado = null, 1500);
+            };
+
+            const aMano = () => {
+                const caja = document.createElement('textarea');
+                caja.value = valor;
+                caja.style.position = 'fixed';
+                caja.style.opacity = '0';
+                document.body.appendChild(caja);
+                caja.select();
+                try { document.execCommand('copy'); hecho(); } catch (e) {}
+                document.body.removeChild(caja);
+            };
+
+            if (navigator.clipboard ? window.isSecureContext : false) {
+                navigator.clipboard.writeText(valor).then(hecho).catch(aMano);
+            } else {
+                aMano();
+            }
         },
         /* El secret no se escribe en la pagina: se pide solo cuando lo pulsas,
            para que no quede a la vista de quien mire el codigo fuente. */

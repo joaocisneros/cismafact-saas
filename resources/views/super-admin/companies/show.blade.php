@@ -97,7 +97,24 @@
     </section>
 
     <section class="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <div class="rounded-xl bg-white p-6 shadow-sm" x-data="{ copying: null, copy(value, id) { navigator.clipboard.writeText(value); this.copying = id; setTimeout(() => this.copying = null, 1500); } }">
+        <div class="rounded-xl bg-white p-6 shadow-sm" x-data="{
+            copying: null,
+            /* navigator.clipboard solo existe en HTTPS o en localhost; el panel
+               corre en un dominio .test, asi que hace falta la alternativa. */
+            copy(value, id) {
+                const hecho = () => { this.copying = id; setTimeout(() => this.copying = null, 1500); };
+                const aMano = () => {
+                    const caja = document.createElement('textarea');
+                    caja.value = value; caja.style.position = 'fixed'; caja.style.opacity = '0';
+                    document.body.appendChild(caja); caja.select();
+                    try { document.execCommand('copy'); hecho(); } catch (e) {}
+                    document.body.removeChild(caja);
+                };
+                if (navigator.clipboard ? window.isSecureContext : false) {
+                    navigator.clipboard.writeText(value).then(hecho).catch(aMano);
+                } else { aMano(); }
+            }
+        }">
             <h3 class="mb-4 text-base font-semibold text-gray-900">API Keys Generadas</h3>
             <div class="space-y-3">
                 @forelse($apiKeys as $key)

@@ -88,6 +88,22 @@ class StoreDebitNoteRequest extends FormRequest
             if (!$branch) {
                 $validator->errors()->add('branch_id', 'La sucursal no pertenece a la empresa seleccionada.');
             }
+
+            // Las penalidades (motivo 13, desde el 01/08/2026) son operacion
+            // inafecta al IGV. Inafecto es el grupo 30-36 del catalogo 07.
+            if ($this->input('cod_motivo') === '13') {
+                foreach ((array) $this->input('detalles', []) as $i => $detalle) {
+                    $afectacion = (string) ($detalle['tip_afe_igv'] ?? '10');
+
+                    if (! str_starts_with($afectacion, '3')) {
+                        $validator->errors()->add(
+                            "detalles.{$i}.tip_afe_igv",
+                            'Las penalidades son inafectas al IGV: usa una afectacion 30-36. '
+                            . 'Si van gravadas, SUNAT rechaza la nota.'
+                        );
+                    }
+                }
+            }
         });
     }
 
