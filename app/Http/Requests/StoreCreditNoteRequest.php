@@ -71,7 +71,7 @@ class StoreCreditNoteRequest extends FormRequest
             'detalles.*.precio_unitario_incluye_igv' => 'nullable|numeric|min:0',
             'detalles.*.porcentaje_igv' => 'nullable|numeric|min:0',
             'detalles.*.tip_afe_igv' => 'nullable|string|in:10,11,12,13,14,15,16,17,20,21,30,31,32,33,34,35,36,40',
-            'detalles.*.codigo_producto_sunat' => 'nullable|string|max:50',
+            'detalles.*.codigo_producto_sunat' => 'nullable|digits:8',   // SUNAT: 8 digitos numericos desde el 01/08/2026
 
             // Guías (opcional)
             'guias' => 'nullable|array',
@@ -119,6 +119,7 @@ class StoreCreditNoteRequest extends FormRequest
             'tipo_doc_afectado.required' => 'El tipo de documento afectado es requerido.',
             'tipo_doc_afectado.in' => 'El tipo de documento afectado debe ser válido (01=Factura, 03=Boleta, 07=Nota Crédito, 08=Nota Débito).',
             'num_doc_afectado.required' => 'El número de documento afectado es requerido.',
+            'detalles.*.codigo_producto_sunat.digits' => 'El codigo de producto de SUNAT debe tener 8 digitos numericos.',
             'cod_motivo.required' => 'El código de motivo es requerido.',
             'des_motivo.required' => 'La descripción del motivo es requerida.',
             

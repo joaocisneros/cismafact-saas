@@ -8,7 +8,10 @@ class StoreNotaDebitoRequest extends StoreNotaRequest
     public const MOTIVOS = [
         '01' => 'Intereses por mora',
         '02' => 'Aumento en el valor',
-        '03' => 'Penalidades / otros conceptos',
+        '03' => 'Otros conceptos',
+        // Desde el 01/08/2026 las penalidades van aparte, y son inafectas al
+        // IGV: si se mandan gravadas, SUNAT rechaza la nota.
+        '13' => 'Penalidades',
     ];
 
     protected function serieRegex(): string
