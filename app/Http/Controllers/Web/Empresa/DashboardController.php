@@ -76,8 +76,10 @@ class DashboardController extends Controller
             ->selectRaw('SUM(CASE WHEN created_at >= ? AND created_at < ? THEN 1 ELSE 0 END) as today_count', [$todayStart, $tomorrowStart])
             ->selectRaw('SUM(CASE WHEN created_at >= ? AND created_at < ? THEN 1 ELSE 0 END) as month_count', [$monthStart, $nextMonthStart])
             ->selectRaw('SUM(CASE WHEN estado_sunat = ? THEN 1 ELSE 0 END) as pending_count', ['PENDIENTE'])
-            ->selectRaw('COALESCE(SUM(CASE WHEN created_at >= ? AND created_at < ? THEN mto_imp_venta ELSE 0 END), 0) as today_sales', [$todayStart, $tomorrowStart])
-            ->selectRaw('COALESCE(SUM(CASE WHEN created_at >= ? AND created_at < ? THEN mto_imp_venta ELSE 0 END), 0) as month_sales', [$monthStart, $nextMonthStart])
+            // Un comprobante dado de baja ya no es una venta: se cuenta como
+            // emitido, pero su importe no puede seguir sumando.
+            ->selectRaw('COALESCE(SUM(CASE WHEN created_at >= ? AND created_at < ? AND anulado_en IS NULL THEN mto_imp_venta ELSE 0 END), 0) as today_sales', [$todayStart, $tomorrowStart])
+            ->selectRaw('COALESCE(SUM(CASE WHEN created_at >= ? AND created_at < ? AND anulado_en IS NULL THEN mto_imp_venta ELSE 0 END), 0) as month_sales', [$monthStart, $nextMonthStart])
             ->first();
     }
 

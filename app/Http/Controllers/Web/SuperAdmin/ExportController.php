@@ -110,11 +110,12 @@ class ExportController extends Controller
      */
     private function resumenGeneral(): array
     {
-        $ventasMes = Invoice::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->sum('mto_imp_venta')
-            + Boleta::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->sum('mto_imp_venta');
+        // Lo dado de baja no suma: se emitio, pero dejo de ser una venta.
+        $ventasMes = Invoice::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->whereNull('anulado_en')->sum('mto_imp_venta')
+            + Boleta::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->whereNull('anulado_en')->sum('mto_imp_venta');
 
-        $ventasAnio = Invoice::whereYear('created_at', now()->year)->sum('mto_imp_venta')
-            + Boleta::whereYear('created_at', now()->year)->sum('mto_imp_venta');
+        $ventasAnio = Invoice::whereYear('created_at', now()->year)->whereNull('anulado_en')->sum('mto_imp_venta')
+            + Boleta::whereYear('created_at', now()->year)->whereNull('anulado_en')->sum('mto_imp_venta');
 
         return [
             'Empresas Activas' => Company::where('activo', true)->count(),
@@ -210,8 +211,8 @@ class ExportController extends Controller
     {
         $empresas = Company::query()
             ->withCount(['invoices', 'boletas'])
-            ->withSum('invoices as ventas_facturas', 'mto_imp_venta')
-            ->withSum('boletas as ventas_boletas', 'mto_imp_venta')
+            ->withSum(['invoices as ventas_facturas' => fn ($q) => $q->whereNull('anulado_en')], 'mto_imp_venta')
+            ->withSum(['boletas as ventas_boletas' => fn ($q) => $q->whereNull('anulado_en')], 'mto_imp_venta')
             ->orderBy('razon_social')
             ->get(['id', 'ruc', 'razon_social']);
 

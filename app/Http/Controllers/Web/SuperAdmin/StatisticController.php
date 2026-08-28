@@ -27,11 +27,11 @@ class StatisticController extends Controller
         $data = Cache::remember('super_admin_stats', 60, function () use ($startOfMonth, $endOfMonth, $startOfYear, $endOfYear, $today) {
             $companyStats = Company::selectRaw("SUM(CASE WHEN activo = 1 THEN 1 ELSE 0 END) as activas, SUM(CASE WHEN activo = 0 THEN 1 ELSE 0 END) as inactivas")->first();
 
-            $invoiceStats = Invoice::selectRaw("COUNT(*) as total, SUM(CASE WHEN created_at BETWEEN ? AND ? THEN 1 ELSE 0 END) as mes, SUM(CASE WHEN created_at BETWEEN ? AND ? THEN mto_imp_venta ELSE 0 END) as ventas_mes, SUM(CASE WHEN created_at BETWEEN ? AND ? THEN mto_imp_venta ELSE 0 END) as ventas_anio")
+            $invoiceStats = Invoice::selectRaw("COUNT(*) as total, SUM(CASE WHEN created_at BETWEEN ? AND ? THEN 1 ELSE 0 END) as mes, SUM(CASE WHEN created_at BETWEEN ? AND ? AND anulado_en IS NULL THEN mto_imp_venta ELSE 0 END) as ventas_mes, SUM(CASE WHEN created_at BETWEEN ? AND ? AND anulado_en IS NULL THEN mto_imp_venta ELSE 0 END) as ventas_anio")
                 ->addBinding([$startOfMonth, $endOfMonth, $startOfYear, $endOfYear, $startOfYear, $endOfYear], 'select')
                 ->first();
 
-            $boletaStats = Boleta::selectRaw("COUNT(*) as total, SUM(CASE WHEN created_at BETWEEN ? AND ? THEN 1 ELSE 0 END) as mes, SUM(CASE WHEN created_at BETWEEN ? AND ? THEN mto_imp_venta ELSE 0 END) as ventas_mes, SUM(CASE WHEN created_at BETWEEN ? AND ? THEN mto_imp_venta ELSE 0 END) as ventas_anio")
+            $boletaStats = Boleta::selectRaw("COUNT(*) as total, SUM(CASE WHEN created_at BETWEEN ? AND ? THEN 1 ELSE 0 END) as mes, SUM(CASE WHEN created_at BETWEEN ? AND ? AND anulado_en IS NULL THEN mto_imp_venta ELSE 0 END) as ventas_mes, SUM(CASE WHEN created_at BETWEEN ? AND ? AND anulado_en IS NULL THEN mto_imp_venta ELSE 0 END) as ventas_anio")
                 ->addBinding([$startOfMonth, $endOfMonth, $startOfYear, $endOfYear, $startOfYear, $endOfYear], 'select')
                 ->first();
 

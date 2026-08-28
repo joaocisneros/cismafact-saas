@@ -51,12 +51,14 @@ class ReportController extends Controller
 
         $invoiceData = Invoice::where('company_id', $companyId)
             ->whereBetween('fecha_emision', [$start, $end])
+            ->whereNull('anulado_en')
             ->selectRaw("YEARWEEK(fecha_emision, 1) as semana, MIN(fecha_emision) as inicio, MAX(fecha_emision) as fin, SUM(mto_imp_venta) as total")
             ->groupBy('semana')
             ->get();
 
         $boletaData = Boleta::where('company_id', $companyId)
             ->whereBetween('fecha_emision', [$start, $end])
+            ->whereNull('anulado_en')
             ->selectRaw("YEARWEEK(fecha_emision, 1) as semana, SUM(mto_imp_venta) as total")
             ->groupBy('semana')
             ->get()
@@ -88,6 +90,7 @@ class ReportController extends Controller
 
         $invoiceData = Invoice::where('company_id', $companyId)
             ->whereBetween('fecha_emision', [$start, $end])
+            ->whereNull('anulado_en')
             ->selectRaw("YEAR(fecha_emision) as anio, MONTH(fecha_emision) as mes, SUM(mto_imp_venta) as total")
             ->groupBy('anio', 'mes')
             ->get()
@@ -95,6 +98,7 @@ class ReportController extends Controller
 
         $boletaData = Boleta::where('company_id', $companyId)
             ->whereBetween('fecha_emision', [$start, $end])
+            ->whereNull('anulado_en')
             ->selectRaw("YEAR(fecha_emision) as anio, MONTH(fecha_emision) as mes, SUM(mto_imp_venta) as total")
             ->groupBy('anio', 'mes')
             ->get()
@@ -172,12 +176,14 @@ class ReportController extends Controller
 
             $invoiceData = Invoice::where('company_id', $companyId)
                 ->whereBetween('fecha_emision', [$start, $end])
+                ->whereNull('anulado_en')
                 ->selectRaw("DATE(fecha_emision) as fecha, SUM(mto_imp_venta) as total")
                 ->groupBy('fecha')
                 ->pluck('total', 'fecha');
 
             $boletaData = Boleta::where('company_id', $companyId)
                 ->whereBetween('fecha_emision', [$start, $end])
+                ->whereNull('anulado_en')
                 ->selectRaw("DATE(fecha_emision) as fecha, SUM(mto_imp_venta) as total")
                 ->groupBy('fecha')
                 ->pluck('total', 'fecha');
@@ -204,6 +210,7 @@ class ReportController extends Controller
 
             $invoiceData = Invoice::where('company_id', $companyId)
                 ->whereBetween('fecha_emision', [$start, $end])
+                ->whereNull('anulado_en')
                 ->selectRaw("YEAR(fecha_emision) as anio, MONTH(fecha_emision) as mes, SUM(mto_imp_venta) as total")
                 ->groupBy('anio', 'mes')
                 ->get()
@@ -211,6 +218,7 @@ class ReportController extends Controller
 
             $boletaData = Boleta::where('company_id', $companyId)
                 ->whereBetween('fecha_emision', [$start, $end])
+                ->whereNull('anulado_en')
                 ->selectRaw("YEAR(fecha_emision) as anio, MONTH(fecha_emision) as mes, SUM(mto_imp_venta) as total")
                 ->groupBy('anio', 'mes')
                 ->get()
