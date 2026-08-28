@@ -62,7 +62,13 @@
                         <td class="py-3 px-4 font-medium">{{ $doc['numero_completo'] ?? '-' }}</td>
                         <td class="py-3 px-4 text-gray-500">{{ isset($doc['fecha_emision']) ? \Carbon\Carbon::parse($doc['fecha_emision'])->format('d/m/Y') : '-' }}</td>
                         <td class="py-3 px-4">S/ {{ number_format($doc['mto_imp_venta'] ?? 0, 2) }}</td>
-                        <td class="py-3 px-4"><x-status-badge :status="$doc['estado_sunat'] ?? 'PENDIENTE'" /></td>
+                        <td class="py-3 px-4">
+                            <x-status-badge :status="$doc['estado_sunat'] ?? 'PENDIENTE'" />
+                            @if(!empty($doc['anulado_en']))
+                                <span class="ml-1 rounded bg-red-50 px-2 py-1 text-xs font-medium text-red-700"
+                                      title="Baja aceptada por SUNAT el {{ \Illuminate\Support\Carbon::parse($doc['anulado_en'])->format('d/m/Y') }}">Anulado</span>
+                            @endif
+                        </td>
                         <td class="py-3 px-4">
                             {{-- Un color por formato: en gris los tres se confunden. --}}
                             <div class="flex items-center gap-1.5">
