@@ -36,10 +36,10 @@ class FileService
 
     protected function generatePath($document, string $extension, string $format = 'A4'): string
     {
-        $date = Carbon::parse($document->fecha_emision);
+        $date = Carbon::parse($this->fechaDelDocumento($document));
         $dateFolder = $date->format('dmY'); // Formato: 02092025
-        
-        $fileName = $document->numero_completo;
+
+        $fileName = $this->nombreDelDocumento($document, $date);
         
         // Obtener tipo de comprobante
         $tipoComprobante = $this->getDocumentTypeName($document);
@@ -62,6 +62,49 @@ class FileService
         }
         
         return "{$directory}/{$prefix}{$fileName}.{$extension}";
+    }
+
+    /**
+     * Fecha con la que se archiva el documento.
+     *
+     * Los comprobantes la llaman fecha_emision. Las comunicaciones de baja y
+     * los resumenes diarios no tienen esa columna: usan fecha_generacion.
+     */
+    protected function fechaDelDocumento($document)
+    {
+        return $document->fecha_emision
+            ?? $document->fecha_generacion
+            ?? now();
+    }
+
+    /**
+     * Nombre del archivo, sin extension.
+     *
+     * Un comprobante ya lo trae armado en numero_completo (F001-000001). Una
+     * comunicacion de baja o un resumen diario no: SUNAT los nombra
+     * RUC-RA-AAAAMMDD-correlativo y RUC-RC-AAAAMMDD-correlativo. Sin esto el
+     * archivo se guardaba como ".xml", y el del dia siguiente lo pisaba.
+     */
+    protected function nombreDelDocumento($document, Carbon $date): string
+    {
+        if (! empty($document->numero_completo)) {
+            return $document->numero_completo;
+        }
+
+        $tipo = match (class_basename($document)) {
+            'VoidedDocument' => 'RA',
+            'DailySummary' => 'RC',
+            default => null,
+        };
+
+        if ($tipo === null) {
+            return 'documento-' . $document->getKey();
+        }
+
+        $ruc = $document->company->ruc ?? '';
+        $correlativo = str_pad((string) $document->correlativo, 3, '0', STR_PAD_LEFT);
+
+        return trim("{$ruc}-{$tipo}-{$date->format('Ymd')}-{$correlativo}", '-');
     }
 
     protected function getDocumentTypeName($document): string
@@ -92,6 +135,7 @@ class FileService
             'Percepcion' => 'percepciones',
             'Retencion' => 'retenciones',
             'DailySummary' => 'resumenes-diarios',
+            'VoidedDocument' => 'comunicaciones-baja',
             default => 'otros-comprobantes'
         };
     }
