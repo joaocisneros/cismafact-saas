@@ -24,7 +24,8 @@ class StoreVoidedDocumentRequest extends FormRequest
             
             // Detalles de documentos a anular
             'detalles' => 'required|array|min:1|max:100',
-            'detalles.*.tipo_documento' => 'required|string|in:01,03,07,08,09',
+            // Sin '03': una boleta no se da de baja por aqui, sino por resumen diario.
+            'detalles.*.tipo_documento' => 'required|string|in:01,07,08,09',
             'detalles.*.serie' => 'required|string|max:4',
             'detalles.*.correlativo' => 'required|string|max:8',
             'detalles.*.motivo_especifico' => 'required|string|max:250',
@@ -90,7 +91,8 @@ class StoreVoidedDocumentRequest extends FormRequest
             'detalles.max' => 'No se pueden anular más de 100 documentos por comunicación.',
             
             'detalles.*.tipo_documento.required' => 'El tipo de documento es requerido.',
-            'detalles.*.tipo_documento.in' => 'Tipo de documento inválido. Valores permitidos: 01, 03, 07, 08, 09.',
+            'detalles.*.tipo_documento.in' => 'Tipo de documento inválido. Valores permitidos: 01, 07, 08, 09. '
+                . 'Las boletas se anulan con un resumen diario, no con una comunicación de baja.',
             'detalles.*.serie.required' => 'La serie es requerida.',
             'detalles.*.serie.max' => 'La serie no puede exceder 4 caracteres.',
             'detalles.*.correlativo.required' => 'El correlativo es requerido.',

@@ -814,6 +814,83 @@ class DocumentService
         }
     }
 
+    /**
+     * Boletas que todavia se pueden anular por resumen.
+     *
+     * Solo las que SUNAT ya acepto: una boleta que aun no llego no se puede
+     * dar de baja, y una ya anulada no se anula dos veces.
+     */
+    public function getBoletasForVoiding(int $companyId, int $branchId, string $fecha): array
+    {
+        return Boleta::where('company_id', $companyId)
+            ->where('branch_id', $branchId)
+            ->whereDate('fecha_emision', $fecha)
+            ->where('estado_sunat', 'ACEPTADO')
+            ->whereNull('anulado_en')
+            ->get(['id', 'serie', 'correlativo', 'numero_completo', 'mto_imp_venta'])
+            ->map(fn ($b) => [
+                'id' => $b->id,
+                'tipo_documento' => '03',
+                'serie' => $b->serie,
+                'correlativo' => $b->correlativo,
+                'numero_completo' => $b->numero_completo,
+                'monto' => $b->mto_imp_venta,
+                'tipo_nombre' => 'Boleta',
+            ])->values()->all();
+    }
+
+    /**
+     * Resumen diario que da de baja boletas (estado 3).
+     *
+     * Es la unica forma de anular una boleta: SUNAT rechaza la comunicacion de
+     * baja si lleva una dentro (error 2308). El resumen devuelve un ticket, y
+     * al consultarlo checkSummaryStatus() marca las boletas como anuladas.
+     *
+     * @param array $numeros Numeros completos, por ejemplo ['B001-000002'].
+     */
+    public function createSummaryToVoidBoletas(
+        int $companyId,
+        int $branchId,
+        string $fechaReferencia,
+        array $numeros,
+        ?string $usuario = null
+    ): DailySummary {
+        $boletas = Boleta::with('client:id,tipo_documento,numero_documento')
+            ->where('company_id', $companyId)
+            ->whereIn('numero_completo', $numeros)
+            ->where('estado_sunat', 'ACEPTADO')
+            ->whereNull('anulado_en')
+            ->get();
+
+        if ($boletas->isEmpty()) {
+            throw new Exception('Las boletas indicadas ya estaban anuladas o aun no las acepto SUNAT.');
+        }
+
+        return $this->createDailySummary([
+            'company_id' => $companyId,
+            'branch_id' => $branchId,
+            'fecha_resumen' => $fechaReferencia,
+            'fecha_generacion' => now()->toDateString(),
+            'moneda' => 'PEN',
+            'detalles' => $boletas->map(fn ($b) => [
+                'tipo_documento' => '03',
+                'serie_numero' => $b->numero_completo,
+                'estado' => '3',   // 3 = anulacion
+                'cliente_tipo' => $b->client->tipo_documento ?? '1',
+                'cliente_numero' => $b->client->numero_documento ?? '00000000',
+                'total' => $b->mto_imp_venta,
+                'mto_oper_gravadas' => $b->mto_oper_gravadas,
+                'mto_oper_exoneradas' => $b->mto_oper_exoneradas,
+                'mto_oper_inafectas' => $b->mto_oper_inafectas,
+                'mto_oper_gratuitas' => $b->mto_oper_gratuitas,
+                'mto_igv' => $b->mto_igv,
+                'mto_isc' => $b->mto_isc ?? 0,
+                'mto_icbper' => $b->mto_icbper ?? 0,
+            ])->values()->all(),
+            'usuario_creacion' => $usuario,
+        ]);
+    }
+
     public function createSummaryFromBoletas(array $data): DailySummary
     {
         return DB::transaction(function () use ($data) {
@@ -2355,27 +2432,9 @@ class DocumentService
             }
         }
         
-        // Buscar boletas ACEPTADAS de la fecha
-        if (!$tipoDocumento || $tipoDocumento === '03') {
-            $boletas = Boleta::where('company_id', $companyId)
-                            ->where('branch_id', $branchId)
-                            ->whereDate('fecha_emision', $fechaReferencia)
-                            ->where('estado_sunat', 'ACEPTADO')
-                              ->whereNull('anulado_en')
-                            ->get(['id', 'serie', 'correlativo', 'numero_completo', 'mto_imp_venta']);
-            
-            foreach ($boletas as $boleta) {
-                $documents[] = [
-                    'id' => $boleta->id,
-                    'tipo_documento' => '03',
-                    'serie' => $boleta->serie,
-                    'correlativo' => $boleta->correlativo,
-                    'numero_completo' => $boleta->numero_completo,
-                    'monto' => $boleta->mto_imp_venta,
-                    'tipo_nombre' => 'Boleta'
-                ];
-            }
-        }
+        // Las boletas NO van aqui. SUNAT rechaza la comunicacion de baja con
+        // una boleta dentro (error 2308: tipo de documento invalido). Se anulan
+        // por resumen diario, con getBoletasForVoiding() y estado 3.
         
         // Buscar notas de crédito ACEPTADAS de la fecha
         if (!$tipoDocumento || $tipoDocumento === '07') {

@@ -173,6 +173,9 @@ Route::middleware('api.key')->prefix('resumenes')->group(function () {
     Route::get('/', [DailySummaryController::class, 'index']);
     Route::post('/', [DailySummaryController::class, 'store']);
     Route::get('/pendientes/boletas', [DailySummaryController::class, 'pendingBoletas']);
+    // Anular boletas: van por resumen, no por comunicacion de baja.
+    Route::get('/boletas/anulables', [DailySummaryController::class, 'boletasForVoiding']);
+    Route::post('/anular', [DailySummaryController::class, 'voidBoletas']);
     Route::get('/{id}', [DailySummaryController::class, 'show']);
     Route::post('/{id}/enviar', [DailySummaryController::class, 'sendToSunat']);
     Route::match(['get', 'post'], '/{id}/estado', [DailySummaryController::class, 'checkStatus']);

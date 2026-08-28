@@ -82,7 +82,14 @@ class AnulacionController extends Controller
             // Todas las sucursales: antes miraba solo la primera y lo emitido
             // por las demás no aparecía, sin forma de anularlo.
             foreach (Branch::where('company_id', $companyId)->orderBy('id')->get() as $sucursal) {
-                foreach ($this->documentService->getDocumentsForVoiding($companyId, $sucursal->id, $fecha) as $documento) {
+                // Esta pantalla junta los dos tramites. Las boletas vienen
+                // aparte porque no caben en una comunicacion de baja.
+                $delDia = array_merge(
+                    $this->documentService->getDocumentsForVoiding($companyId, $sucursal->id, $fecha),
+                    $this->documentService->getBoletasForVoiding($companyId, $sucursal->id, $fecha)
+                );
+
+                foreach ($delDia as $documento) {
                     $documento['sucursal'] = $sucursal->nombre;
                     $documento['branch_id'] = $sucursal->id;
                     $documento['via'] = $documento['tipo_documento'] === '03'

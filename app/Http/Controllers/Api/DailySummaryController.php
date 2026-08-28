@@ -176,6 +176,102 @@ class DailySummaryController extends Controller
         }
     }
 
+    /** Boletas que aun se pueden anular en una fecha. */
+    public function boletasForVoiding(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'branch_id' => 'nullable|integer',
+                'fecha_emision' => 'nullable|date',
+            ]);
+
+            $companyId = (int) $request->user()->company_id;
+
+            $branchQuery = Branch::where('company_id', $companyId);
+            $branch = isset($validated['branch_id'])
+                ? $branchQuery->findOrFail($validated['branch_id'])
+                : $branchQuery->orderBy('id')->firstOrFail();
+
+            $boletas = $this->documentService->getBoletasForVoiding(
+                $companyId,
+                (int) $branch->id,
+                $validated['fecha_emision'] ?? now()->toDateString()
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => $boletas,
+                'total' => count($boletas),
+                'message' => 'Boletas disponibles para anular',
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener las boletas anulables',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Anula boletas.
+     *
+     * Va por resumen diario con estado 3, no por comunicacion de baja: SUNAT
+     * rechaza una baja que lleve boletas dentro. Devuelve un ticket; el
+     * resultado se recoge luego en POST /resumenes/{id}/estado.
+     */
+    public function voidBoletas(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'branch_id' => 'nullable|integer',
+                'fecha_referencia' => 'required|date',
+                'boletas' => 'required|array|min:1',
+                'boletas.*' => 'required|string|max:20',
+            ]);
+
+            $companyId = (int) $request->user()->company_id;
+
+            $branchQuery = Branch::where('company_id', $companyId);
+            $branch = isset($validated['branch_id'])
+                ? $branchQuery->findOrFail($validated['branch_id'])
+                : $branchQuery->orderBy('id')->firstOrFail();
+
+            $summary = $this->documentService->createSummaryToVoidBoletas(
+                $companyId,
+                (int) $branch->id,
+                $validated['fecha_referencia'],
+                $validated['boletas'],
+                $request->user()->name ?? null
+            );
+
+            $resultado = $this->documentService->sendDailySummaryToSunat($summary);
+
+            if (! ($resultado['success'] ?? false)) {
+                return response()->json([
+                    'success' => false,
+                    'data' => $summary->fresh(),
+                    'message' => 'El resumen de baja no se pudo enviar a SUNAT',
+                    'error' => $resultado['error'] ?? null,
+                ], 400);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $summary->fresh()->load(['company', 'branch']),
+                'message' => 'Resumen de baja enviado. Consulta el estado con el ticket.',
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al anular las boletas',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function pendingBoletas(Request $request): JsonResponse
     {
         try {

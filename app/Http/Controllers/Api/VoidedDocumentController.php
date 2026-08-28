@@ -206,7 +206,7 @@ class VoidedDocumentController extends Controller
             $validated = $request->validate([
                 'branch_id' => ['nullable', 'integer'],
                 'fecha_referencia' => ['nullable', 'date'],
-                'tipo_documento' => ['nullable', 'string', 'in:01,03'],
+                'tipo_documento' => ['nullable', 'string', 'in:01,07,08,09'],
             ]);
 
             $branchQuery = Branch::where('company_id', $companyId);
