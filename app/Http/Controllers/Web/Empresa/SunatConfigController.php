@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Empresa;
 
+use App\Support\CertificadoDigital;
 use App\Http\Controllers\Controller;
 use App\Models\Boleta;
 use App\Models\CreditNote;
@@ -21,7 +22,35 @@ class SunatConfigController extends Controller
     {
         $company = Auth::user()->company;
 
-        return view('empresa.sunat-config.index', compact('company'));
+        // Cuantos comprobantes de prueba se borrarian al pasar a produccion.
+        // Se enseñan en el modal de confirmacion: antes el aviso decia "se
+        // borran las facturas de prueba" sin decir cuantas.
+        $porBorrar = [];
+        $tipos = [
+            'facturas' => Invoice::class,
+            'boletas' => Boleta::class,
+            'notas de crédito' => CreditNote::class,
+            'notas de débito' => DebitNote::class,
+            'guías de remisión' => DispatchGuide::class,
+        ];
+
+        foreach ($tipos as $nombre => $modelo) {
+            $cuantos = $modelo::where('company_id', $company->id)->count();
+            if ($cuantos) {
+                $porBorrar[$nombre] = $cuantos;
+            }
+        }
+
+        foreach (['daily_summaries' => 'resúmenes', 'voided_documents' => 'anulaciones'] as $tabla => $nombre) {
+            if (Schema::hasTable($tabla)) {
+                $cuantos = DB::table($tabla)->where('company_id', $company->id)->count();
+                if ($cuantos) {
+                    $porBorrar[$nombre] = $cuantos;
+                }
+            }
+        }
+
+        return view('empresa.sunat-config.index', compact('company', 'porBorrar'));
     }
 
     public function update(Request $request)
@@ -71,10 +100,11 @@ class SunatConfigController extends Controller
             $password = (string) $request->certificado_password;
 
             // Validar que el .pfx se pueda abrir con la contrasena ANTES de guardar.
-            $certs = [];
-            if (! openssl_pkcs12_read($pfxContent, $certs, $password)) {
+            try {
+                $certs = CertificadoDigital::leer($pfxContent, $password);
+            } catch (\RuntimeException $e) {
                 return back()
-                    ->withErrors(['certificado_password' => 'No se pudo abrir el certificado. Verifica que la contraseña sea correcta.'])
+                    ->withErrors(['certificado_password' => $e->getMessage()])
                     ->withInput();
             }
 
@@ -105,7 +135,10 @@ class SunatConfigController extends Controller
         }
 
         $subject = $info['subject'] ?? [];
-        $titular = $subject['CN'] ?? ($subject['O'] ?? null);
+        // En el certificado de SUNAT el CN es '||USO TRIBUTARIO|| ... CDT 20...',
+        // ilegible en pantalla. La organizacion es el nombre de la empresa.
+        $titular = $subject['O'] ?? ($subject['CN'] ?? null);
+        $titular = is_array($titular) ? reset($titular) : $titular;
 
         // El RUC suele venir en serialNumber; si no, se busca en el resto del sujeto.
         // En un certificado de persona natural serialNumber es el DNI, no
@@ -113,7 +146,13 @@ class SunatConfigController extends Controller
         $serial = (string) ($subject['serialNumber'] ?? '');
         $ruc = preg_match('/^\d{11}$/', $serial) ? $serial : null;
         if (! $ruc) {
-            foreach ($subject as $valor) {
+            // Un campo del sujeto puede repetirse y llegar como array: el
+            // certificado gratuito de SUNAT trae el RUC en el segundo OU, y
+            // mirando solo los valores de primer nivel se pasaba por alto.
+            $planos = [];
+            array_walk_recursive($subject, function ($v) use (&$planos) { $planos[] = $v; });
+
+            foreach ($planos as $valor) {
                 if (is_string($valor) && preg_match('/\b(\d{11})\b/', $valor, $m)) {
                     $ruc = $m[1];
                     break;
@@ -222,10 +261,11 @@ class SunatConfigController extends Controller
                 $file = $request->file('certificado_pfx');
                 $password = (string) $request->certificado_password;
 
-                $certs = [];
-                if (! openssl_pkcs12_read(file_get_contents($file->getRealPath()), $certs, $password)) {
+                try {
+                    $certs = CertificadoDigital::leer(file_get_contents($file->getRealPath()), $password);
+                } catch (\RuntimeException $e) {
                     return back()
-                        ->withErrors(['certificado_password' => 'No se pudo abrir el certificado. Verifica que la contraseña sea correcta.'])
+                        ->withErrors(['certificado_password' => $e->getMessage()])
                         ->withInput();
                 }
 

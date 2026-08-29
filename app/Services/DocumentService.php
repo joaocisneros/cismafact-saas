@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\CertificadoDigital;
 use App\Models\Company;
 use App\Models\Branch;
 use App\Models\Client;
@@ -1671,12 +1672,14 @@ class DocumentService
             $pfx = Storage::disk('local')->get($stored);
             $certs = [];
 
-            if (!openssl_pkcs12_read($pfx, $certs, (string) $company->certificado_password)) {
-                throw new Exception('No se pudo leer el certificado digital (.pfx). Verifica que la contrasena del certificado sea correcta.');
+            try {
+                $certs = CertificadoDigital::leer($pfx, (string) $company->certificado_password);
+            } catch (\RuntimeException $e) {
+                throw new Exception('No se pudo usar el certificado digital: ' . $e->getMessage());
             }
 
             // Greenter necesita el certificado y la llave privada concatenados en PEM.
-            return ($certs['cert'] ?? '') . ($certs['pkey'] ?? '');
+            return $certs['cert'] . $certs['pkey'];
         }
 
         // Caso 2: ya esta guardado como contenido PEM directo

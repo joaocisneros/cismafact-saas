@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Empresa;
 
+use App\Support\CertificadoDigital;
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Models\Boleta;
@@ -55,9 +56,17 @@ class DashboardController extends Controller
             $certPath = storage_path('app/' . $company->certificado_pem);
             if (file_exists($certPath)) {
                 $certContent = file_get_contents($certPath);
-                $certInfo = openssl_pkcs12_read($certContent, $certs, $company->certificado_password ?? '');
-                if ($certInfo && isset($certs['pcert'])) {
-                    $certData = openssl_x509_parse($certs['pcert']);
+                // Por el lector propio: el certificado gratuito de SUNAT usa
+                // cifrado antiguo y openssl_pkcs12_read() solo no lo abre, asi
+                // que la tarjeta de vencimiento salia siempre vacia.
+                try {
+                    $certs = CertificadoDigital::leer($certContent, (string) ($company->certificado_password ?? ''));
+                } catch (\RuntimeException $e) {
+                    $certs = [];
+                }
+
+                if (! empty($certs['cert'])) {
+                    $certData = openssl_x509_parse($certs['cert']);
                     if ($certData && isset($certData['validTo_time_t'])) {
                         $data['certificadoExpira'] = \Carbon\Carbon::createFromTimestamp($certData['validTo_time_t']);
                         $data['certificadoVencido'] = $data['certificadoExpira']->isPast();

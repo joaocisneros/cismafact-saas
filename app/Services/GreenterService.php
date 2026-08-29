@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\CertificadoDigital;
 use App\Models\Company;
 use Greenter\See;
 use Greenter\Model\Company\Company as GreenterCompany;
@@ -80,11 +81,13 @@ class GreenterService
             $pfx = Storage::disk('local')->get($stored);
             $certs = [];
 
-            if (! openssl_pkcs12_read($pfx, $certs, (string) $this->company->certificado_password)) {
-                throw new Exception('No se pudo leer el certificado digital (.pfx). Verifica que la contraseña del certificado sea correcta.');
+            try {
+                $certs = CertificadoDigital::leer($pfx, (string) $this->company->certificado_password);
+            } catch (\RuntimeException $e) {
+                throw new Exception('No se pudo usar el certificado digital: ' . $e->getMessage());
             }
 
-            return ($certs['cert'] ?? '') . ($certs['pkey'] ?? '');
+            return $certs['cert'] . $certs['pkey'];
         }
 
         // 2) Ya esta guardado como contenido PEM directo.
