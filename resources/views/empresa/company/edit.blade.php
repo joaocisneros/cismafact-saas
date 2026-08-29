@@ -69,9 +69,13 @@
                                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label for="email" class="mb-1 block text-sm font-medium text-gray-700">Correo</label>
+                            <label for="email" class="mb-1 block text-sm font-medium text-gray-700">Correo de contacto</label>
                             <input type="email" name="email" id="email" value="{{ old('email', $company->email) }}"
                                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+                            <p class="mt-1 text-xs text-gray-500">
+                                Sale impreso en el comprobante. No es con el que entras:
+                                ese se cambia en <span class="font-medium text-gray-700">Mi cuenta → Editar perfil</span>.
+                            </p>
                         </div>
                         <div class="md:col-span-2">
                             <label for="web" class="mb-1 block text-sm font-medium text-gray-700">Sitio web</label>
