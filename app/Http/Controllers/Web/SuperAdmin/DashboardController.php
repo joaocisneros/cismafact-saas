@@ -90,7 +90,8 @@ class DashboardController extends Controller
                 $alerts->push([
                     'type' => 'warning',
                     'title' => 'Empresas sin plan',
-                    'message' => "{$companiesWithoutPlan} empresa(s) no tienen plan asignado.",
+                    'count' => $companiesWithoutPlan,
+                    'message' => 'sin plan asignado',
                     'route' => route('super-admin.plans'),
                 ]);
             }
@@ -104,7 +105,8 @@ class DashboardController extends Controller
                 $alerts->push([
                     'type' => 'danger',
                     'title' => 'Documentos rechazados',
-                    'message' => "{$rejectedDocuments} documento(s) requieren revision.",
+                    'count' => $rejectedDocuments,
+                    'message' => 'requieren revisión',
                     'route' => route('super-admin.documents', ['status' => 'RECHAZADO']),
                 ]);
             }
@@ -114,7 +116,8 @@ class DashboardController extends Controller
                 $alerts->push([
                     'type' => 'info',
                     'title' => 'Documentos pendientes',
-                    'message' => "{$pendingDocuments} documento(s) pendientes de respuesta SUNAT.",
+                    'count' => $pendingDocuments,
+                    'message' => 'esperan respuesta de SUNAT',
                     'route' => route('super-admin.documents', ['status' => 'PENDIENTE']),
                 ]);
             }
@@ -124,7 +127,8 @@ class DashboardController extends Controller
                 $alerts->push([
                     'type' => 'danger',
                     'title' => 'Certificados vencidos',
-                    'message' => "{$certsVencidos} empresa(s) con certificado vencido. No pueden emitir.",
+                    'count' => $certsVencidos,
+                    'message' => 'no pueden emitir',
                     'route' => route('super-admin.certificates'),
                 ]);
             }
@@ -136,7 +140,8 @@ class DashboardController extends Controller
                 $alerts->push([
                     'type' => 'warning',
                     'title' => 'Certificados por vencer',
-                    'message' => "{$certsPorVencer} certificado(s) vencen en 30 días o menos.",
+                    'count' => $certsPorVencer,
+                    'message' => 'vencen en 30 días o menos',
                     'route' => route('super-admin.certificates'),
                 ]);
             }
@@ -146,7 +151,8 @@ class DashboardController extends Controller
                 $alerts->push([
                     'type' => 'warning',
                     'title' => 'Tickets abiertos',
-                    'message' => "{$openTickets} ticket(s) necesitan atencion.",
+                    'count' => $openTickets,
+                    'message' => 'necesitan atención',
                     'route' => route('super-admin.support'),
                 ]);
             }
@@ -154,8 +160,9 @@ class DashboardController extends Controller
             if ($alerts->isEmpty()) {
                 $alerts->push([
                     'type' => 'success',
-                    'title' => 'Sin alertas importantes',
-                    'message' => 'La plataforma no tiene incidencias pendientes.',
+                    'title' => 'Todo en orden',
+                    'count' => null,
+                    'message' => 'No hay incidencias pendientes.',
                     'route' => null,
                 ]);
             }

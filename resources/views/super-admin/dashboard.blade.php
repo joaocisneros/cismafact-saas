@@ -45,27 +45,50 @@
         </x-stat-card>
     </section>
 
-    <section class="rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div class="border-b border-gray-200 px-5 py-4">
-            <h2 class="text-base font-semibold text-gray-900">Alertas Importantes</h2>
-        </div>
-        <div class="grid gap-3 p-5 md:grid-cols-2 xl:grid-cols-4">
+    {{-- Eran tres rectangulos de color con el numero escondido dentro de una
+         frase y un "Revisar" subrayado. Lo que importa de una alerta es cuantos
+         son, asi que el numero manda y la tarjeta entera lleva al listado. --}}
+    <section>
+        <h2 class="mb-3 text-base font-semibold text-gray-900">Alertas</h2>
+
+        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             @foreach($alerts as $alert)
                 @php
-                    $styles = [
-                        'success' => 'border-green-200 bg-green-50 text-green-800',
-                        'info' => 'border-blue-200 bg-blue-50 text-blue-800',
-                        'warning' => 'border-amber-200 bg-amber-50 text-amber-800',
-                        'danger' => 'border-red-200 bg-red-50 text-red-800',
-                    ];
+                    $tono = [
+                        'danger'  => ['borde' => 'border-red-200 hover:border-red-300',    'punto' => 'bg-red-500',   'cifra' => 'text-red-700'],
+                        'warning' => ['borde' => 'border-amber-200 hover:border-amber-300','punto' => 'bg-amber-500', 'cifra' => 'text-amber-700'],
+                        'info'    => ['borde' => 'border-blue-200 hover:border-blue-300',  'punto' => 'bg-blue-500',  'cifra' => 'text-blue-700'],
+                        'success' => ['borde' => 'border-green-200',                       'punto' => 'bg-green-500', 'cifra' => 'text-green-700'],
+                    ][$alert['type']] ?? ['borde' => 'border-gray-200', 'punto' => 'bg-gray-400', 'cifra' => 'text-gray-700'];
+
+                    $etiqueta = $alert['route'] ? 'a' : 'div';
                 @endphp
-                <div class="rounded-md border p-4 {{ $styles[$alert['type']] ?? 'border-gray-200 bg-gray-50 text-gray-700' }}">
-                    <p class="text-sm font-semibold">{{ $alert['title'] }}</p>
-                    <p class="mt-1 text-sm">{{ $alert['message'] }}</p>
+
+                <{{ $etiqueta }} @if($alert['route']) href="{{ $alert['route'] }}" @endif
+                   class="group flex flex-col justify-between rounded-lg border bg-white p-4 shadow-sm transition {{ $tono['borde'] }} @if($alert['route']) hover:shadow-md @endif">
+
+                    <div class="flex items-start gap-2.5">
+                        <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full {{ $tono['punto'] }}"></span>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-gray-900">{{ $alert['title'] }}</p>
+
+                            @if(($alert['count'] ?? null) !== null)
+                                <p class="mt-1.5 text-2xl font-semibold leading-none {{ $tono['cifra'] }}">{{ $alert['count'] }}</p>
+                            @endif
+
+                            <p class="mt-1.5 text-xs text-gray-500">{{ $alert['message'] }}</p>
+                        </div>
+                    </div>
+
                     @if($alert['route'])
-                        <a href="{{ $alert['route'] }}" class="mt-3 inline-flex text-sm font-semibold underline">Revisar</a>
+                        <span class="mt-3 inline-flex items-center gap-1 text-xs font-medium text-gray-400 transition group-hover:text-gray-700">
+                            Ver
+                            <svg class="h-3 w-3 transition group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </span>
                     @endif
-                </div>
+                </{{ $etiqueta }}>
             @endforeach
         </div>
     </section>
