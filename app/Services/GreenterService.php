@@ -221,7 +221,10 @@ class GreenterService
         $company = new GreenterCompany();
         $company->setRuc($this->company->ruc)
                 ->setRazonSocial($this->company->razon_social)
-                ->setNombreComercial($this->company->nombre_comercial);
+                // Muchas empresas no tienen nombre comercial ("-" en la ficha
+                // RUC). Sin esto iba lo que hubiera en el campo, incluido el de
+                // las pruebas, y salia impreso en cada comprobante.
+                ->setNombreComercial($this->company->nombre_comercial ?: $this->company->razon_social);
 
         // La direccion y el codigo de local son los del establecimiento desde el
         // que se emite. Antes iban fijos los de la empresa y codLocal '0000', asi
