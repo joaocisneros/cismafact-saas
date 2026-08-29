@@ -84,7 +84,6 @@
                 ● {{ $company->modo_produccion ? 'Producción · emisión real' : 'Beta · pruebas' }}
             </span>
         </div>
-        </div>
     @endif
 
     <form method="POST" action="{{ route('empresa.sunat-config.update') }}" enctype="multipart/form-data" class="space-y-6">
