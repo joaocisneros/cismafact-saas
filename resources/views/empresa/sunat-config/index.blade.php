@@ -227,11 +227,18 @@
             </button>
 
             <div x-show="greOpen" x-cloak class="mt-5">
-            <p class="text-xs text-gray-500 mb-4">Las credenciales las obtienes en SUNAT SOL → Credenciales de API. Las guías siempre se emiten en producción.</p>
+            <p class="text-xs text-gray-500 mb-1">Las credenciales las obtienes en SUNAT SOL → Credenciales de API. Las guías siempre se emiten en producción.</p>
+            <p class="mb-4 text-xs text-gray-600">
+                <strong class="text-gray-800">Normalmente solo hace falta el Client ID y el Client Secret.</strong>
+                Los tres campos de abajo se reutilizan de tus credenciales SOL si los dejas vacíos;
+                rellénalos únicamente si otra empresa emite las guías en tu nombre.
+            </p>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label for="gre_ruc_proveedor" class="block text-sm font-medium text-gray-700 mb-1">RUC Proveedor GRE</label>
+                    <label for="gre_ruc_proveedor" class="block text-sm font-medium text-gray-700 mb-1">
+                        RUC Proveedor GRE <span class="font-normal text-gray-400">— opcional</span>
+                    </label>
                     <input type="text" name="gre_ruc_proveedor" id="gre_ruc_proveedor"
                            value="{{ old('gre_ruc_proveedor', $company->gre_ruc_proveedor) }}"
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -241,14 +248,18 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label for="gre_usuario_sol" class="block text-sm font-medium text-gray-700 mb-1">Usuario SOL (GRE)</label>
+                    <label for="gre_usuario_sol" class="block text-sm font-medium text-gray-700 mb-1">
+                        Usuario SOL (GRE) <span class="font-normal text-gray-400">— opcional</span>
+                    </label>
                     <input type="text" name="gre_usuario_sol" id="gre_usuario_sol"
                            value="{{ old('gre_usuario_sol', $company->gre_usuario_sol) }}"
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                           placeholder="Usuario secundario SOL">
+                           placeholder="{{ $company->usuario_sol ?: 'Usuario secundario SOL' }}">
                 </div>
                 <div>
-                    <label for="gre_clave_sol" class="block text-sm font-medium text-gray-700 mb-1">Clave SOL (GRE)</label>
+                    <label for="gre_clave_sol" class="block text-sm font-medium text-gray-700 mb-1">
+                        Clave SOL (GRE) <span class="font-normal text-gray-400">— opcional</span>
+                    </label>
                     <input type="password" name="gre_clave_sol" id="gre_clave_sol"
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                            placeholder="{{ $company->gre_clave_sol ? 'Dejar vacío para mantener la actual' : '********' }}">
