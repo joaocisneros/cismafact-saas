@@ -371,6 +371,17 @@ class SunatConfigController extends Controller
                 }
             }
 
+            // Los clientes de las pruebas tambien sobran: son inventados y
+            // quedaban mezclados con los reales, apareciendo en el buscador al
+            // emitir. Y el registro de llamadas a la API cuenta para el limite
+            // mensual del plan, asi que el trafico de prueba se cobraba contra
+            // la cuota real del primer mes.
+            foreach (['clients', 'api_usage'] as $tabla) {
+                if (Schema::hasTable($tabla)) {
+                    DB::table($tabla)->where('company_id', $company->id)->delete();
+                }
+            }
+
             // 2) La matriz es el domicilio fiscal, por definicion. El XML usa la
             //    direccion de la SUCURSAL y solo cae a la de la empresa si le
             //    falta, asi que sin esto la matriz se quedaba con la direccion
@@ -398,6 +409,6 @@ class SunatConfigController extends Controller
         });
 
         return back()->with('success', '¡Listo! ' . $razonSocialReal . ' (RUC ' . $rucReal . ') está en PRODUCCIÓN. '
-            . 'Se eliminaron los comprobantes de prueba y la numeración empieza de nuevo. Ya puedes emitir comprobantes reales.');
+            . 'Se borraron los comprobantes y los clientes de prueba, y la numeración empieza de nuevo. Ya puedes emitir comprobantes reales.');
     }
 }
