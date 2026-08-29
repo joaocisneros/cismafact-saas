@@ -227,62 +227,63 @@
             </button>
 
             <div x-show="greOpen" x-cloak class="mt-5">
-            <p class="text-xs text-gray-500 mb-1">Las credenciales las obtienes en SUNAT SOL → Credenciales de API. Las guías siempre se emiten en producción.</p>
-            <p class="mb-4 text-xs text-gray-600">
-                <strong class="text-gray-800">Normalmente solo hace falta el Client ID y el Client Secret.</strong>
-                Los tres campos de abajo se reutilizan de tus credenciales SOL si los dejas vacíos;
-                rellénalos únicamente si otra empresa emite las guías en tu nombre.
+            {{-- Solo lo que de verdad hay que escribir. El RUC, el usuario y la
+                 clave caen a las credenciales SOL de la empresa si se dejan
+                 vacios (getGreUsuarioSol y compañia), asi que enseñarlos por
+                 delante hacia pensar que hacian falta cinco datos. --}}
+            <p class="mb-4 text-xs text-gray-500">
+                Las obtienes en SUNAT SOL → Credenciales de API. Las guías siempre se emiten en producción.
             </p>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label for="gre_ruc_proveedor" class="block text-sm font-medium text-gray-700 mb-1">
-                        RUC Proveedor GRE <span class="font-normal text-gray-400">— opcional</span>
-                    </label>
-                    <input type="text" name="gre_ruc_proveedor" id="gre_ruc_proveedor"
-                           value="{{ old('gre_ruc_proveedor', $company->gre_ruc_proveedor) }}"
+                    <label for="gre_client_id_beta" class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                    <input type="text" name="gre_client_id_beta" id="gre_client_id_beta"
+                           value="{{ old('gre_client_id_beta', $company->gre_client_id_beta) }}"
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                           placeholder="{{ $company->ruc }}">
+                           placeholder="Client ID de SUNAT">
+                </div>
+                <div>
+                    <label for="gre_client_secret_beta" class="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
+                    <input type="password" name="gre_client_secret_beta" id="gre_client_secret_beta"
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                           placeholder="{{ $company->gre_client_secret_beta ? 'Dejar vacío para mantener el actual' : '********' }}">
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label for="gre_usuario_sol" class="block text-sm font-medium text-gray-700 mb-1">
-                        Usuario SOL (GRE) <span class="font-normal text-gray-400">— opcional</span>
-                    </label>
-                    <input type="text" name="gre_usuario_sol" id="gre_usuario_sol"
-                           value="{{ old('gre_usuario_sol', $company->gre_usuario_sol) }}"
-                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                           placeholder="{{ $company->usuario_sol ?: 'Usuario secundario SOL' }}">
-                </div>
-                <div>
-                    <label for="gre_clave_sol" class="block text-sm font-medium text-gray-700 mb-1">
-                        Clave SOL (GRE) <span class="font-normal text-gray-400">— opcional</span>
-                    </label>
-                    <input type="password" name="gre_clave_sol" id="gre_clave_sol"
-                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                           placeholder="{{ $company->gre_clave_sol ? 'Dejar vacío para mantener la actual' : '********' }}">
-                </div>
-            </div>
+            <details class="mt-4" @if($company->gre_ruc_proveedor || $company->gre_usuario_sol) open @endif>
+                <summary class="cursor-pointer text-xs text-blue-600 hover:underline">
+                    Otra empresa emite mis guías
+                </summary>
 
-            <div class="border-t border-gray-100 pt-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <p class="mt-2 text-xs text-gray-600">
+                    Si las dejas vacías se usan tus propias credenciales SOL
+                    ({{ $company->usuario_sol ?: 'las de arriba' }}).
+                </p>
+
+                <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label for="gre_client_id_beta" class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
-                        <input type="text" name="gre_client_id_beta" id="gre_client_id_beta"
-                               value="{{ old('gre_client_id_beta', $company->gre_client_id_beta) }}"
+                        <label for="gre_ruc_proveedor" class="block text-sm font-medium text-gray-700 mb-1">RUC del proveedor</label>
+                        <input type="text" name="gre_ruc_proveedor" id="gre_ruc_proveedor"
+                               value="{{ old('gre_ruc_proveedor', $company->gre_ruc_proveedor) }}"
                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                               placeholder="Client ID de SUNAT">
+                               placeholder="{{ $company->ruc }}">
                     </div>
                     <div>
-                        <label for="gre_client_secret_beta" class="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
-                        <input type="password" name="gre_client_secret_beta" id="gre_client_secret_beta"
+                        <label for="gre_usuario_sol" class="block text-sm font-medium text-gray-700 mb-1">Usuario SOL</label>
+                        <input type="text" name="gre_usuario_sol" id="gre_usuario_sol"
+                               value="{{ old('gre_usuario_sol', $company->gre_usuario_sol) }}"
                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                               placeholder="{{ $company->gre_client_secret_beta ? 'Dejar vacío para mantener el actual' : '********' }}">
+                               placeholder="{{ $company->usuario_sol ?: 'Usuario secundario SOL' }}">
+                    </div>
+                    <div>
+                        <label for="gre_clave_sol" class="block text-sm font-medium text-gray-700 mb-1">Clave SOL</label>
+                        <input type="password" name="gre_clave_sol" id="gre_clave_sol"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                               placeholder="{{ $company->gre_clave_sol ? 'Dejar vacío para mantener la actual' : '********' }}">
                     </div>
                 </div>
-            </div>
+            </details>
             </div> {{-- /x-show greOpen --}}
         </div>
         </div> {{-- /x-show cisma_fact --}}
