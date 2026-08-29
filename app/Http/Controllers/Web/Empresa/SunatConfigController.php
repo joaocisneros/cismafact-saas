@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Empresa;
 use App\Support\CertificadoDigital;
 use App\Http\Controllers\Controller;
 use App\Models\Boleta;
+use App\Models\Branch;
 use App\Models\Company;
 use App\Models\CreditNote;
 use App\Models\DebitNote;
@@ -370,10 +371,26 @@ class SunatConfigController extends Controller
                 }
             }
 
-            // 2) Reiniciar correlativos a 0: la numeracion real empieza en 1.
+            // 2) La matriz es el domicilio fiscal, por definicion. El XML usa la
+            //    direccion de la SUCURSAL y solo cae a la de la empresa si le
+            //    falta, asi que sin esto la matriz se quedaba con la direccion
+            //    de pruebas y era la que salia impresa en cada comprobante.
+            Branch::where('company_id', $company->id)
+                ->where(function ($q) {
+                    $q->where('codigo', '0000')->orWhereNull('codigo');
+                })
+                ->update([
+                    'direccion' => $datosFiscales['direccion'],
+                    'ubigeo' => $datosFiscales['ubigeo'],
+                    'departamento' => $datosFiscales['departamento'],
+                    'provincia' => $datosFiscales['provincia'],
+                    'distrito' => $datosFiscales['distrito'],
+                ]);
+
+            // 3) Reiniciar correlativos a 0: la numeracion real empieza en 1.
             Correlative::whereIn('branch_id', $branchIds)->update(['correlativo_actual' => 0]);
 
-            // 3) Datos fiscales reales + produccion, en la misma operacion.
+            // 4) Datos fiscales reales + produccion, en la misma operacion.
             $company->update($datosFiscales + [
                 'ruc' => $rucReal,
                 'modo_produccion' => true,
