@@ -226,8 +226,7 @@ class ConsultaCpeService
             
             $grantType = 'client_credentials';
             $scope = 'https://api.sunat.gob.pe/v1/contribuyente/contribuyentes';
-            $clientId = $this->company->gre_client_id_produccion ?? $this->company->gre_client_id_beta;
-            $clientSecret = $this->company->gre_client_secret_produccion ?? $this->company->gre_client_secret_beta;
+            ['client_id' => $clientId, 'client_secret' => $clientSecret] = $this->company->credencialesApiSunat();
 
             if (!$clientId || !$clientSecret) {
                 throw new Exception('Credenciales de API SUNAT no configuradas para la empresa');

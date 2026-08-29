@@ -197,6 +197,30 @@ class Company extends Model
      *
      * @return array{auth: string, cpe: string}
      */
+    /**
+     * Credenciales de la API de SUNAT (Client ID / Secret).
+     *
+     * Son las mismas que usan las guias de remision y la Consulta CPE: se
+     * generan una sola vez en SOL -> Credenciales de API SUNAT. Las columnas
+     * api_sunat_client_id / api_sunat_client_secret existen en la tabla pero
+     * no las escribe ni las lee nadie, y la pantalla de Consulta CPE miraba
+     * ahi: avisaba de que faltaban credenciales aunque estuvieran puestas.
+     */
+    public function credencialesApiSunat(): array
+    {
+        return [
+            'client_id' => $this->gre_client_id_produccion ?: $this->gre_client_id_beta,
+            'client_secret' => $this->gre_client_secret_produccion ?: $this->gre_client_secret_beta,
+        ];
+    }
+
+    public function tieneCredencialesApiSunat(): bool
+    {
+        $c = $this->credencialesApiSunat();
+
+        return ! empty($c['client_id']) && ! empty($c['client_secret']);
+    }
+
     public function greApiEndpoints(): array
     {
         // GRE no tiene ambiente beta en SUNAT (api-cpe-beta NO existe). Las guias

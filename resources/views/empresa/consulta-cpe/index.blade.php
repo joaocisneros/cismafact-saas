@@ -11,7 +11,7 @@
         // donde se arregla.
         $empresaCpe = auth()->user()->company;
         $disponibleCpe = (bool) $empresaCpe?->modo_produccion;
-        $faltanCredenciales = $disponibleCpe && ! ($empresaCpe->api_sunat_client_id && $empresaCpe->api_sunat_client_secret);
+        $faltanCredenciales = $disponibleCpe && ! $empresaCpe->tieneCredencialesApiSunat();
     @endphp
 
     <div>
@@ -38,7 +38,7 @@
             <p class="mt-1">
                 Estás en producción, pero esta consulta necesita además un <strong>client id</strong> y un
                 <strong>client secret</strong> que se generan desde tu Clave SOL
-                (Menú SOL → Empresas → Servicios web). Son distintos del certificado y del usuario secundario.
+                (Menú SOL → <strong>Credenciales de API SUNAT</strong>). Son las mismas que usan las guías de remisión, y distintas del certificado y del usuario secundario.
             </p>
             <p class="mt-2">
                 <a href="{{ route('empresa.sunat-config.index') }}" class="font-medium underline">Registrarlas en Configuración SUNAT</a>
