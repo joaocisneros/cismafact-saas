@@ -338,7 +338,12 @@
 
     {{-- Pasar a producción: solo en modo Cisma Fact y mientras la empresa esté en beta --}}
     @unless($company->modo_produccion)
-    <div x-show="metodo === 'cisma_fact'" x-cloak x-data="{ confirmar: false }"
+    {{-- Si el intento fallo, el formulario se queda abierto con lo que ya
+         estaba escrito. Antes se cerraba, y al reabrirlo los campos volvian a
+         los valores originales: se subia el certificado nuevo con el RUC
+         viejo, y el aviso resultante no ayudaba a entender por que. --}}
+    <div x-show="metodo === 'cisma_fact'" x-cloak
+         x-data="{ confirmar: {{ $errors->any() || session('error') ? 'true' : 'false' }} }"
          class="rounded-xl border-2 border-red-200 bg-red-50 p-6">
         <h3 class="text-md font-semibold text-red-800">🚀 Empezar a facturar de verdad</h3>
         <p class="text-sm text-red-700 mt-1">
