@@ -251,39 +251,6 @@
                 </div>
             </div>
 
-            <details class="mt-4" @if($company->gre_ruc_proveedor || $company->gre_usuario_sol) open @endif>
-                <summary class="cursor-pointer text-xs text-blue-600 hover:underline">
-                    Otra empresa emite mis guías
-                </summary>
-
-                <p class="mt-2 text-xs text-gray-600">
-                    Si las dejas vacías se usan tus propias credenciales SOL
-                    ({{ $company->usuario_sol ?: 'las de arriba' }}).
-                </p>
-
-                <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label for="gre_ruc_proveedor" class="block text-sm font-medium text-gray-700 mb-1">RUC del proveedor</label>
-                        <input type="text" name="gre_ruc_proveedor" id="gre_ruc_proveedor"
-                               value="{{ old('gre_ruc_proveedor', $company->gre_ruc_proveedor) }}"
-                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                               placeholder="{{ $company->ruc }}">
-                    </div>
-                    <div>
-                        <label for="gre_usuario_sol" class="block text-sm font-medium text-gray-700 mb-1">Usuario SOL</label>
-                        <input type="text" name="gre_usuario_sol" id="gre_usuario_sol"
-                               value="{{ old('gre_usuario_sol', $company->gre_usuario_sol) }}"
-                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                               placeholder="{{ $company->usuario_sol ?: 'Usuario secundario SOL' }}">
-                    </div>
-                    <div>
-                        <label for="gre_clave_sol" class="block text-sm font-medium text-gray-700 mb-1">Clave SOL</label>
-                        <input type="password" name="gre_clave_sol" id="gre_clave_sol"
-                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                               placeholder="{{ $company->gre_clave_sol ? 'Dejar vacío para mantener la actual' : '********' }}">
-                    </div>
-                </div>
-            </details>
             </div> {{-- /x-show greOpen --}}
         </div>
         </div> {{-- /x-show cisma_fact --}}
