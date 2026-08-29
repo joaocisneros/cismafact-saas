@@ -155,17 +155,17 @@
         @unless($enBeta)
         <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="text-md font-semibold text-gray-800 mb-1">Credenciales SOL</h3>
-            <p class="text-xs text-gray-500 mb-4">Para emitir facturas, boletas y notas.</p>
+            <p class="text-xs text-gray-500 mb-4">Para emitir facturas, boletas y notas. Usa tu <strong>usuario secundario</strong> con perfil de facturación electrónica, no tu Clave SOL principal.</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label for="usuario_sol" class="block text-sm font-medium text-gray-700 mb-1">Usuario SOL</label>
+                    <label for="usuario_sol" class="block text-sm font-medium text-gray-700 mb-1">Usuario SOL secundario</label>
                     <input type="text" name="usuario_sol" id="usuario_sol"
                            value="{{ old('usuario_sol', $company->usuario_sol) }}"
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                           placeholder="Tu usuario secundario">
+                           placeholder="Ej. FACTURA01 (no tu clave principal)">
                 </div>
                 <div>
-                    <label for="clave_sol" class="block text-sm font-medium text-gray-700 mb-1">Clave SOL</label>
+                    <label for="clave_sol" class="block text-sm font-medium text-gray-700 mb-1">Clave de ese usuario secundario</label>
                     <input type="password" name="clave_sol" id="clave_sol"
                            value="{{ old('clave_sol', $company->clave_sol) }}"
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -379,6 +379,44 @@
                                value="{{ old('razon_social', $company->razon_social) }}"
                                class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-red-500">
                     </div>
+
+                    {{-- La direccion y el ubigeo tambien van en cada XML. Faltaban
+                         aqui, y las facturas reales salian con la de pruebas. --}}
+                    <div class="md:col-span-3">
+                        <label for="prod_direccion" class="mb-1 block text-sm font-medium text-gray-700">Dirección fiscal</label>
+                        <input type="text" name="direccion" id="prod_direccion" maxlength="255"
+                               value="{{ old('direccion', $company->direccion) }}"
+                               class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-red-500"
+                               placeholder="La que figura en tu ficha RUC">
+                    </div>
+
+                    <div>
+                        <label for="prod_departamento" class="mb-1 block text-sm font-medium text-gray-700">Departamento</label>
+                        <input type="text" name="departamento" id="prod_departamento" maxlength="100"
+                               value="{{ old('departamento', $company->departamento) }}"
+                               class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-red-500">
+                    </div>
+                    <div>
+                        <label for="prod_provincia" class="mb-1 block text-sm font-medium text-gray-700">Provincia</label>
+                        <input type="text" name="provincia" id="prod_provincia" maxlength="100"
+                               value="{{ old('provincia', $company->provincia) }}"
+                               class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-red-500">
+                    </div>
+                    <div>
+                        <label for="prod_distrito" class="mb-1 block text-sm font-medium text-gray-700">Distrito</label>
+                        <input type="text" name="distrito" id="prod_distrito" maxlength="100"
+                               value="{{ old('distrito', $company->distrito) }}"
+                               class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-red-500">
+                    </div>
+
+                    <div>
+                        <label for="prod_ubigeo" class="mb-1 block text-sm font-medium text-gray-700">Ubigeo</label>
+                        <input type="text" name="ubigeo" id="prod_ubigeo" maxlength="6" inputmode="numeric"
+                               value="{{ old('ubigeo', $company->ubigeo) }}"
+                               class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-red-500"
+                               placeholder="150101">
+                        <p class="mt-1 text-xs text-gray-500">6 dígitos. Ej. 150101 = Lima · Lima · Lima.</p>
+                    </div>
                 </div>
 
                 <div class="border-t border-gray-100 pt-4">
@@ -412,26 +450,35 @@
                 </div>
 
                 <div class="border-t border-gray-100 pt-4">
-                    <p class="text-sm font-semibold text-gray-800">3. Tus claves SOL</p>
-                    <details class="mt-1">
-                        <summary class="cursor-pointer text-xs text-blue-600 hover:underline">¿De dónde las saco?</summary>
+                    <p class="text-sm font-semibold text-gray-800">3. Tu usuario SOL <span class="text-red-600">secundario</span></p>
+                    {{-- Esto se explicaba dentro de un desplegable cerrado, asi que
+                         casi todo el mundo ponia su clave principal. Va a la vista. --}}
+                    <p class="mt-1 text-xs leading-relaxed text-gray-600">
+                        <strong class="text-gray-800">No pongas aquí tu Clave SOL principal.</strong>
+                        SUNAT pide un <strong>usuario secundario</strong> con el perfil de facturación
+                        electrónica. Es gratis y se crea en un minuto. Si pusieras la principal, esa clave
+                        —que da acceso a todas tus declaraciones y a tu RUC— quedaría guardada aquí.
+                    </p>
+                    <details class="mt-2">
+                        <summary class="cursor-pointer text-xs text-blue-600 hover:underline">¿Cómo lo creo?</summary>
                         <p class="text-xs text-gray-600 mt-2 leading-relaxed">
-                            Entra a SUNAT con tu Clave SOL principal → <em>Administración de usuarios secundarios</em> →
-                            crea uno y actívale el perfil de <strong>facturación electrónica</strong>. Es gratis.
+                            Entra a SUNAT con tu Clave SOL <em>principal</em> →
+                            <em>Administración de usuarios secundarios</em> → crea uno y actívale el perfil de
+                            <strong>facturación electrónica</strong>. Luego vuelve aquí y escribe ese usuario y su clave.
                         </p>
                     </details>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="prod_usuario_sol" class="block text-sm font-medium text-gray-700 mb-1">Usuario SOL</label>
+                        <label for="prod_usuario_sol" class="block text-sm font-medium text-gray-700 mb-1">Usuario SOL secundario</label>
                         <input type="text" name="usuario_sol" id="prod_usuario_sol" autocomplete="off"
                                value="{{ old('usuario_sol', strcasecmp((string) $company->usuario_sol, 'MODDATOS') === 0 ? '' : $company->usuario_sol) }}"
                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
-                               placeholder="Tu usuario secundario">
+                               placeholder="Ej. FACTURA01 (no tu clave principal)">
                     </div>
                     <div>
-                        <label for="prod_clave_sol" class="block text-sm font-medium text-gray-700 mb-1">Clave SOL</label>
+                        <label for="prod_clave_sol" class="block text-sm font-medium text-gray-700 mb-1">Clave de ese usuario secundario</label>
                         <input type="password" name="clave_sol" id="prod_clave_sol" autocomplete="new-password"
                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
                                placeholder="********">

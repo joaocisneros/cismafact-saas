@@ -177,12 +177,27 @@ class SunatConfigController extends Controller
         $request->validate([
             'ruc' => ['required', 'string', 'size:11', 'regex:/^\d{11}$/', Rule::unique('companies', 'ruc')->ignore($company->id)],
             'razon_social' => ['required', 'string', 'max:255'],
+            // La direccion y el ubigeo van impresos en cada XML. Antes se
+            // quedaban con los de prueba y las facturas reales salian con una
+            // direccion inventada.
+            'direccion' => ['required', 'string', 'max:255'],
+            'ubigeo' => ['required', 'string', 'size:6', 'regex:/^\d{6}$/'],
+            'departamento' => ['required', 'string', 'max:100'],
+            'provincia' => ['required', 'string', 'max:100'],
+            'distrito' => ['required', 'string', 'max:100'],
         ], [
             'ruc.required' => 'Escribe el RUC real de tu empresa.',
             'ruc.size' => 'El RUC debe tener 11 dígitos.',
             'ruc.regex' => 'El RUC debe tener 11 dígitos, solo números.',
             'ruc.unique' => 'Ese RUC ya está registrado en otra empresa.',
             'razon_social.required' => 'Escribe la razón social real de tu empresa.',
+            'direccion.required' => 'Escribe la dirección fiscal real: aparece en cada comprobante.',
+            'ubigeo.required' => 'Escribe el ubigeo de tu dirección fiscal (6 dígitos).',
+            'ubigeo.size' => 'El ubigeo tiene 6 dígitos. Ej. 150101 para Lima - Lima - Lima.',
+            'ubigeo.regex' => 'El ubigeo son 6 dígitos, solo números.',
+            'departamento.required' => 'Escribe el departamento.',
+            'provincia.required' => 'Escribe la provincia.',
+            'distrito.required' => 'Escribe el distrito.',
         ]);
 
         $rucReal = $request->input('ruc');
@@ -274,9 +289,12 @@ class SunatConfigController extends Controller
         }
 
         $branchIds = $company->branches()->pluck('id');
-        $razonSocialReal = $request->input('razon_social');
+        $datosFiscales = $request->only([
+            'razon_social', 'direccion', 'ubigeo', 'departamento', 'provincia', 'distrito',
+        ]);
+        $razonSocialReal = $datosFiscales['razon_social'];
 
-        DB::transaction(function () use ($company, $branchIds, $rucReal, $razonSocialReal) {
+        DB::transaction(function () use ($company, $branchIds, $rucReal, $datosFiscales) {
             // 1) Borrar TODO lo emitido en pruebas. Antes solo se borraban los
             //    cinco comprobantes principales y quedaban resumenes, anulaciones
             //    y retenciones de prueba mezclados con los reales.
@@ -296,9 +314,8 @@ class SunatConfigController extends Controller
             Correlative::whereIn('branch_id', $branchIds)->update(['correlativo_actual' => 0]);
 
             // 3) Datos fiscales reales + produccion, en la misma operacion.
-            $company->update([
+            $company->update($datosFiscales + [
                 'ruc' => $rucReal,
-                'razon_social' => $razonSocialReal,
                 'modo_produccion' => true,
             ]);
         });
