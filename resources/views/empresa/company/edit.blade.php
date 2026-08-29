@@ -44,6 +44,16 @@
                                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
+                            <label for="regimen_tributario" class="mb-1 block text-sm font-medium text-gray-700">Régimen tributario</label>
+                            <select name="regimen_tributario" id="regimen_tributario"
+                                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Sin indicar</option>
+                                @foreach(\App\Models\Company::REGIMENES as $codigo => $nombre)
+                                    <option value="{{ $codigo }}" @selected(old('regimen_tributario', $company->regimen_tributario) === $codigo)>{{ $nombre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
                             <label for="nombre_comercial" class="mb-1 block text-sm font-medium text-gray-700">Nombre comercial</label>
                             <input type="text" name="nombre_comercial" id="nombre_comercial" value="{{ old('nombre_comercial', $company->nombre_comercial) }}"
                                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">

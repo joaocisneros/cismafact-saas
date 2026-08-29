@@ -17,12 +17,26 @@ class Company extends Model
     // automaticamente.
     use HasFactory, HasCompanyConfigurations, SoftDeletes;
 
+    /**
+     * Regimenes tributarios.
+     *
+     * No viajan en el XML —SUNAT no los pide en el comprobante— pero mandan
+     * sobre lo que se puede emitir: en Nuevo RUS solo caben boletas.
+     */
+    public const REGIMENES = [
+        'nrus' => 'NRUS — Nuevo Régimen Único Simplificado',
+        'rer' => 'RER — Régimen Especial de Renta',
+        'rmt' => 'RMT — Régimen MYPE Tributario',
+        'rg' => 'RG — Régimen General',
+    ];
+
     protected $fillable = [
         'ruc',
         'plan_id',
         'metodo_emision',
         'razon_social',
         'nombre_comercial',
+        'regimen_tributario',
         'direccion',
         'ubigeo',
         'distrito',

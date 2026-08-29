@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Empresa;
 use App\Support\CertificadoDigital;
 use App\Http\Controllers\Controller;
 use App\Models\Boleta;
+use App\Models\Company;
 use App\Models\CreditNote;
 use App\Models\DebitNote;
 use App\Models\DispatchGuide;
@@ -219,6 +220,7 @@ class SunatConfigController extends Controller
         $request->validate([
             'ruc' => ['required', 'string', 'size:11', 'regex:/^\d{11}$/', Rule::unique('companies', 'ruc')->ignore($company->id)],
             'razon_social' => ['required', 'string', 'max:255'],
+            'regimen_tributario' => ['required', Rule::in(array_keys(Company::REGIMENES))],
             // La direccion y el ubigeo van impresos en cada XML. Antes se
             // quedaban con los de prueba y las facturas reales salian con una
             // direccion inventada.
@@ -233,6 +235,8 @@ class SunatConfigController extends Controller
             'ruc.regex' => 'El RUC debe tener 11 dígitos, solo números.',
             'ruc.unique' => 'Ese RUC ya está registrado en otra empresa.',
             'razon_social.required' => 'Escribe la razón social real de tu empresa.',
+            'regimen_tributario.required' => 'Elige tu régimen tributario: figura en tu ficha RUC.',
+            'regimen_tributario.in' => 'Ese régimen no existe.',
             'direccion.required' => 'Escribe la dirección fiscal real: aparece en cada comprobante.',
             'ubigeo.required' => 'Escribe el ubigeo de tu dirección fiscal (6 dígitos).',
             'ubigeo.size' => 'El ubigeo tiene 6 dígitos. Ej. 150101 para Lima - Lima - Lima.',
@@ -348,7 +352,7 @@ class SunatConfigController extends Controller
         }
 
         $datosFiscales = $request->only([
-            'razon_social', 'nombre_comercial', 'direccion', 'ubigeo',
+            'razon_social', 'nombre_comercial', 'regimen_tributario', 'direccion', 'ubigeo',
             'departamento', 'provincia', 'distrito',
         ]);
         $razonSocialReal = $datosFiscales['razon_social'];

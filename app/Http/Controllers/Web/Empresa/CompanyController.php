@@ -22,6 +22,7 @@ class CompanyController extends Controller
         $request->validate([
             'razon_social' => 'required|string|max:255',
             'nombre_comercial' => 'nullable|string|max:255',
+            'regimen_tributario' => 'nullable|in:' . implode(',', array_keys(\App\Models\Company::REGIMENES)),
             'direccion' => 'nullable|string|max:500',
             'telefono' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
@@ -32,7 +33,7 @@ class CompanyController extends Controller
         ]);
 
         $company = Auth::user()->company;
-        $data = $request->only(['razon_social', 'nombre_comercial', 'direccion', 'telefono', 'email', 'web']);
+        $data = $request->only(['razon_social', 'nombre_comercial', 'regimen_tributario', 'direccion', 'telefono', 'email', 'web']);
 
         if ($request->hasFile('logo')) {
             // La columna es 'logo_path', no 'logo'. Guardar en 'logo' no hacia

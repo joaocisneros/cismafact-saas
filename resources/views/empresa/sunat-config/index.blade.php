@@ -337,6 +337,20 @@
                                class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-red-500">
                     </div>
 
+                    {{-- El regimen no va en el XML, pero manda sobre lo que se
+                         puede emitir: en Nuevo RUS solo caben boletas. --}}
+                    <div class="md:col-span-3">
+                        <label for="prod_regimen" class="mb-1 block text-sm font-medium text-gray-700">Régimen tributario</label>
+                        <select name="regimen_tributario" id="prod_regimen"
+                                class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-red-500">
+                            <option value="">Elige tu régimen…</option>
+                            @foreach(\App\Models\Company::REGIMENES as $codigo => $nombre)
+                                <option value="{{ $codigo }}" @selected(old('regimen_tributario', $company->regimen_tributario) === $codigo)>{{ $nombre }}</option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">Figura en tu ficha RUC. En Nuevo RUS solo se emiten boletas.</p>
+                    </div>
+
                     {{-- La direccion y el ubigeo tambien van en cada XML. Faltaban
                          aqui, y las facturas reales salian con la de pruebas. --}}
                     <div class="md:col-span-3">
