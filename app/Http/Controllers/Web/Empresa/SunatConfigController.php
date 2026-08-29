@@ -107,8 +107,11 @@ class SunatConfigController extends Controller
         $subject = $info['subject'] ?? [];
         $titular = $subject['CN'] ?? ($subject['O'] ?? null);
 
-        // El RUC suele venir en serialNumber; si no, se busca un numero de 11 digitos.
-        $ruc = $subject['serialNumber'] ?? null;
+        // El RUC suele venir en serialNumber; si no, se busca en el resto del sujeto.
+        // En un certificado de persona natural serialNumber es el DNI, no
+        // un RUC. Solo se acepta si son 11 digitos.
+        $serial = (string) ($subject['serialNumber'] ?? '');
+        $ruc = preg_match('/^\d{11}$/', $serial) ? $serial : null;
         if (! $ruc) {
             foreach ($subject as $valor) {
                 if (is_string($valor) && preg_match('/\b(\d{11})\b/', $valor, $m)) {
@@ -233,7 +236,15 @@ class SunatConfigController extends Controller
                 // Antes se guardaba el RUC del certificado sin compararlo nunca.
                 $rucCert = $datosCert['cert_ruc'] ?? null;
 
-                if ($rucCert && $rucCert !== $rucReal) {
+                if (! $rucCert) {
+                    return back()->withInput()->withErrors([
+                        'certificado_pfx' => 'Este certificado no lleva ningún RUC dentro, así que parece de '
+                            . 'persona natural. Para facturar necesitas uno emitido a nombre del RUC '
+                            . $rucReal . '. Con este, SUNAT rechazaría todos los comprobantes.',
+                    ]);
+                }
+
+                if ($rucCert !== $rucReal) {
                     return back()->withInput()->withErrors([
                         'certificado_pfx' => "El certificado pertenece al RUC {$rucCert}, pero la empresa es {$rucReal}. "
                             . 'SUNAT rechazaría todos los comprobantes. Sube el certificado del RUC correcto.',
