@@ -340,8 +340,16 @@ class SunatConfigController extends Controller
         }
 
         $branchIds = $company->branches()->pluck('id');
+        // El nombre comercial va al XML como PartyName. Se quedaba con el de
+        // pruebas, asi que los comprobantes reales salian a nombre de la
+        // empresa de prueba. Si no se indica, vale la razon social.
+        if (! $request->filled('nombre_comercial')) {
+            $request->merge(['nombre_comercial' => $request->input('razon_social')]);
+        }
+
         $datosFiscales = $request->only([
-            'razon_social', 'direccion', 'ubigeo', 'departamento', 'provincia', 'distrito',
+            'razon_social', 'nombre_comercial', 'direccion', 'ubigeo',
+            'departamento', 'provincia', 'distrito',
         ]);
         $razonSocialReal = $datosFiscales['razon_social'];
 

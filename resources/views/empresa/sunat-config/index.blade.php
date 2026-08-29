@@ -4,12 +4,7 @@
 
 @section('content')
 
-    <div class="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
-        ¿Dudas con el certificado, la Clave SOL o la diferencia entre pruebas y producción?
-        <a href="{{ route('empresa.ayuda-emision') }}" class="font-medium underline">Lee la guía de emisión</a>.
-    </div>
 <div class="space-y-6" x-data="{ metodo: '{{ old('metodo_emision', $company->metodo_emision ?? 'cisma_fact') }}' }">
-    <h2 class="text-lg font-semibold text-gray-800">Configuración SUNAT</h2>
 
     @if(session('success'))
         <div class="rounded-lg bg-green-50 border border-green-200 text-green-800 px-4 py-3 text-sm">{{ session('success') }}</div>
@@ -71,37 +66,24 @@
             </dl>
         </div>
     @else
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-white rounded-xl shadow-sm p-4 text-center">
-                <div class="w-10 h-10 {{ !empty($company->usuario_sol) ? 'bg-green-100' : 'bg-red-100' }} rounded-full flex items-center justify-center mx-auto mb-2">
-                    <svg class="w-5 h-5 {{ !empty($company->usuario_sol) ? 'text-green-600' : 'text-red-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
-                <p class="text-sm font-medium {{ !empty($company->usuario_sol) ? 'text-green-600' : 'text-red-600' }}">
-                    {{ !empty($company->usuario_sol) ? 'SUNAT Configurado' : 'SUNAT Pendiente' }}
-                </p>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm p-4 text-center">
-                <div class="w-10 h-10 {{ !empty($company->certificado_pem) ? 'bg-green-100' : 'bg-red-100' }} rounded-full flex items-center justify-center mx-auto mb-2">
-                    <svg class="w-5 h-5 {{ !empty($company->certificado_pem) ? 'text-green-600' : 'text-red-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-                    </svg>
-                </div>
-                <p class="text-sm font-medium {{ !empty($company->certificado_pem) ? 'text-green-600' : 'text-red-600' }}">
-                    {{ !empty($company->certificado_pem) ? 'Certificado Instalado' : 'Certificado Pendiente' }}
-                </p>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm p-4 text-center">
-                <div class="w-10 h-10 {{ $company->activo ? 'bg-green-100' : 'bg-red-100' }} rounded-full flex items-center justify-center mx-auto mb-2">
-                    <svg class="w-5 h-5 {{ $company->activo ? 'text-green-600' : 'text-red-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                    </svg>
-                </div>
-                <p class="text-sm font-medium {{ $company->activo ? 'text-green-600' : 'text-red-600' }}">
-                    {{ $company->activo ? 'Empresa Activa' : 'Empresa Inactiva' }}
-                </p>
-            </div>
+        {{-- Eran tres tarjetas a todo el ancho para decir tres palabras. --}}
+        <div class="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-white p-4 shadow-sm text-sm">
+            @foreach([
+                ['Credenciales SOL', !empty($company->usuario_sol)],
+                ['Certificado', !empty($company->certificado_pem)],
+                ['Empresa activa', (bool) $company->activo],
+            ] as [$que, $listo])
+                <span class="inline-flex items-center gap-1.5 {{ $listo ? 'text-gray-700' : 'text-red-600' }}">
+                    <span class="text-base leading-none {{ $listo ? 'text-green-600' : 'text-red-500' }}">{{ $listo ? '●' : '○' }}</span>
+                    {{ $que }}{{ $listo ? '' : ' pendiente' }}
+                </span>
+            @endforeach
+
+            <span class="ml-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium
+                         {{ $company->modo_produccion ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700' }}">
+                ● {{ $company->modo_produccion ? 'Producción · emisión real' : 'Beta · pruebas' }}
+            </span>
+        </div>
         </div>
     @endif
 
@@ -171,15 +153,7 @@
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                            placeholder="********">
                 </div>
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Ambiente actual</label>
-                    @if($company->modo_produccion)
-                        <span class="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-700 px-3 py-1 text-sm font-medium">● Producción (emisión real)</span>
-                    @else
-                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-700 px-3 py-1 text-sm font-medium">● Beta (pruebas)</span>
-                    @endif
-                    <p class="text-xs text-gray-500 mt-1">El cambio a producción se hace abajo en «Pasar a producción».</p>
-                </div>
+
             </div>
         </div>
 
@@ -509,12 +483,5 @@
     </div>
     @endunless
 
-    {{-- Aviso cuando ya está en producción --}}
-    @if($company->modo_produccion)
-    <div class="rounded-xl border-2 border-green-200 bg-green-50 p-5">
-        <p class="text-sm font-semibold text-green-800">✅ Empresa en producción</p>
-        <p class="text-sm text-green-700 mt-1">Esta empresa emite comprobantes reales con valor legal.</p>
-    </div>
-    @endif
 </div>
 @endsection
