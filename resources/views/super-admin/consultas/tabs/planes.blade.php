@@ -21,7 +21,8 @@
         <div>
             <h2 class="text-sm font-semibold text-gray-900">Qué incluye cada plan</h2>
             <p class="mt-0.5 text-xs text-gray-500">
-                Al mes. Una consulta sin cuota queda fuera del plan: así se arman paquetes como «Solo RUC».
+                Un plan incluye las dos consultas, cada una con su tope. Para que alguien solo use una,
+                marca solo esa en su API Key.
             </p>
         </div>
         <button type="button" @click="nuevo = true; plan = null"
