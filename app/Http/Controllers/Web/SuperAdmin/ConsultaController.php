@@ -22,6 +22,7 @@ class ConsultaController extends Controller
             'ajustes' => Setting::whereIn('key', ['consultas_url', 'consultas_token'])
                 ->pluck('value', 'key')
                 ->all(),
+            'cabecera' => $this->cabecera(),
             'mes' => $this->consumoDelMes(),
             'empresas' => $this->porEmpresa(),
             'guardadas' => $this->guardadas(),
@@ -49,6 +50,43 @@ class ConsultaController extends Controller
         }
 
         return back()->with('success', 'Cuotas actualizadas.');
+    }
+
+    /**
+     * Las cifras de cabecera.
+     *
+     * Cosas que sirven para decidir algo, no detalles de como esta hecho por
+     * dentro: cuanto se usa, si crece, quien lo usa, y a quien hay que llamar
+     * porque se le acaba la cuota.
+     *
+     * @return array<string,int>
+     */
+    private function cabecera(): array
+    {
+        $mes = now()->startOfMonth();
+
+        $cercaDelTope = DB::table('consultas_consumo')
+            ->join('companies', 'companies.id', '=', 'consultas_consumo.company_id')
+            ->join('plans', 'plans.id', '=', 'companies.plan_id')
+            ->where('consultas_consumo.created_at', '>=', $mes)
+            ->where('plans.consultas_limit', '>', 0)
+            // El select explicito no es adorno: con GROUP BY, MySQL rechaza el
+            // "select *" que pone Laravel por defecto (only_full_group_by).
+            ->select('companies.id')
+            ->groupBy('companies.id', 'plans.consultas_limit')
+            ->havingRaw('COUNT(*) >= plans.consultas_limit * 0.8')
+            ->get()
+            ->count();
+
+        return [
+            'mes' => DB::table('consultas_consumo')->where('created_at', '>=', $mes)->count(),
+            'hoy' => DB::table('consultas_consumo')->where('created_at', '>=', now()->startOfDay())->count(),
+            'empresas' => DB::table('consultas_consumo')
+                ->where('created_at', '>=', $mes)
+                ->distinct()
+                ->count('company_id'),
+            'cerca_del_tope' => $cercaDelTope,
+        ];
     }
 
     /**

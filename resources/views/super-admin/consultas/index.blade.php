@@ -31,10 +31,12 @@
         </div>
     @endif
 
-    {{-- Las mismas tarjetas del Dashboard, con el mismo componente: si aqui se
-         dibujaran a mano acabarian pareciendose pero no siendo iguales. --}}
+    {{-- Cosas que sirven para decidir algo. Antes habia aqui "resueltas en
+         casa" y "fueron al proveedor": eso es como esta hecho por dentro, no
+         algo sobre lo que se actue. Y el padron no es una cifra, es un aviso.
+         Van con el componente del Dashboard, no unas parecidas a mano. --}}
     <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <x-stat-card title="Consultas este mes" :value="number_format($mes['total'])"
+        <x-stat-card title="Consultas este mes" :value="number_format($cabecera['mes'])"
                      :subtitle="number_format($mes['ruc']) . ' RUC · ' . number_format($mes['dni']) . ' DNI'"
                      color="blue">
             <x-slot:icon>
@@ -44,31 +46,30 @@
             </x-slot:icon>
         </x-stat-card>
 
-        <x-stat-card title="Resueltas en casa" :value="number_format($mes['en_casa'])"
-                     :subtitle="$mes['total'] ? round($mes['en_casa'] / $mes['total'] * 100) . '% sin salir a internet' : 'Sin consultas todavía'"
-                     color="green">
+        <x-stat-card title="Hoy" :value="number_format($cabecera['hoy'])"
+                     subtitle="Consultas en lo que va de día" color="indigo">
             <x-slot:icon>
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
                 </svg>
             </x-slot:icon>
         </x-stat-card>
 
-        <x-stat-card title="Fueron al proveedor" :value="number_format($mes['al_proveedor'])"
-                     subtitle="Lo que cuesta de verdad" color="orange">
+        <x-stat-card title="Empresas usándola" :value="number_format($cabecera['empresas'])"
+                     subtitle="Consultaron al menos una vez este mes" color="green">
             <x-slot:icon>
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-2a4 4 0 10-8 0 4 4 0 008 0zm6-3a4 4 0 11-8 0 4 4 0 018 0z"/>
                 </svg>
             </x-slot:icon>
         </x-stat-card>
 
-        <x-stat-card title="Padrón local" :value="$padron ? number_format($padron) : 'Vacío'"
-                     :subtitle="$padron ? 'RUC en tu base' : 'Sin importar todavía'"
-                     :color="$padron ? 'indigo' : 'yellow'">
+        <x-stat-card title="Cerca de su límite" :value="number_format($cabecera['cerca_del_tope'])"
+                     subtitle="Han pasado del 80% de su cuota"
+                     :color="$cabecera['cerca_del_tope'] ? 'orange' : 'green'">
             <x-slot:icon>
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                 </svg>
             </x-slot:icon>
         </x-stat-card>
