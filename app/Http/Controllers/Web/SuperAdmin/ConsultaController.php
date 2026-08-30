@@ -36,8 +36,16 @@ class ConsultaController extends Controller
                 ->withCount(['consumo as consultas_mes' => fn ($q) => $q->where('created_at', '>=', now()->startOfMonth())])
                 ->get(),
             'planesApi' => ApiPlan::orderBy('a_medida')->orderBy('precio_mensual')->orderBy('orden')->get(),
+            // Separadas por entorno: las de prueba tienen su pestaña. Mezclarlas
+            // con las que cobran confunde al mirar quien gasta que.
             'llaves' => \App\Models\ConsultaLlave::with(['empresa:id,razon_social,ruc', 'plan'])
                 ->withCount(['consumo as usadas_mes' => fn ($q) => $q->where('created_at', '>=', now()->startOfMonth())])
+                ->where('entorno', 'produccion')
+                ->latest('id')
+                ->get(),
+            'sandbox' => \App\Models\ConsultaLlave::with(['empresa:id,razon_social,ruc', 'plan'])
+                ->withCount('consumo')
+                ->where('entorno', 'sandbox')
                 ->latest('id')
                 ->get(),
             'empresas' => \App\Models\Company::orderBy('razon_social')->get(['id', 'razon_social', 'ruc']),

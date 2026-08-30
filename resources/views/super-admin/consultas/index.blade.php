@@ -10,6 +10,7 @@
     $pestanas = [
         'planes' => 'Planes',
         'apis' => 'Mis APIs',
+        'sandbox' => 'Sandbox',
         'consumo' => 'Consumo',
         'docs' => 'Documentación',
     ];
