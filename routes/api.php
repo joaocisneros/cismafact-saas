@@ -433,14 +433,16 @@ Route::prefix('v1')->middleware('api.key')->group(function () {
 | Consulta de RUC y DNI
 |--------------------------------------------------------------------------
 |
-| Con la misma clave con la que emiten: al cliente no hay que darle nada nuevo.
+| Con su propia llave, NO con la de emision. Son dos negocios distintos: quien
+| compra consultas puede no facturar aqui, y quien factura no deberia recibir
+| consultas de regalo. Ademas, bloquear una cosa no puede cortar la otra.
 |
 | El tope por minuto no es lo mismo que la cuota del plan. La cuota dice cuanto
 | puede consumir al mes; esto evita que se lo queme de golpe y, de paso, que una
 | rafaga tumbe al proveedor del que dependemos.
 |
 */
-Route::middleware(['api.key', 'throttle:30,1'])->prefix('consultas')->group(function () {
+Route::middleware(['llave.consulta', 'throttle:30,1'])->prefix('consultas')->group(function () {
     Route::get('/ruc/{numero}', [ApiConsultaController::class, 'ruc']);
     Route::get('/dni/{numero}', [ApiConsultaController::class, 'dni']);
     Route::get('/cuota', [ApiConsultaController::class, 'cuota']);

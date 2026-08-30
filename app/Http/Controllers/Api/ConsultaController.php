@@ -4,23 +4,26 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Api;
+use App\Models\ConsultaLlave;
 use App\Services\ConsultaDocumentoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Consulta de RUC y DNI para quien compra la API.
+ * Consulta de RUC y DNI para quien compra el servicio.
+ *
+ * SIN NADA QUE VER CON LA EMISION. Se entra con una llave de consultas, no con
+ * la de facturar: son dos negocios distintos y mezclarlos daria consultas de
+ * regalo a quien solo contrato facturacion, y obligaria a tener llave de
+ * emision a quien solo quiere consultar.
  *
  * Dos rutas y no una: lo que devuelve un RUC (estado, condicion, domicilio
  * fiscal) y lo que devuelve un DNI (apellidos) no se parecen. Con una sola,
  * quien la usa tendria que mirar que le llego para saber como leerlo.
  *
- * Que api se sirve, si esta encendida, si esta en pruebas y cuanto incluye
- * cada plan sale de la tabla `apis`, no de este archivo: asi se apaga una sin
- * tocar la otra y sin desplegar nada.
- *
- * Entran con la misma clave con la que emiten. No hay que darles nada nuevo.
+ * Que servicio existe, si esta encendido y cuanto incluye cada plan sale de la
+ * base, no de este archivo: asi se apaga uno sin tocar el otro ni desplegar.
  */
 class ConsultaController extends Controller
 {
@@ -38,66 +41,75 @@ class ConsultaController extends Controller
         return $this->responder($request, 'dni', $numero);
     }
 
-    /** Lo consumido y lo que queda de cada api, para que lo vea sin preguntar. */
+    /** Lo consumido y lo que queda, para que lo vea sin preguntar. */
     public function cuota(Request $request): JsonResponse
     {
-        $empresa = $request->user()->company;
-        $planId = $empresa->api_plan_id;
+        $llave = $this->llave($request);
 
-        $apis = Api::with('planes')->get()->map(function (Api $api) use ($empresa, $planId) {
-            $tope = $api->limiteDelPlan($planId);
-            $usadas = $this->usadas($empresa->id, $api->id);
-
-            return [
-                'api' => $api->slug,
+        $servicios = Api::with('planes')
+            ->whereIn('slug', (array) $llave->servicios)
+            ->get()
+            ->map(fn (Api $api) => [
+                'servicio' => $api->slug,
                 'nombre' => $api->nombre,
                 'disponible' => $api->activa,
-                'modo_prueba' => $api->modo_prueba,
-                'limite_mensual' => $tope,
-                'usadas' => $usadas,
+                'limite_mensual' => $tope = $api->limiteDelPlan($llave->api_plan_id),
+                'usadas' => $usadas = $this->usadas($llave->id, $api->id),
                 'restantes' => max(0, $tope - $usadas),
-            ];
-        });
+            ]);
 
         return response()->json([
-            'plan' => $empresa->apiPlan->nombre ?? null,
+            'llave' => $llave->nombre,
+            'entorno' => $llave->entorno,
+            'plan' => $llave->plan->nombre ?? null,
+            'expira_en' => $llave->expira_en?->toDateString(),
             'renueva' => now()->startOfMonth()->addMonth()->toDateString(),
-            'apis' => $apis,
+            'servicios' => $servicios,
         ]);
     }
 
     private function responder(Request $request, string $slug, string $numero): JsonResponse
     {
+        $llave = $this->llave($request);
+
+        // Lo primero: si esta llave da acceso a esto. Antes que nada del
+        // servicio, porque es lo que separa "no lo contrataste" de "esta caido".
+        if (! $llave->sirve($slug)) {
+            return $this->error("Esta llave no da acceso a la consulta de {$slug}.", 403);
+        }
+
         $api = Api::with('planes')->where('slug', $slug)->first();
 
         if (! $api) {
-            return response()->json(['success' => false, 'message' => 'Esa consulta no existe.'], 404);
+            return $this->error('Esa consulta no existe.', 404);
         }
 
         // Apagada a proposito: se corta aqui, sin gastar cuota ni molestar al
         // proveedor. Sirve para cuando el proveedor esta caido, en vez de que
         // cada cliente se coma el error por su cuenta.
         if (! $api->activa) {
-            return response()->json([
-                'success' => false,
-                'message' => "La consulta de {$slug} está temporalmente fuera de servicio.",
-            ], 503);
+            return $this->error("La consulta de {$slug} está temporalmente fuera de servicio.", 503);
         }
 
-        $empresa = $request->user()->company;
-        $tope = $api->limiteDelPlan($empresa->api_plan_id);
+        $tope = $api->limiteDelPlan($llave->api_plan_id);
 
         if ($tope === 0) {
-            return response()->json([
-                'success' => false,
-                'message' => "Tu plan no incluye la consulta de {$slug}.",
-            ], 403);
+            return $this->error("Tu plan no incluye la consulta de {$slug}.", 403);
         }
 
-        $usadas = $this->usadas($empresa->id, $api->id);
+        // En sandbox se responde con un ejemplo y no se cuenta: es justo para
+        // poder integrar sin gastar lo que se paga.
+        if ($llave->entorno === 'sandbox') {
+            return response()->json([
+                'success' => true,
+                'data' => $api->ejemplo($numero),
+                'message' => 'Entorno de pruebas: los datos son de ejemplo y no gastan cuota.',
+            ]);
+        }
 
-        // En pruebas no se cuenta: es justo para poder integrar sin gastar.
-        if (! $api->modo_prueba && $usadas >= $tope) {
+        $usadas = $this->usadas($llave->id, $api->id);
+
+        if ($usadas >= $tope) {
             return response()->json([
                 'success' => false,
                 'message' => "Has agotado las {$tope} consultas de {$slug} de tu plan este mes.",
@@ -107,14 +119,6 @@ class ConsultaController extends Controller
             ], 429);
         }
 
-        if ($api->modo_prueba) {
-            return response()->json([
-                'success' => true,
-                'data' => $api->ejemplo($numero),
-                'message' => 'Modo de pruebas: los datos son de ejemplo y no gastan cuota.',
-            ]);
-        }
-
         $r = $slug === 'ruc'
             ? $this->consultas->ruc($numero)
             : $this->consultas->dni($numero);
@@ -122,7 +126,7 @@ class ConsultaController extends Controller
         // Un numero mal escrito no gasta cuota: el error es de quien pregunta
         // y no ha costado nada resolverlo.
         if ($r['valido']) {
-            $this->anotar($empresa->id, $api->id, $slug, $numero, $r['fuente'] ?? 'ninguna');
+            $this->anotar($llave, $api->id, $slug, $numero, $r['fuente'] ?? 'ninguna');
         }
 
         return response()->json([
@@ -132,21 +136,28 @@ class ConsultaController extends Controller
         ], $r['valido'] ? 200 : 422);
     }
 
-    /** Solo lo de fuera cuenta: lo interno ya lo paga el plan de la empresa. */
-    private function usadas(int $empresa, int $api): int
+    private function llave(Request $request): ConsultaLlave
+    {
+        return $request->attributes->get('llave_consulta');
+    }
+
+    /** Lo gastado por esta llave este mes. Cada llave tiene su cuenta. */
+    private function usadas(int $llave, int $api): int
     {
         return DB::table('consultas_consumo')
-            ->where('company_id', $empresa)
+            ->where('llave_id', $llave)
             ->where('api_id', $api)
-            ->where('origen', 'externo')
             ->where('created_at', '>=', now()->startOfMonth())
             ->count();
     }
 
-    private function anotar(int $empresa, int $api, string $tipo, string $numero, string $fuente): void
+    private function anotar(ConsultaLlave $llave, int $api, string $tipo, string $numero, string $fuente): void
     {
         DB::table('consultas_consumo')->insert([
-            'company_id' => $empresa,
+            'llave_id' => $llave->id,
+            // Puede ser nulo: una llave de alguien de fuera no cuelga de
+            // ninguna empresa del sistema.
+            'company_id' => $llave->company_id,
             'api_id' => $api,
             'origen' => 'externo',
             'tipo' => $tipo,
@@ -156,5 +167,10 @@ class ConsultaController extends Controller
             'fuente' => $fuente,
             'created_at' => now(),
         ]);
+    }
+
+    private function error(string $mensaje, int $codigo): JsonResponse
+    {
+        return response()->json(['success' => false, 'message' => $mensaje], $codigo);
     }
 }
