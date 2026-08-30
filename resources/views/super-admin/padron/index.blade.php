@@ -28,6 +28,11 @@
     @if(session('success'))
         <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('success') }}</div>
     @endif
+    @if($errors->any())
+        <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            @foreach($errors->all() as $e)<p>{{ $e }}</p>@endforeach
+        </div>
+    @endif
     @if(session('error'))
         <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ session('error') }}</div>
     @endif
@@ -127,6 +132,89 @@
                     <code class="rounded bg-gray-100 px-1.5 py-0.5 font-mono">php artisan padron:actualizar</code>
                 </p>
             </div>
+        </div>
+    </section>
+
+    {{-- La otra fuente del mismo dato. Mientras el padron este vacio es la
+         unica; cuando se importe, pasa a cubrir solo lo que el padron no tenga
+         (los RUC inscritos despues de la ultima descarga). --}}
+    <section class="rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div class="border-b border-gray-200 px-5 py-4">
+            <h2 class="text-base font-semibold text-gray-900">Proveedor externo</h2>
+            <p class="mt-0.5 text-xs text-gray-500">
+                @if($filas)
+                    Cubre lo que el padrón no tenga: los RUC inscritos después de la última descarga.
+                @else
+                    Mientras el padrón esté vacío, todo sale de aquí.
+                @endif
+            </p>
+        </div>
+
+        <form method="POST" action="{{ route('super-admin.padron.proveedor') }}" class="space-y-3 px-5 py-4">
+            @csrf
+            @method('PUT')
+
+            <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                    <label for="consultas_url" class="mb-1 block text-xs font-medium text-gray-700">Dirección</label>
+                    <input type="url" name="consultas_url" id="consultas_url"
+                           value="{{ old('consultas_url', $ajustes['consultas_url'] ?? '') }}"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="https://api.apis.net.pe/v1/{tipo}?numero={numero}">
+                    <p class="mt-1 text-xs text-gray-500">
+                        Pon <code class="rounded bg-gray-100 px-1">{tipo}</code> y
+                        <code class="rounded bg-gray-100 px-1">{numero}</code> donde vayan.
+                    </p>
+                </div>
+                <div>
+                    <label for="consultas_token" class="mb-1 block text-xs font-medium text-gray-700">Token</label>
+                    <input type="password" name="consultas_token" id="consultas_token" autocomplete="new-password"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="{{ !empty($ajustes['consultas_token']) ? 'Dejar vacío para mantener el actual' : 'Opcional' }}">
+                    <p class="mt-1 text-xs text-gray-500">Va como <code class="rounded bg-gray-100 px-1">Bearer</code></p>
+                </div>
+            </div>
+
+            <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
+                Guardar
+            </button>
+        </form>
+
+        <div class="border-t border-gray-100 bg-gray-50 px-5 py-4">
+            <form method="POST" action="{{ route('super-admin.padron.probar') }}" class="flex flex-wrap items-center gap-2">
+                @csrf
+                <select name="tipo" class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="ruc">RUC</option>
+                    <option value="dni">DNI</option>
+                </select>
+                <input type="text" name="numero" value="{{ old('numero') }}"
+                       class="w-44 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="20608251589">
+                <button type="submit" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
+                    Probar
+                </button>
+                <span class="text-xs text-gray-500">Pregunta de verdad, sin usar lo guardado.</span>
+            </form>
+
+            @if($r = session('consulta_prueba'))
+                <div class="mt-3 rounded-lg border bg-white px-4 py-3 text-sm {{ $r['valido'] ? 'border-green-200' : 'border-red-200' }}">
+                    <p class="font-semibold {{ $r['valido'] ? 'text-green-800' : 'text-red-800' }}">
+                        {{ $r['numero'] }} — {{ $r['valido'] ? 'válido' : 'no válido' }}
+                        @if(!empty($r['fuente']))
+                            <span class="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">{{ $r['fuente'] }}</span>
+                        @endif
+                    </p>
+                    <dl class="mt-2 grid gap-x-6 gap-y-1 text-xs sm:grid-cols-2">
+                        @foreach($r as $campo => $valor)
+                            @continue(in_array($campo, ['valido', 'numero', 'tipo', 'fuente'], true) || $valor === null)
+                            <div class="flex gap-2">
+                                <dt class="w-28 shrink-0 text-gray-500">{{ str_replace('_', ' ', $campo) }}</dt>
+                                <dd class="font-medium text-gray-800">{{ $valor }}</dd>
+                            </div>
+                        @endforeach
+                    </dl>
+                </div>
+            @endif
         </div>
     </section>
 

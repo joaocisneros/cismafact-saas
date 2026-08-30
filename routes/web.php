@@ -213,15 +213,14 @@ Route::prefix('super-admin')
 
         // Consultas de RUC y DNI: proveedor, cache y padron.
         Route::get('/consultas', [SuperAdminConsultaController::class, 'index'])->name('consultas');
-        Route::put('/consultas', [SuperAdminConsultaController::class, 'update'])->name('consultas.update');
-        Route::post('/consultas/probar', [SuperAdminConsultaController::class, 'probar'])->name('consultas.probar');
         Route::put('/consultas/cuotas', [SuperAdminConsultaController::class, 'cuotas'])->name('consultas.cuotas');
-        Route::delete('/consultas/cache', [SuperAdminConsultaController::class, 'vaciarCache'])->name('consultas.cache.vaciar');
 
         // Padron reducido de SUNAT: estado y actualizacion.
         Route::get('/padron', [SuperAdminPadronController::class, 'index'])->name('padron');
         Route::post('/padron/actualizar', [SuperAdminPadronController::class, 'actualizar'])->name('padron.actualizar');
         Route::get('/padron/estado', [SuperAdminPadronController::class, 'estado'])->name('padron.estado');
+        Route::put('/padron/proveedor', [SuperAdminPadronController::class, 'proveedor'])->name('padron.proveedor');
+        Route::post('/padron/probar', [SuperAdminPadronController::class, 'probar'])->name('padron.probar');
 
         Route::get('/settings', [SuperAdminSettingController::class, 'index'])->name('settings');
         Route::put('/settings', [SuperAdminSettingController::class, 'update'])->name('settings.update');

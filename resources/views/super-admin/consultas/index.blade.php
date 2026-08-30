@@ -150,98 +150,12 @@
         </div>
     </section>
 
-    {{-- El proveedor es fontaneria: se abre solo si hace falta tocarlo, y deja
-         de existir el dia que se importe el padron. --}}
-    <details class="rounded-lg border border-gray-200 bg-white shadow-sm" @if($errors->any() || session('consulta_prueba')) open @endif>
-        <summary class="cursor-pointer px-5 py-3 text-sm font-semibold text-gray-900">
-            De dónde salen los datos
-            <span class="ml-1 font-normal text-gray-500">
-                — {{ !empty($ajustes['consultas_url']) ? parse_url($ajustes['consultas_url'], PHP_URL_HOST) : 'sin proveedor' }}
-            </span>
-        </summary>
-
-        <div class="border-t border-gray-200">
-            <form method="POST" action="{{ route('super-admin.consultas.update') }}" class="space-y-3 px-5 py-4">
-                @csrf
-                @method('PUT')
-
-                <div class="grid gap-4 md:grid-cols-2">
-                    <div>
-                        <label for="consultas_url" class="mb-1 block text-xs font-medium text-gray-700">Dirección</label>
-                        <input type="url" name="consultas_url" id="consultas_url"
-                               value="{{ old('consultas_url', $ajustes['consultas_url'] ?? '') }}"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs outline-none focus:ring-2 focus:ring-blue-500"
-                               placeholder="https://api.apis.net.pe/v1/{tipo}?numero={numero}">
-                        <p class="mt-1 text-xs text-gray-500">
-                            Pon <code class="rounded bg-gray-100 px-1">{tipo}</code> y
-                            <code class="rounded bg-gray-100 px-1">{numero}</code> donde vayan.
-                        </p>
-                    </div>
-                    <div>
-                        <label for="consultas_token" class="mb-1 block text-xs font-medium text-gray-700">Token</label>
-                        <input type="password" name="consultas_token" id="consultas_token" autocomplete="new-password"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                               placeholder="{{ !empty($ajustes['consultas_token']) ? 'Dejar vacío para mantener el actual' : 'Opcional' }}">
-                        <p class="mt-1 text-xs text-gray-500">Va como <code class="rounded bg-gray-100 px-1">Bearer</code></p>
-                    </div>
-                </div>
-
-                <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
-                    Guardar
-                </button>
-            </form>
-
-            <div class="border-t border-gray-100 bg-gray-50 px-5 py-4">
-                <form method="POST" action="{{ route('super-admin.consultas.probar') }}" class="flex flex-wrap items-center gap-2">
-                    @csrf
-                    <select name="tipo" class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="ruc">RUC</option>
-                        <option value="dni">DNI</option>
-                    </select>
-                    <input type="text" name="numero" value="{{ old('numero') }}"
-                           class="w-44 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="20608251589">
-                    <button type="submit" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
-                        Probar
-                    </button>
-                    <span class="text-xs text-gray-500">Pregunta de verdad, sin usar lo guardado.</span>
-                </form>
-
-                @if($r = session('consulta_prueba'))
-                    <div class="mt-3 rounded-lg border bg-white px-4 py-3 text-sm {{ $r['valido'] ? 'border-green-200' : 'border-red-200' }}">
-                        <p class="font-semibold {{ $r['valido'] ? 'text-green-800' : 'text-red-800' }}">
-                            {{ $r['numero'] }} — {{ $r['valido'] ? 'válido' : 'no válido' }}
-                            @if(!empty($r['fuente']))
-                                <span class="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">{{ $r['fuente'] }}</span>
-                            @endif
-                        </p>
-                        <dl class="mt-2 grid gap-x-6 gap-y-1 text-xs sm:grid-cols-2">
-                            @foreach($r as $campo => $valor)
-                                @continue(in_array($campo, ['valido', 'numero', 'tipo', 'fuente'], true) || $valor === null)
-                                <div class="flex gap-2">
-                                    <dt class="w-28 shrink-0 text-gray-500">{{ str_replace('_', ' ', $campo) }}</dt>
-                                    <dd class="font-medium text-gray-800">{{ $valor }}</dd>
-                                </div>
-                            @endforeach
-                        </dl>
-                    </div>
-                @endif
-
-                @if($guardadas['total'] > 0)
-                    <form method="POST" action="{{ route('super-admin.consultas.cache.vaciar') }}"
-                          class="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-200 pt-3"
-                          onsubmit="return confirm('Se borrarán {{ $guardadas['total'] }} fichas. ¿Continuar?')">
-                        @csrf
-                        @method('DELETE')
-                        <span class="text-xs text-gray-500">
-                            {{ number_format($guardadas['total']) }} fichas guardadas de consultas anteriores.
-                        </span>
-                        <button type="submit" class="text-xs font-medium text-red-600 hover:underline">Vaciarlas</button>
-                    </form>
-                @endif
-            </div>
-        </div>
-    </details>
+    <p class="text-xs text-gray-500">
+        Los datos salen de
+        <a href="{{ route('super-admin.padron') }}" class="font-medium text-blue-600 hover:underline">
+            {{ $padron ? 'tu padrón local' : ($ajustes['consultas_url'] ?? false ? parse_url($ajustes['consultas_url'], PHP_URL_HOST) : 'ningún sitio todavía') }}
+        </a>.
+    </p>
 
 </div>
 @endsection

@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Web\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
+use App\Services\ConsultaDocumentoService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -25,7 +28,50 @@ class PadronController extends Controller
             'enMarcha' => $this->enMarcha(),
             'espacio' => $this->espacio(),
             'puedeLanzar' => $this->puedeLanzar(),
+            // El proveedor externo vive aqui, junto al padron: las dos son
+            // fuentes del mismo dato, y en la pantalla de la API estorbaba
+            // porque alli se mira lo que se vende, no de donde sale.
+            'ajustes' => Setting::whereIn('key', ['consultas_url', 'consultas_token'])
+                ->pluck('value', 'key')
+                ->all(),
         ]);
+    }
+
+    public function proveedor(Request $request)
+    {
+        $datos = $request->validate([
+            'consultas_url' => 'nullable|url:http,https|max:255',
+            'consultas_token' => 'nullable|string|max:255',
+        ], [
+            'consultas_url.url' => 'La dirección debe empezar por http:// o https://',
+        ]);
+
+        foreach ($datos as $clave => $valor) {
+            // Un token vacio no borra el que hay: el formulario nunca lo
+            // muestra, asi que guardar en blanco seria perderlo sin querer.
+            if ($clave === 'consultas_token' && blank($valor)) {
+                continue;
+            }
+
+            Setting::updateOrCreate(
+                ['key' => $clave],
+                ['value' => $valor, 'type' => 'text', 'group' => 'consultas'],
+            );
+        }
+
+        return back()->with('success', 'Proveedor guardado.');
+    }
+
+    public function probar(Request $request, ConsultaDocumentoService $consultas)
+    {
+        $datos = $request->validate([
+            'tipo' => 'required|in:ruc,dni',
+            'numero' => 'required|string|max:11',
+        ]);
+
+        return back()->with('consulta_prueba', $datos['tipo'] === 'ruc'
+            ? $consultas->ruc($datos['numero'], usarCache: false)
+            : $consultas->dni($datos['numero'], usarCache: false));
     }
 
     public function actualizar()

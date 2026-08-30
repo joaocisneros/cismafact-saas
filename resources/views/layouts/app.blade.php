@@ -14,11 +14,38 @@
            y se veia como un fallo. Se oculta en los tres motores. */
         .sin-barra { scrollbar-width: none; -ms-overflow-style: none; }
         .sin-barra::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+        /* Y en toda la aplicacion, no solo en el menu: la barra gris del
+           navegador al lado de una tabla se lee como un fallo. Se sigue
+           pudiendo desplazar con la rueda, el teclado y el gesto tactil; lo
+           unico que desaparece es el dibujo. */
+        html, body, .app-content, .app-shell {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar,
+        .app-content::-webkit-scrollbar,
+        .app-shell::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+        /* Lo que se desplaza dentro de su propia caja: tablas anchas, listas
+           largas y el cuerpo de los modales. Cada pantalla pone esas clases
+           por su cuenta, asi que se cubren aqui en vez de ir archivo por
+           archivo (y de que a la siguiente se olvide). */
+        .overflow-x-auto,
+        .overflow-y-auto,
+        .overflow-auto {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .overflow-x-auto::-webkit-scrollbar,
+        .overflow-y-auto::-webkit-scrollbar,
+        .overflow-auto::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
         html, body { min-height: 100%; width: 100%; overflow-x: hidden; }
         body { margin: 0; background: #f8fafc; }
         .app-shell {
             width: 100%;
-            min-height: 100vh;
             min-height: 100dvh;
             display: flex;
             overflow-x: hidden;

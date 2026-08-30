@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Web\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
-use App\Services\ConsultaDocumentoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -17,10 +16,6 @@ use Illuminate\Support\Facades\DB;
  */
 class ConsultaController extends Controller
 {
-    public function __construct(private ConsultaDocumentoService $consultas)
-    {
-    }
-
     public function index()
     {
         return view('super-admin.consultas.index', [
@@ -54,54 +49,6 @@ class ConsultaController extends Controller
         }
 
         return back()->with('success', 'Cuotas actualizadas.');
-    }
-
-    public function update(Request $request)
-    {
-        $datos = $request->validate([
-            'consultas_url' => 'nullable|url:http,https|max:255',
-            'consultas_token' => 'nullable|string|max:255',
-        ], [
-            'consultas_url.url' => 'La dirección debe empezar por http:// o https://',
-        ]);
-
-        foreach ($datos as $clave => $valor) {
-            // Un token vacio no borra el que hay: el formulario nunca lo
-            // muestra, asi que guardar en blanco seria perderlo sin querer.
-            if ($clave === 'consultas_token' && blank($valor)) {
-                continue;
-            }
-
-            Setting::updateOrCreate(
-                ['key' => $clave],
-                ['value' => $valor, 'type' => 'text', 'group' => 'consultas'],
-            );
-        }
-
-        return back()->with('success', 'Proveedor guardado.');
-    }
-
-    /** Consulta de prueba, saltando lo que ya esta guardado. */
-    public function probar(Request $request)
-    {
-        $datos = $request->validate([
-            'tipo' => 'required|in:ruc,dni',
-            'numero' => 'required|string|max:11',
-        ]);
-
-        $resultado = $datos['tipo'] === 'ruc'
-            ? $this->consultas->ruc($datos['numero'], usarCache: false)
-            : $this->consultas->dni($datos['numero'], usarCache: false);
-
-        return back()->with('consulta_prueba', $resultado);
-    }
-
-    public function vaciarCache()
-    {
-        $cuantas = DB::table('consultas_documento')->count();
-        DB::table('consultas_documento')->truncate();
-
-        return back()->with('success', "Se borraron {$cuantas} fichas guardadas.");
     }
 
     /**
