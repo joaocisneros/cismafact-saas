@@ -32,10 +32,10 @@ class ConsultaController extends Controller
             'consumo' => $this->porLlave(),
             'guardadas' => $this->guardadas(),
             'padron' => DB::table('padron_ruc')->count(),
-            'apis' => Api::with(['planes' => fn ($q) => $q->orderBy('precio_mensual')->orderBy('orden')])
+            'apis' => Api::with(['planes' => fn ($q) => $q->orderBy('a_medida')->orderBy('precio_mensual')->orderBy('orden')])
                 ->withCount(['consumo as consultas_mes' => fn ($q) => $q->where('created_at', '>=', now()->startOfMonth())])
                 ->get(),
-            'planesApi' => ApiPlan::orderBy('precio_mensual')->orderBy('orden')->get(),
+            'planesApi' => ApiPlan::orderBy('a_medida')->orderBy('precio_mensual')->orderBy('orden')->get(),
             'llaves' => \App\Models\ConsultaLlave::with(['empresa:id,razon_social,ruc', 'plan'])
                 ->withCount(['consumo as usadas_mes' => fn ($q) => $q->where('created_at', '>=', now()->startOfMonth())])
                 ->latest('id')
