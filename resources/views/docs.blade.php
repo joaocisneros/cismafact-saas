@@ -18,6 +18,7 @@
             </a>
             <nav class="flex items-center gap-2 sm:gap-3 text-sm">
                 <a href="{{ route('landing') }}" class="px-3 py-2 font-medium text-gray-600 hover:text-blue-600">Inicio</a>
+                <a href="{{ route('docs.consultas') }}" class="hidden px-3 py-2 font-medium text-gray-600 hover:text-blue-600 sm:inline-block">API RUC y DNI</a>
                 <a href="{{ route('login') }}" class="px-3 py-2 font-medium text-gray-700 hover:text-blue-600">Iniciar sesión</a>
                 <a href="{{ route('register') }}" class="px-4 py-2 font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">Crear cuenta</a>
             </nav>

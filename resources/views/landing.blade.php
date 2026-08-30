@@ -67,7 +67,37 @@
                      class="h-11 w-auto">
             </a>
             <nav class="flex items-center gap-1 sm:gap-3">
-                <a href="{{ route('docs') }}" class="hidden md:inline-block px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-600">Documentación</a>
+                {{-- Dos documentaciones, y son cosas distintas: una es para emitir
+                     comprobantes y la otra para consultar RUC y DNI. Sueltas en la
+                     barra no se sabria cual es cual, y la dejaban llena. Va sin
+                     JavaScript porque esta pagina no carga Alpine; con focus ademas
+                     de hover, para que tambien se abra con el teclado. --}}
+                <div class="group relative hidden md:block">
+                    <button type="button"
+                            class="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-600 group-hover:text-blue-600 group-focus-within:text-blue-600">
+                        Documentación
+                        <svg class="h-4 w-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+
+                    {{-- Pegado al boton, sin hueco: con separacion el raton se sale
+                         por el medio y el menu se cierra antes de llegar. --}}
+                    <div class="invisible absolute left-0 top-full z-20 w-64 pt-2 opacity-0 transition
+                                group-hover:visible group-hover:opacity-100
+                                group-focus-within:visible group-focus-within:opacity-100">
+                        <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                            <a href="{{ route('docs') }}" class="block px-4 py-3 hover:bg-gray-50">
+                                <span class="block text-sm font-medium text-gray-900">API de facturación</span>
+                                <span class="block text-xs text-gray-500">Emitir comprobantes a SUNAT</span>
+                            </a>
+                            <a href="{{ route('docs.consultas') }}" class="block border-t border-gray-100 px-4 py-3 hover:bg-gray-50">
+                                <span class="block text-sm font-medium text-gray-900">API de RUC y DNI</span>
+                                <span class="block text-xs text-gray-500">Consultar datos por número</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
                 <a href="#nosotros" class="hidden md:inline-block px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-600">Nosotros</a>
                 <a href="#planes" class="hidden md:inline-block px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-600">Planes</a>
                 <a href="#contacto" class="hidden md:inline-block px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-600">Contacto</a>

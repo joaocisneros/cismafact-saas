@@ -1,0 +1,364 @@
+{{-- Documentacion publica de la API de RUC y DNI.
+
+     Publica y no un PDF por correo: el dia que cambie algo, cambia aqui y ya
+     esta. Una copia pegada en un correo se queda vieja y nadie la corrige.
+
+     SIN PRECIOS a proposito. Explica como se usa, que es lo que necesita quien
+     va a integrar; lo que cuesta se habla aparte, con cada cliente.
+
+     Aparte de /docs, que es la de emision: quien compra consultas no factura
+     necesariamente con el sistema y no tiene por que leerse lo otro. --}}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>API de RUC y DNI — Cisma Fact</title>
+    <meta name="description" content="Consulta RUC y DNI del Perú desde tu sistema: razón social, estado, condición y domicilio fiscal. Autenticación, endpoints y ejemplos de código.">
+    <link rel="icon" href="{{ config('platform.favicon_url', asset('assets/brand/favicon.png')) }}">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+<body class="bg-white text-gray-800">
+
+    <header class="sticky top-0 z-10 border-b border-gray-100 bg-white/90 backdrop-blur">
+        <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+            <a href="{{ route('landing') }}" class="flex items-center">
+                <img src="{{ config('platform.logo_url', asset('assets/brand/cisma-fact.png')) }}" alt="Cisma Fact" class="h-10 w-auto">
+            </a>
+            <nav class="flex items-center gap-2 text-sm sm:gap-3">
+                <a href="{{ route('landing') }}" class="px-3 py-2 font-medium text-gray-600 hover:text-blue-600">Inicio</a>
+                <a href="{{ route('docs') }}" class="hidden px-3 py-2 font-medium text-gray-600 hover:text-blue-600 sm:inline-block">API de facturación</a>
+                <a href="{{ route('login') }}" class="px-3 py-2 font-medium text-gray-700 hover:text-blue-600">Iniciar sesión</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="mx-auto grid max-w-5xl grid-cols-1 gap-10 px-6 py-10 lg:grid-cols-[210px_1fr]">
+
+        <aside class="hidden lg:block">
+            <nav class="sticky top-24 space-y-1 text-sm">
+                <p class="px-2 text-xs font-semibold uppercase text-gray-400">Contenido</p>
+                <a href="#empezar" class="block rounded px-2 py-1.5 text-gray-600 hover:bg-gray-100 hover:text-blue-600">1. Empezar</a>
+                <a href="#credenciales" class="block rounded px-2 py-1.5 text-gray-600 hover:bg-gray-100 hover:text-blue-600">2. Credenciales</a>
+                <a href="#pruebas" class="block rounded px-2 py-1.5 text-gray-600 hover:bg-gray-100 hover:text-blue-600">3. Pruebas</a>
+                <a href="#ruc" class="block rounded px-2 py-1.5 text-gray-600 hover:bg-gray-100 hover:text-blue-600">4. Consultar RUC</a>
+                <a href="#dni" class="block rounded px-2 py-1.5 text-gray-600 hover:bg-gray-100 hover:text-blue-600">5. Consultar DNI</a>
+                <a href="#cuota" class="block rounded px-2 py-1.5 text-gray-600 hover:bg-gray-100 hover:text-blue-600">6. Ver tu cuota</a>
+                <a href="#errores" class="block rounded px-2 py-1.5 text-gray-600 hover:bg-gray-100 hover:text-blue-600">7. Errores</a>
+                <a href="#limites" class="block rounded px-2 py-1.5 text-gray-600 hover:bg-gray-100 hover:text-blue-600">8. Límites</a>
+                <a href="#ejemplos" class="block rounded px-2 py-1.5 text-gray-600 hover:bg-gray-100 hover:text-blue-600">9. Ejemplos</a>
+            </nav>
+        </aside>
+
+        <main class="min-w-0 space-y-12">
+
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">API de RUC y DNI</h1>
+                <p class="mt-2 text-gray-600">
+                    Consulta un RUC o un DNI desde tu sistema y rellena los datos del cliente solo con
+                    el número. Devuelve razón social, estado, condición y domicilio fiscal para RUC;
+                    nombres y apellidos para DNI.
+                </p>
+            </div>
+
+            {{-- 1 --}}
+            <section id="empezar" class="scroll-mt-24 space-y-3">
+                <h2 class="text-xl font-semibold text-gray-900">1. Empezar</h2>
+                <p class="text-gray-600">Son tres pasos:</p>
+                <ol class="ml-5 list-decimal space-y-1.5 text-gray-600">
+                    <li>Pides tus credenciales. Te llegan una <strong>API Key</strong> y un <strong>API Secret</strong>.</li>
+                    <li>Pruebas contra el entorno de pruebas, que no gasta cuota.</li>
+                    <li>Cambias las credenciales por las de producción y ya estás consultando de verdad.</li>
+                </ol>
+                <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <p class="text-sm font-medium text-gray-700">Dirección base</p>
+                    <pre class="mt-1 overflow-x-auto text-sm text-gray-800"><code>{{ url('/api/consultas') }}</code></pre>
+                    <p class="mt-2 text-xs text-gray-500">Todas las peticiones son <code class="rounded bg-gray-200 px-1">GET</code> y responden en JSON.</p>
+                </div>
+            </section>
+
+            {{-- 2 --}}
+            <section id="credenciales" class="scroll-mt-24 space-y-3">
+                <h2 class="text-xl font-semibold text-gray-900">2. Credenciales</h2>
+                <p class="text-gray-600">Van en las cabeceras de cada petición. Las dos son obligatorias.</p>
+                <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-gray-100"><code>X-Api-Key: tu_api_key
+X-Api-Secret: tu_api_secret
+Accept: application/json</code></pre>
+                <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                    <p class="font-medium">El API Secret se enseña una sola vez.</p>
+                    <p class="mt-1">
+                        Guárdalo en cuanto lo recibas. No lo pongas en el código de una página web ni en
+                        una aplicación de móvil: cualquiera puede leerlo de ahí y gastar tu cuota. Va en
+                        tu servidor. Si se te pierde o crees que alguien más lo tiene, pide que te lo cambien.
+                    </p>
+                </div>
+            </section>
+
+            {{-- 3 --}}
+            <section id="pruebas" class="scroll-mt-24 space-y-3">
+                <h2 class="text-xl font-semibold text-gray-900">3. Pruebas</h2>
+                <p class="text-gray-600">
+                    Si te damos credenciales de prueba, la API responde igual pero con datos inventados,
+                    sin salir a internet y sin gastar cuota. Sirve para dejar tu integración terminada
+                    antes de contratar nada. Las respuestas llevan
+                    <code class="rounded bg-gray-100 px-1 text-sm">"fuente": "modo prueba"</code>
+                    para que no las confundas con datos reales.
+                </p>
+                <p class="text-gray-600">
+                    Cuando termines, cambias las dos cabeceras por las de producción. No hay que tocar nada más.
+                </p>
+            </section>
+
+            {{-- 4 --}}
+            <section id="ruc" class="scroll-mt-24 space-y-3">
+                <h2 class="text-xl font-semibold text-gray-900">4. Consultar RUC</h2>
+                <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-gray-100"><code>GET {{ url('/api/consultas/ruc') }}/20100070970</code></pre>
+                <p class="text-sm font-medium text-gray-700">Respuesta</p>
+                <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-gray-100"><code>{
+  "success": true,
+  "data": {
+    "valido": true,
+    "numero": "20100070970",
+    "tipo": "ruc",
+    "nombre": "SUPERMERCADOS PERUANOS SOCIEDAD ANONIMA",
+    "estado": "ACTIVO",
+    "condicion": "HABIDO",
+    "direccion": "CAL. MORELLI NRO 181 INT. P-2",
+    "ubigeo": "150130",
+    "departamento": "LIMA",
+    "provincia": "LIMA",
+    "distrito": "SAN BORJA",
+    "fuente": "consultado antes"
+  },
+  "message": null
+}</code></pre>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
+                            <tr><th class="px-4 py-2.5">Campo</th><th class="px-4 py-2.5">Qué es</th></tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-gray-600">
+                            <tr><td class="px-4 py-2 font-mono text-xs">nombre</td><td class="px-4 py-2">Razón social o nombre del contribuyente.</td></tr>
+                            <tr><td class="px-4 py-2 font-mono text-xs">estado</td><td class="px-4 py-2"><strong>ACTIVO</strong>, BAJA DE OFICIO, SUSPENSION TEMPORAL… Si no está activo, no puede emitir comprobantes.</td></tr>
+                            <tr><td class="px-4 py-2 font-mono text-xs">condicion</td><td class="px-4 py-2"><strong>HABIDO</strong> o NO HABIDO. No habido significa que SUNAT no lo encontró en su domicilio.</td></tr>
+                            <tr><td class="px-4 py-2 font-mono text-xs">direccion</td><td class="px-4 py-2">Domicilio fiscal.</td></tr>
+                            <tr><td class="px-4 py-2 font-mono text-xs">ubigeo</td><td class="px-4 py-2">Código de 6 dígitos de departamento, provincia y distrito.</td></tr>
+                            <tr><td class="px-4 py-2 font-mono text-xs">fuente</td><td class="px-4 py-2">De dónde salió el dato. Informativo: el contenido es el mismo.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            {{-- 5 --}}
+            <section id="dni" class="scroll-mt-24 space-y-3">
+                <h2 class="text-xl font-semibold text-gray-900">5. Consultar DNI</h2>
+                <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-gray-100"><code>GET {{ url('/api/consultas/dni') }}/12345678</code></pre>
+                <p class="text-sm font-medium text-gray-700">Respuesta</p>
+                <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-gray-100"><code>{
+  "success": true,
+  "data": {
+    "valido": true,
+    "numero": "12345678",
+    "tipo": "dni",
+    "nombre": "JUAN CARLOS PEREZ ROJAS",
+    "nombres": "JUAN CARLOS",
+    "apellido_paterno": "PEREZ",
+    "apellido_materno": "ROJAS",
+    "fuente": "consultado antes"
+  },
+  "message": null
+}</code></pre>
+                <p class="text-sm text-gray-600">
+                    Tienes el nombre completo ya armado en <code class="rounded bg-gray-100 px-1">nombre</code> y también
+                    por partes, por si tu sistema guarda los apellidos en campos separados.
+                </p>
+            </section>
+
+            {{-- 6 --}}
+            <section id="cuota" class="scroll-mt-24 space-y-3">
+                <h2 class="text-xl font-semibold text-gray-900">6. Ver tu cuota</h2>
+                <p class="text-gray-600">Cuánto llevas gastado y cuánto te queda. No gasta cuota.</p>
+                <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-gray-100"><code>GET {{ url('/api/consultas/cuota') }}</code></pre>
+                <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-gray-100"><code>{
+  "llave": "Producción",
+  "entorno": "produccion",
+  "plan": "Pro",
+  "expira_en": null,
+  "renueva": "{{ now()->startOfMonth()->addMonth()->toDateString() }}",
+  "servicios": [
+    { "servicio": "ruc", "nombre": "Consulta RUC", "disponible": true,
+      "limite_mensual": 10000, "usadas": 1, "restantes": 9999 },
+    { "servicio": "dni", "nombre": "Consulta DNI", "disponible": true,
+      "limite_mensual": 2000, "usadas": 1, "restantes": 1999 }
+  ]
+}</code></pre>
+                <p class="text-sm text-gray-600">
+                    Los límites del ejemplo son ilustrativos: los tuyos son los de tu plan, y salen aquí.
+                </p>
+            </section>
+
+            {{-- 7 --}}
+            <section id="errores" class="scroll-mt-24 space-y-3">
+                <h2 class="text-xl font-semibold text-gray-900">7. Errores</h2>
+                <p class="text-gray-600">
+                    Cuando algo va mal, <code class="rounded bg-gray-100 px-1">success</code> es
+                    <code class="rounded bg-gray-100 px-1">false</code> y
+                    <code class="rounded bg-gray-100 px-1">message</code> explica qué pasó, en castellano.
+                    Puedes enseñárselo a tu usuario tal cual.
+                </p>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
+                            <tr><th class="px-4 py-2.5">Código</th><th class="px-4 py-2.5">Qué pasó</th><th class="px-4 py-2.5">Qué hacer</th></tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-gray-600">
+                            <tr>
+                                <td class="px-4 py-2 font-mono text-xs">401</td>
+                                <td class="px-4 py-2">Faltan las cabeceras o las credenciales no valen.</td>
+                                <td class="px-4 py-2">Revisa que mandas las dos y que no llevan espacios de más.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2 font-mono text-xs">403</td>
+                                <td class="px-4 py-2">La llave está bloqueada, venció, o tu plan no incluye ese servicio.</td>
+                                <td class="px-4 py-2">El mensaje dice cuál de los tres. Escríbenos.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2 font-mono text-xs">422</td>
+                                <td class="px-4 py-2">El número no es válido, o no existe en SUNAT o RENIEC.</td>
+                                <td class="px-4 py-2">Nada: no gasta cuota. Enséñale el mensaje a tu usuario.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2 font-mono text-xs">429</td>
+                                <td class="px-4 py-2">Se acabó tu cuota del mes, o vas demasiado rápido.</td>
+                                <td class="px-4 py-2">Espera al día 1, sube de plan, o baja el ritmo.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2 font-mono text-xs">503</td>
+                                <td class="px-4 py-2">Ese servicio está fuera de servicio un rato.</td>
+                                <td class="px-4 py-2">Reintenta en unos minutos. No gasta cuota.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-sm font-medium text-gray-700">Ejemplo</p>
+                <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-gray-100"><code>{
+  "success": false,
+  "data": null,
+  "message": "El RUC no es válido: el dígito verificador no cuadra."
+}</code></pre>
+            </section>
+
+            {{-- 8 --}}
+            <section id="limites" class="scroll-mt-24 space-y-3">
+                <h2 class="text-xl font-semibold text-gray-900">8. Límites</h2>
+                <ul class="ml-5 list-disc space-y-1.5 text-gray-600">
+                    <li><strong>30 peticiones por minuto.</strong> Es aparte de tu cuota mensual: evita que te la gastes de golpe por un fallo en tu código.</li>
+                    <li><strong>Cuota mensual</strong> según tu plan, contada por separado para RUC y para DNI.</li>
+                    <li><strong>Lo que falla no gasta cuota.</strong> Un número mal escrito o un servicio caído no te cuestan nada.</li>
+                    <li><strong>La cuota se reinicia el día 1</strong> de cada mes. No se acumula lo que no gastaste.</li>
+                </ul>
+            </section>
+
+            {{-- 9 --}}
+            <section id="ejemplos" class="scroll-mt-24 space-y-5">
+                <h2 class="text-xl font-semibold text-gray-900">9. Ejemplos</h2>
+
+                <div>
+                    <h3 class="mb-2 text-sm font-semibold uppercase text-gray-500">curl</h3>
+                    <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-gray-100"><code>curl -H "X-Api-Key: tu_api_key" \
+     -H "X-Api-Secret: tu_api_secret" \
+     -H "Accept: application/json" \
+     {{ url('/api/consultas/ruc') }}/20100070970</code></pre>
+                </div>
+
+                <div>
+                    <h3 class="mb-2 text-sm font-semibold uppercase text-gray-500">PHP</h3>
+                    <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-gray-100"><code>&lt;?php
+
+function consultarRuc(string $ruc): ?array
+{
+    $ch = curl_init('{{ url('/api/consultas/ruc') }}/' . $ruc);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER =&gt; true,
+        CURLOPT_HTTPHEADER =&gt; [
+            'X-Api-Key: ' . getenv('CISMA_API_KEY'),
+            'X-Api-Secret: ' . getenv('CISMA_API_SECRET'),
+            'Accept: application/json',
+        ],
+    ]);
+
+    $cuerpo = json_decode(curl_exec($ch), true);
+    curl_close($ch);
+
+    // Un RUC que no existe no es un fallo del programa: devuelve null y que
+    // el formulario avise, en vez de reventar.
+    return ($cuerpo['success'] ?? false) ? $cuerpo['data'] : null;
+}
+
+$empresa = consultarRuc('20100070970');
+echo $empresa['nombre'] ?? 'No encontrado';</code></pre>
+                </div>
+
+                <div>
+                    <h3 class="mb-2 text-sm font-semibold uppercase text-gray-500">Python</h3>
+                    <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-gray-100"><code>import os, requests
+
+CABECERAS = {
+    "X-Api-Key": os.environ["CISMA_API_KEY"],
+    "X-Api-Secret": os.environ["CISMA_API_SECRET"],
+    "Accept": "application/json",
+}
+
+def consultar_ruc(ruc):
+    r = requests.get(f"{{ url('/api/consultas/ruc') }}/{ruc}",
+                     headers=CABECERAS, timeout=15)
+    cuerpo = r.json()
+    return cuerpo["data"] if cuerpo.get("success") else None
+
+empresa = consultar_ruc("20100070970")
+print(empresa["nombre"] if empresa else "No encontrado")</code></pre>
+                </div>
+
+                <div>
+                    <h3 class="mb-2 text-sm font-semibold uppercase text-gray-500">JavaScript / Node.js</h3>
+                    <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-gray-100"><code>// Desde el servidor, nunca desde el navegador: ahi el secreto queda a la vista.
+const cabeceras = {
+  'X-Api-Key': process.env.CISMA_API_KEY,
+  'X-Api-Secret': process.env.CISMA_API_SECRET,
+  'Accept': 'application/json',
+};
+
+async function consultarRuc(ruc) {
+  const r = await fetch(`{{ url('/api/consultas/ruc') }}/${ruc}`, { headers: cabeceras });
+  const cuerpo = await r.json();
+  return cuerpo.success ? cuerpo.data : null;
+}
+
+const empresa = await consultarRuc('20100070970');
+console.log(empresa?.nombre ?? 'No encontrado');</code></pre>
+                </div>
+            </section>
+
+            <section class="rounded-lg border border-blue-200 bg-blue-50 p-5">
+                <p class="font-medium text-blue-900">¿Lo quieres probar?</p>
+                <p class="mt-1 text-sm text-blue-800">
+                    Escríbenos y te damos credenciales de prueba para que dejes tu integración lista
+                    antes de contratar nada.
+                </p>
+                <a href="{{ route('landing') }}#contacto"
+                   class="mt-3 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                    Pedir credenciales
+                </a>
+            </section>
+
+        </main>
+    </div>
+
+    <footer class="border-t border-gray-100 py-8">
+        <div class="mx-auto max-w-5xl px-6 text-sm text-gray-500">
+            <p>¿Dudas con la integración? Escríbenos y te echamos una mano.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

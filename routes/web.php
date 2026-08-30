@@ -34,11 +34,16 @@ Route::get('/', [\App\Http\Controllers\Web\LandingController::class, 'index'])->
 // Documentación pública de la API (sin login).
 Route::view('/docs', 'docs')->name('docs');
 
+// Y la de consultas, aparte: quien compra RUC y DNI no factura necesariamente
+// con el sistema, asi que no tiene por que leerse la de emision para empezar.
+Route::view('/docs/ruc-dni', 'docs-consultas')->name('docs.consultas');
+
 // Sitemap para buscadores (usa el dominio real automaticamente)
 Route::get('/sitemap.xml', function () {
     $urls = [
         ['loc' => url('/'), 'priority' => '1.0'],
         ['loc' => route('docs'), 'priority' => '0.7'],
+        ['loc' => route('docs.consultas'), 'priority' => '0.7'],
         ['loc' => route('register'), 'priority' => '0.8'],
         ['loc' => route('login'), 'priority' => '0.5'],
     ];
