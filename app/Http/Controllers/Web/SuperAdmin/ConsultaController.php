@@ -31,6 +31,25 @@ class ConsultaController extends Controller
             // a la primera y la pestaña de consumo se quedaba sin datos.
             'consumo' => $this->porLlave(),
             'guardadas' => $this->guardadas(),
+            // Las ultimas consultas, una por fila. Es lo que se mira cuando un
+            // cliente dice "me falla": ahi se ve que pidio y que le pasó.
+            'historial' => DB::table('consultas_consumo')
+                ->leftJoin('consulta_llaves', 'consulta_llaves.id', '=', 'consultas_consumo.llave_id')
+                ->leftJoin('apis', 'apis.id', '=', 'consultas_consumo.api_id')
+                ->orderByDesc('consultas_consumo.id')
+                ->limit(60)
+                ->get([
+                    'consultas_consumo.created_at',
+                    'consultas_consumo.tipo',
+                    'consultas_consumo.numero',
+                    'consultas_consumo.fuente',
+                    'consultas_consumo.exito',
+                    'consultas_consumo.ms',
+                    'consultas_consumo.motivo',
+                    'consulta_llaves.nombre as llave',
+                    'consulta_llaves.entorno',
+                    'apis.nombre as servicio',
+                ]),
             'padron' => DB::table('padron_ruc')->count(),
             'apis' => Api::with(['planes' => fn ($q) => $q->orderBy('a_medida')->orderBy('precio_mensual')->orderBy('orden')])
                 ->withCount(['consumo as consultas_mes' => fn ($q) => $q->where('created_at', '>=', now()->startOfMonth())])
@@ -234,8 +253,8 @@ class ConsultaController extends Controller
             ->count();
 
         return [
-            'mes' => DB::table('consultas_consumo')->where('created_at', '>=', $mes)->count(),
-            'hoy' => DB::table('consultas_consumo')->where('created_at', '>=', now()->startOfDay())->count(),
+            'mes' => DB::table('consultas_consumo')->where('exito', true)->where('created_at', '>=', $mes)->count(),
+            'hoy' => DB::table('consultas_consumo')->where('exito', true)->where('created_at', '>=', now()->startOfDay())->count(),
             'empresas' => DB::table('consultas_consumo')
                 ->where('created_at', '>=', $mes)
                 ->distinct()
@@ -279,6 +298,7 @@ class ConsultaController extends Controller
             ->leftJoin('companies', 'companies.id', '=', 'consulta_llaves.company_id')
             ->leftJoin('api_planes', 'api_planes.id', '=', 'consulta_llaves.api_plan_id')
             ->where('consultas_consumo.created_at', '>=', now()->startOfMonth())
+            ->where('consultas_consumo.exito', true)
             ->groupBy('consulta_llaves.id', 'consulta_llaves.nombre', 'consulta_llaves.entorno',
                       'companies.razon_social', 'consulta_llaves.titular', 'api_planes.nombre')
             ->selectRaw('consulta_llaves.id, consulta_llaves.nombre as llave,

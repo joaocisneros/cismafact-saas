@@ -119,15 +119,25 @@ class ConsultaController extends Controller
             ], 429);
         }
 
+        $empezo = microtime(true);
+
         $r = $slug === 'ruc'
             ? $this->consultas->ruc($numero)
             : $this->consultas->dni($numero);
 
-        // Un numero mal escrito no gasta cuota: el error es de quien pregunta
-        // y no ha costado nada resolverlo.
-        if ($r['valido']) {
-            $this->anotar($llave, $api->id, $slug, $numero, $r['fuente'] ?? 'ninguna');
-        }
+        // Se anota siempre, salga bien o mal: los errores son justo lo que se
+        // busca en un historial. Lo que NO cuenta para la cuota es lo fallido,
+        // porque un numero mal escrito no ha costado nada resolverlo.
+        $this->anotar(
+            $llave,
+            $api->id,
+            $slug,
+            $numero,
+            $r['fuente'] ?? 'ninguna',
+            (bool) $r['valido'],
+            (int) round((microtime(true) - $empezo) * 1000),
+            $r['valido'] ? null : ($r['motivo'] ?? null),
+        );
 
         return response()->json([
             'success' => $r['valido'],
@@ -141,18 +151,27 @@ class ConsultaController extends Controller
         return $request->attributes->get('llave_consulta');
     }
 
-    /** Lo gastado por esta llave este mes. Cada llave tiene su cuenta. */
+    /** Lo gastado por esta llave este mes. Solo cuentan las que salieron bien. */
     private function usadas(int $llave, int $api): int
     {
         return DB::table('consultas_consumo')
             ->where('llave_id', $llave)
             ->where('api_id', $api)
+            ->where('exito', true)
             ->where('created_at', '>=', now()->startOfMonth())
             ->count();
     }
 
-    private function anotar(ConsultaLlave $llave, int $api, string $tipo, string $numero, string $fuente): void
-    {
+    private function anotar(
+        ConsultaLlave $llave,
+        int $api,
+        string $tipo,
+        string $numero,
+        string $fuente,
+        bool $exito,
+        int $ms,
+        ?string $motivo,
+    ): void {
         DB::table('consultas_consumo')->insert([
             'llave_id' => $llave->id,
             // Puede ser nulo: una llave de alguien de fuera no cuelga de
@@ -165,6 +184,9 @@ class ConsultaController extends Controller
             // De donde salio: sirve para saber cuanto se esta yendo al
             // proveedor de verdad y cuanto se resuelve en casa.
             'fuente' => $fuente,
+            'exito' => $exito,
+            'ms' => min($ms, 65535),
+            'motivo' => $motivo ? mb_substr($motivo, 0, 120) : null,
             'created_at' => now(),
         ]);
     }
