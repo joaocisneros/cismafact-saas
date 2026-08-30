@@ -37,6 +37,7 @@ class Company extends Model
         'razon_social',
         'nombre_comercial',
         'regimen_tributario',
+        'api_plan_id',
         'direccion',
         'ubigeo',
         'distrito',
@@ -219,6 +220,12 @@ class Company extends Model
         $c = $this->credencialesApiSunat();
 
         return ! empty($c['client_id']) && ! empty($c['client_secret']);
+    }
+
+    /** El plan de las consultas de RUC y DNI, distinto del de facturacion. */
+    public function apiPlan()
+    {
+        return $this->belongsTo(ApiPlan::class, 'api_plan_id');
     }
 
     public function greApiEndpoints(): array

@@ -30,23 +30,32 @@ class ConsultaController extends Controller
             // Las cuotas se editan aqui y no en Planes: quien mira el consumo
             // es quien decide el tope, y mandarle a otro modulo para cambiar un
             // numero que esta viendo solo obliga a ir y volver.
-            'planes' => DB::table('plans')->orderBy('monthly_price')->get(),
+            // Cada api con sus planes y lo que incluye en cada uno: es lo que
+            // se enseña en la pestaña, una tarjeta por escalon.
+            'apis' => \App\Models\Api::with(['planes' => fn ($q) => $q->orderBy('orden')])->get(),
+            'planesApi' => \App\Models\ApiPlan::orderBy('orden')->get(),
         ]);
     }
 
-    /** Las cuotas mensuales de cada plan. */
+    /** Lo que incluye cada plan de cada api. */
     public function cuotas(Request $request)
     {
         $datos = $request->validate([
             'cuotas' => 'required|array',
-            'cuotas.*' => 'required|integer|min:0|max:1000000',
+            'cuotas.*' => 'required|array',
+            'cuotas.*.*' => 'required|integer|min:0|max:10000000',
         ], [
-            'cuotas.*.integer' => 'Las cuotas se escriben en números enteros.',
-            'cuotas.*.min' => 'Una cuota no puede ser negativa. Escribe 0 para dejarla sin consultas.',
+            'cuotas.*.*.integer' => 'Las cuotas se escriben en números enteros.',
+            'cuotas.*.*.min' => 'Una cuota no puede ser negativa. Escribe 0 para dejar ese plan sin acceso.',
         ]);
 
-        foreach ($datos['cuotas'] as $plan => $tope) {
-            DB::table('plans')->where('id', $plan)->update(['consultas_limit' => (int) $tope]);
+        foreach ($datos['cuotas'] as $api => $porPlan) {
+            foreach ($porPlan as $plan => $tope) {
+                DB::table('api_plan_limite')
+                    ->where('api_id', $api)
+                    ->where('api_plan_id', $plan)
+                    ->update(['limite_mensual' => (int) $tope, 'updated_at' => now()]);
+            }
         }
 
         return back()->with('success', 'Cuotas actualizadas.');
