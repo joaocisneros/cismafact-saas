@@ -7,8 +7,8 @@
      Lo que si va aqui es lo que no puede ser publico: el mensaje de entrega con
      sus credenciales dentro, ya escrito y listo para mandar.
 
-     El orden va por uso: primero entregar, que es a lo que se entra; luego el
-     enlace y la chuleta, que son para consultar de vez en cuando. --}}
+     El orden va por uso: primero entregar, que es a lo que se entra; el enlace
+     debajo, que es de consultar de vez en cuando. --}}
 @php
     // Todas las llaves, las de verdad y las de prueba, con lo justo para armar
     // el mensaje. El secreto NO sale de la base a proposito: va cifrado y solo
@@ -212,85 +212,44 @@
         </div>
     </section>
 
-    {{-- 2 y 3. Consulta: el enlace y la chuleta, uno al lado del otro --}}
-    <div class="grid gap-5 lg:grid-cols-2">
+    {{-- 2. El enlace. Aqui NO va un resumen de lo que dice la documentacion:
+         seria una copia que se queda vieja en cuanto cambie un limite, que es
+         justo lo que esta pestaña evita. Esta a un clic. --}}
+    <section class="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div class="border-b border-gray-200 px-5 py-4">
+            <h2 class="text-sm font-semibold text-gray-900">La documentación del cliente</h2>
+            <p class="mt-0.5 text-xs text-gray-500">
+                Cómo se autentica, qué devuelve cada consulta, los errores, los límites y ejemplos
+                en curl, PHP, Python y JavaScript. Sin precios.
+            </p>
+        </div>
 
-        <section class="flex flex-col rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div class="border-b border-gray-200 px-5 py-4">
-                <h2 class="text-sm font-semibold text-gray-900">La documentación del cliente</h2>
-                <p class="mt-0.5 text-xs text-gray-500">
-                    Cómo se autentica, qué devuelve cada consulta, los errores y ejemplos en
-                    curl, PHP, Python y JavaScript. Sin precios.
-                </p>
+        <div class="space-y-3 px-5 py-4">
+            <div class="flex flex-wrap items-center gap-2">
+                <code class="flex-1 truncate rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-xs text-gray-700">{{ route('docs.consultas') }}</code>
+
+                <button type="button" @click="copiar(enlaceDocs, 'enlace')"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    <span x-text="copiado === 'enlace' ? 'Copiado' : 'Copiar'"></span>
+                </button>
+
+                <a href="{{ route('docs.consultas') }}" target="_blank" rel="noopener"
+                   class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-700">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    Verla
+                </a>
             </div>
 
-            <div class="flex flex-1 flex-col justify-between gap-3 px-5 py-4">
-                <code class="block truncate rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-xs text-gray-700">{{ route('docs.consultas') }}</code>
-
-                <div class="flex flex-wrap items-center gap-2">
-                    <a href="{{ route('docs.consultas') }}" target="_blank" rel="noopener"
-                       class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-700">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                        </svg>
-                        Verla
-                    </a>
-
-                    <button type="button" @click="copiar(enlaceDocs, 'enlace')"
-                            class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                        </svg>
-                        <span x-text="copiado === 'enlace' ? 'Copiado' : 'Copiar enlace'"></span>
-                    </button>
-                </div>
-
-                <p class="text-xs text-gray-500">
-                    Se manda el enlace, no una copia: el día que cambie algo, cambia ahí y el
-                    cliente lo ve. Está enlazada desde la web, así que también la encuentran solos.
-                </p>
-            </div>
-        </section>
-
-        <section class="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div class="border-b border-gray-200 px-5 py-4">
-                <h2 class="text-sm font-semibold text-gray-900">Resumen</h2>
-                <p class="mt-0.5 text-xs text-gray-500">Lo justo para responder a un cliente sin abrir la documentación.</p>
-            </div>
-
-            <div class="flex-1 divide-y divide-gray-100">
-                <div class="flex items-start justify-between gap-3 px-5 py-3">
-                    <div class="min-w-0">
-                        <code class="block truncate font-mono text-xs text-gray-800">GET /consultas/ruc/{numero}</code>
-                        <p class="mt-0.5 text-xs text-gray-500">Razón social, estado, condición y domicilio fiscal.</p>
-                    </div>
-                    <span class="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">Gasta cuota</span>
-                </div>
-
-                <div class="flex items-start justify-between gap-3 px-5 py-3">
-                    <div class="min-w-0">
-                        <code class="block truncate font-mono text-xs text-gray-800">GET /consultas/dni/{numero}</code>
-                        <p class="mt-0.5 text-xs text-gray-500">Nombres y apellidos.</p>
-                    </div>
-                    <span class="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">Gasta cuota</span>
-                </div>
-
-                <div class="flex items-start justify-between gap-3 px-5 py-3">
-                    <div class="min-w-0">
-                        <code class="block truncate font-mono text-xs text-gray-800">GET /consultas/cuota</code>
-                        <p class="mt-0.5 text-xs text-gray-500">Lo gastado y lo que queda, por servicio.</p>
-                    </div>
-                    <span class="shrink-0 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">Libre</span>
-                </div>
-            </div>
-
-            <div class="border-t border-gray-100 bg-gray-50 px-5 py-3 text-xs leading-relaxed text-gray-500">
-                Cabeceras <code class="rounded bg-gray-200 px-1">X-Api-Key</code> y
-                <code class="rounded bg-gray-200 px-1">X-Api-Secret</code> en cada petición ·
-                30 por minuto · lo que falla no gasta cuota · la cuota se reinicia el día 1.
-            </div>
-        </section>
-
-    </div>
+            <p class="text-xs text-gray-500">
+                Se manda el enlace, no una copia: el día que cambie algo, cambia ahí y el cliente
+                lo ve. Está enlazada desde la web, así que también la encuentran solos.
+            </p>
+        </div>
+    </section>
 
 </div>
