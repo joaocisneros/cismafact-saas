@@ -26,14 +26,12 @@ class ConsultaController extends Controller
                 ->all(),
             'cabecera' => $this->cabecera(),
             'mes' => $this->consumoDelMes(),
-            'empresas' => $this->porEmpresa(),
+            // Lo gastado por cada llave este mes. Se llamaba 'empresas' y
+            // chocaba con la lista de empresas de mas abajo: la segunda pisaba
+            // a la primera y la pestaña de consumo se quedaba sin datos.
+            'consumo' => $this->porLlave(),
             'guardadas' => $this->guardadas(),
             'padron' => DB::table('padron_ruc')->count(),
-            // Las cuotas se editan aqui y no en Planes: quien mira el consumo
-            // es quien decide el tope, y mandarle a otro modulo para cambiar un
-            // numero que esta viendo solo obliga a ir y volver.
-            // Cada api con sus planes y lo que incluye en cada uno: es lo que
-            // se enseña en la pestaña, una tarjeta por escalon.
             'apis' => Api::with(['planes' => fn ($q) => $q->orderBy('orden')])
                 ->withCount(['consumo as consultas_mes' => fn ($q) => $q->where('created_at', '>=', now()->startOfMonth())])
                 ->get(),
@@ -266,7 +264,7 @@ class ConsultaController extends Controller
     }
 
     /** Quien consulta y cuanto gasta, por llave, ordenado por quien mas usa. */
-    private function porEmpresa()
+    private function porLlave()
     {
         return DB::table('consultas_consumo')
             ->join('consulta_llaves', 'consulta_llaves.id', '=', 'consultas_consumo.llave_id')
