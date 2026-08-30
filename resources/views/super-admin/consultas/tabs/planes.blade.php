@@ -26,7 +26,7 @@
             </p>
         </div>
         <button type="button" @click="nuevo = true; plan = null"
-                class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
+                class="whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
             Nuevo plan
         </button>
     </div>
@@ -190,10 +190,10 @@
                     </template>
                     <div class="ml-auto flex gap-2">
                         <button type="button" @click="plan = null; nuevo = false"
-                                class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-50">
+                                class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                             Cancelar
                         </button>
-                        <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
+                        <button type="submit" class="whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
                             Guardar
                         </button>
                     </div>

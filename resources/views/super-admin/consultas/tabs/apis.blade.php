@@ -38,7 +38,7 @@
 
                 <div class="flex justify-end border-t border-gray-100 px-5 py-4">
                     <button type="button" @click="abierto = false"
-                            class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
+                            class="whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
                         Ya la copié
                     </button>
                 </div>
@@ -54,7 +54,7 @@
             </p>
         </div>
         <button type="button" @click="nueva = true; llave = null"
-                class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
+                class="whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
             Nueva API Key
         </button>
     </div>
@@ -107,63 +107,54 @@
                     </div>
                 </div>
 
+                {{-- Los mismos botones que el resto del sistema: x-icon-action
+                     es el componente que usan Empresas, Documentos y API. Con
+                     botones a mano esta pantalla se veia de otro sitio. --}}
                 <div class="flex shrink-0 items-center gap-1.5">
-                    <button type="button"
-                            @click="detalle = {{ Illuminate\Support\Js::from([
-                                'nombre' => $l->nombre,
-                                'estado' => $estado,
-                                'entorno' => $l->entorno,
-                                'clave' => $l->clave,
-                                'pista' => $l->secreto_pista,
-                                'titular' => $l->nombreDelTitular(),
-                                'plan' => $l->plan?->nombre,
-                                'servicios' => collect($l->servicios)->map(fn ($x) => strtoupper($x))->join(' y '),
-                                'usadas' => $l->usadas_mes,
-                                'tope' => $tope,
-                                'creada' => $l->created_at->format('d/m/Y'),
-                                'expira' => $l->expira_en?->format('d/m/Y'),
-                                'ultimo_uso' => $l->ultimo_uso_en?->format('d/m/Y H:i'),
-                            ]) }}"
-                            class="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50">
-                        Ver
-                    </button>
+                    <x-icon-action icon="ver" label="Ver esta API Key" color="blue" type="button"
+                                   @click="detalle = {{ Illuminate\Support\Js::from([
+                                       'nombre' => $l->nombre,
+                                       'estado' => $estado,
+                                       'entorno' => $l->entorno,
+                                       'clave' => $l->clave,
+                                       'pista' => $l->secreto_pista,
+                                       'titular' => $l->nombreDelTitular(),
+                                       'plan' => $l->plan?->nombre,
+                                       'servicios' => collect($l->servicios)->map(fn ($x) => strtoupper($x))->join(' y '),
+                                       'usadas' => $l->usadas_mes,
+                                       'tope' => $tope,
+                                       'creada' => $l->created_at->format('d/m/Y'),
+                                       'expira' => $l->expira_en?->format('d/m/Y'),
+                                       'ultimo_uso' => $l->ultimo_uso_en?->format('d/m/Y H:i'),
+                                   ]) }}" />
 
-                    <button type="button"
-                            @click="llave = {{ Illuminate\Support\Js::from([
-                                'id' => $l->id,
-                                'nombre' => $l->nombre,
-                                'titular_tipo' => $l->company_id ? 'empresa' : 'externo',
-                                'company_id' => $l->company_id,
-                                'titular' => $l->titular,
-                                'titular_documento' => $l->titular_documento,
-                                'titular_email' => $l->titular_email,
-                                'api_plan_id' => $l->api_plan_id,
-                                'entorno' => $l->entorno,
-                                'servicios' => (array) $l->servicios,
-                                'expira_en' => $l->expira_en?->toDateString(),
-                            ]) }}; nueva = false"
-                            class="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50">
-                        Editar
-                    </button>
+                    <x-icon-action icon="editar" label="Editar" color="slate" type="button"
+                                   @click="llave = {{ Illuminate\Support\Js::from([
+                                       'id' => $l->id,
+                                       'nombre' => $l->nombre,
+                                       'titular_tipo' => $l->company_id ? 'empresa' : 'externo',
+                                       'company_id' => $l->company_id,
+                                       'titular' => $l->titular,
+                                       'titular_documento' => $l->titular_documento,
+                                       'titular_email' => $l->titular_email,
+                                       'api_plan_id' => $l->api_plan_id,
+                                       'entorno' => $l->entorno,
+                                       'servicios' => (array) $l->servicios,
+                                       'expira_en' => $l->expira_en?->toDateString(),
+                                   ]) }}; nueva = false" />
 
                     <form method="POST" action="{{ route('super-admin.consultas.llaves.alternar', $l) }}">
                         @csrf
-                        <button type="submit"
-                                class="rounded-lg border px-2.5 py-1.5 text-xs font-medium transition
-                                       {{ $l->activa
-                                            ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                                            : 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100' }}">
-                            {{ $l->activa ? 'Bloquear' : 'Desbloquear' }}
-                        </button>
+                        <x-icon-action :icon="$l->activa ? 'bloquear' : 'desbloquear'"
+                                       :label="$l->activa ? 'Bloquear' : 'Desbloquear'"
+                                       :color="$l->activa ? 'amber' : 'emerald'" />
                     </form>
 
                     <form method="POST" action="{{ route('super-admin.consultas.llaves.borrar', $l) }}"
                           onsubmit="return confirm('Se elimina «{{ $l->nombre }}». Quien la use dejará de tener acceso al instante. ¿Continuar?')">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50">
-                            Borrar
-                        </button>
+                        <x-icon-action icon="eliminar" label="Eliminar" color="red" />
                     </form>
                 </div>
             </div>
@@ -308,10 +299,10 @@
 
                 <div class="flex justify-end gap-2 border-t border-gray-100 px-5 py-4">
                     <button type="button" @click="llave = null; nueva = false"
-                            class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-50">
+                            class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                         Cancelar
                     </button>
-                    <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
+                    <button type="submit" class="whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
                         Guardar
                     </button>
                 </div>
@@ -411,7 +402,7 @@
 
             <div class="flex justify-end border-t border-gray-100 px-5 py-4">
                 <button type="button" @click="detalle = null"
-                        class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-50">
+                        class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                     Cerrar
                 </button>
             </div>
