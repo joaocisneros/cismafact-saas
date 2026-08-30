@@ -38,20 +38,19 @@
                          que dice de que va la tabla en vez de repetir la
                          palabra de la primera columna. --}}
                     <th class="w-64 border-b border-gray-200 px-5 py-4 text-left align-middle">
-                        <p class="text-sm font-semibold text-gray-900">Servicios y planes</p>
-                        <p class="mt-0.5 text-xs font-normal text-gray-500">Consultas incluidas al mes</p>
+                        <p class="text-sm font-semibold text-gray-900">Servicios</p>
+                        <p class="mt-0.5 text-xs font-normal text-gray-500">Consultas incluidas <strong class="font-semibold">al mes</strong></p>
                     </th>
 
                     @foreach($planesApi as $i => $plan)
-                        <th class="border-b-2 border-l border-gray-200 px-5 py-4 text-center">
+                        <th class="group border-b-2 border-l border-gray-200 px-5 py-4 text-center">
                             <p class="text-sm font-bold {{ $tonos[$i % count($tonos)] }}">{{ $plan->nombre }}</p>
-                            <p class="mt-1 text-lg font-bold text-gray-900">
-                                {{ $plan->a_medida ? 'Personalizado' : 'S/ ' . rtrim(rtrim(number_format((float) $plan->precio_mensual, 2), '0'), '.') }}
+                            <p class="mt-0.5 text-lg font-bold text-gray-900">
+                                {{ $plan->a_medida ? 'A convenir' : 'S/ ' . rtrim(rtrim(number_format((float) $plan->precio_mensual, 2), '0'), '.') }}
                                 @unless($plan->a_medida)
-                                    <span class="text-xs font-normal text-gray-500">/mes</span>
+                                    <span class="text-xs font-normal text-gray-400">/mes</span>
                                 @endunless
                             </p>
-                            <p class="text-xs font-normal text-gray-400">{{ $plan->descripcion }}</p>
 
                             <button type="button"
                                     @click="plan = {{ Illuminate\Support\Js::from([
@@ -64,7 +63,7 @@
                                             $a->id => $a->planes->firstWhere('id', $plan->id)?->pivot->limite_mensual ?? 0,
                                         ]),
                                     ]) }}; nuevo = false"
-                                    class="mt-2 text-xs font-normal text-blue-600 hover:underline">
+                                    class="mt-1 text-xs font-normal text-gray-400 opacity-0 transition group-hover:opacity-100 hover:text-blue-600 hover:underline focus:opacity-100">
                                 Editar
                             </button>
                         </th>
@@ -98,13 +97,11 @@
 
                         @foreach($planesApi as $plan)
                             @php $tope = $api->planes->firstWhere('id', $plan->id)?->pivot->limite_mensual ?? 0; @endphp
-                            <td class="border-l border-gray-200 px-4 py-4 text-center">
+                            <td class="border-l border-gray-200 px-4 py-5 text-center">
                                 @if($tope > 0)
-                                    <p class="text-xl font-bold text-gray-900">{{ number_format($tope) }}</p>
-                                    <p class="text-xs text-gray-400">consultas/mes</p>
+                                    <span class="text-xl font-bold text-gray-900">{{ number_format($tope) }}</span>
                                 @else
-                                    <p class="text-xl font-bold text-gray-200">—</p>
-                                    <p class="text-xs text-gray-300">no incluida</p>
+                                    <span class="text-sm text-gray-300">no incluida</span>
                                 @endif
                             </td>
                         @endforeach
