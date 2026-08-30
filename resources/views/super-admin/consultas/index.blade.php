@@ -11,7 +11,11 @@
         'planes' => 'Planes',
         'apis' => 'Mis APIs',
         'sandbox' => 'Sandbox',
-        'consumo' => 'Consumo',
+        // Dos consumos y no uno: el de fuera es lo que se cobra y descuenta
+        // cuota; el de casa cuesta pero no se factura. Sumarlos daria un total
+        // que no significa nada, asi que van en pestañas distintas.
+        'consumo' => 'Consumo externo',
+        'interno' => 'Consumo interno',
         'docs' => 'Documentación',
     ];
 

@@ -229,11 +229,6 @@ Route::prefix('super-admin')
         Route::delete('/consultas/llaves/{llave}', [SuperAdminConsultaLlaveController::class, 'destroy'])->name('consultas.llaves.borrar');
 
         // Padron reducido de SUNAT: estado y actualizacion.
-        // Lo que gastan las empresas de casa. Aparte del consumo de «API RUC y
-        // DNI» a proposito: alli esta lo que consumen los de fuera, que es lo
-        // que se cobra. Sumar las dos cosas daria un numero sin significado.
-        Route::get('/consumo-interno', [\App\Http\Controllers\Web\SuperAdmin\ConsumoInternoController::class, 'index'])->name('consumo-interno');
-
         Route::get('/padron', [SuperAdminPadronController::class, 'index'])->name('padron');
         Route::post('/padron/actualizar', [SuperAdminPadronController::class, 'actualizar'])->name('padron.actualizar');
         Route::get('/padron/estado', [SuperAdminPadronController::class, 'estado'])->name('padron.estado');
