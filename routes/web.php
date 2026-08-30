@@ -215,6 +215,7 @@ Route::prefix('super-admin')
         Route::get('/consultas', [SuperAdminConsultaController::class, 'index'])->name('consultas');
         Route::put('/consultas', [SuperAdminConsultaController::class, 'update'])->name('consultas.update');
         Route::post('/consultas/probar', [SuperAdminConsultaController::class, 'probar'])->name('consultas.probar');
+        Route::put('/consultas/cuotas', [SuperAdminConsultaController::class, 'cuotas'])->name('consultas.cuotas');
         Route::delete('/consultas/cache', [SuperAdminConsultaController::class, 'vaciarCache'])->name('consultas.cache.vaciar');
 
         // Padron reducido de SUNAT: estado y actualizacion.

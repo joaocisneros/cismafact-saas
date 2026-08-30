@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\CorrelativeController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ConsultaController as ApiConsultaController;
 use App\Http\Controllers\Api\ConsultaCpeController;
 use App\Http\Controllers\Api\SetupController;
 use App\Http\Controllers\Api\UbigeoController;
@@ -425,4 +426,22 @@ Route::prefix('v1')->middleware('api.key')->group(function () {
         // Estadísticas de consultas
         Route::get('/estadisticas', [ConsultaCpeController::class, 'estadisticasConsultas']);
     });
+});
+
+/*
+|--------------------------------------------------------------------------
+| Consulta de RUC y DNI
+|--------------------------------------------------------------------------
+|
+| Con la misma clave con la que emiten: al cliente no hay que darle nada nuevo.
+|
+| El tope por minuto no es lo mismo que la cuota del plan. La cuota dice cuanto
+| puede consumir al mes; esto evita que se lo queme de golpe y, de paso, que una
+| rafaga tumbe al proveedor del que dependemos.
+|
+*/
+Route::middleware(['api.key', 'throttle:30,1'])->prefix('consultas')->group(function () {
+    Route::get('/ruc/{numero}', [ApiConsultaController::class, 'ruc']);
+    Route::get('/dni/{numero}', [ApiConsultaController::class, 'dni']);
+    Route::get('/cuota', [ApiConsultaController::class, 'cuota']);
 });
