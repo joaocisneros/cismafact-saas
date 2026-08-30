@@ -112,22 +112,26 @@ Accept: application/json</code></pre>
             {{-- 4 --}}
             <section id="ruc" class="scroll-mt-24 space-y-3">
                 <h2 class="text-xl font-semibold text-gray-900">4. Consultar RUC</h2>
-                <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-gray-100"><code>GET {{ url('/api/consultas/ruc') }}/20100070970</code></pre>
+                <p class="text-sm text-gray-500">
+                    Los números y los datos de los ejemplos son inventados: son los mismos que
+                    devuelve el entorno de pruebas, así que es lo que verás al probar.
+                </p>
+                <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-gray-100"><code>GET {{ url('/api/consultas/ruc') }}/20000000001</code></pre>
                 <p class="text-sm font-medium text-gray-700">Respuesta</p>
                 <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-gray-100"><code>{
   "success": true,
   "data": {
     "valido": true,
-    "numero": "20100070970",
+    "numero": "20000000001",
     "tipo": "ruc",
-    "nombre": "SUPERMERCADOS PERUANOS SOCIEDAD ANONIMA",
+    "nombre": "EMPRESA DE EJEMPLO S.A.C.",
     "estado": "ACTIVO",
     "condicion": "HABIDO",
-    "direccion": "CAL. MORELLI NRO 181 INT. P-2",
-    "ubigeo": "150130",
+    "direccion": "AV. DE PRUEBA NRO. 100",
+    "ubigeo": "150101",
     "departamento": "LIMA",
     "provincia": "LIMA",
-    "distrito": "SAN BORJA",
+    "distrito": "LIMA",
     "fuente": "consultado antes"
   },
   "message": null
@@ -160,10 +164,10 @@ Accept: application/json</code></pre>
     "valido": true,
     "numero": "12345678",
     "tipo": "dni",
-    "nombre": "JUAN CARLOS PEREZ ROJAS",
-    "nombres": "JUAN CARLOS",
-    "apellido_paterno": "PEREZ",
-    "apellido_materno": "ROJAS",
+    "nombre": "JUAN DE PRUEBA EJEMPLO",
+    "nombres": "JUAN",
+    "apellido_paterno": "DE PRUEBA",
+    "apellido_materno": "EJEMPLO",
     "fuente": "consultado antes"
   },
   "message": null
@@ -268,7 +272,7 @@ Accept: application/json</code></pre>
                     <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-gray-100"><code>curl -H "X-Api-Key: tu_api_key" \
      -H "X-Api-Secret: tu_api_secret" \
      -H "Accept: application/json" \
-     {{ url('/api/consultas/ruc') }}/20100070970</code></pre>
+     {{ url('/api/consultas/ruc') }}/20000000001</code></pre>
                 </div>
 
                 <div>
@@ -295,7 +299,7 @@ function consultarRuc(string $ruc): ?array
     return ($cuerpo['success'] ?? false) ? $cuerpo['data'] : null;
 }
 
-$empresa = consultarRuc('20100070970');
+$empresa = consultarRuc('20000000001');
 echo $empresa['nombre'] ?? 'No encontrado';</code></pre>
                 </div>
 
@@ -315,7 +319,7 @@ def consultar_ruc(ruc):
     cuerpo = r.json()
     return cuerpo["data"] if cuerpo.get("success") else None
 
-empresa = consultar_ruc("20100070970")
+empresa = consultar_ruc("20000000001")
 print(empresa["nombre"] if empresa else "No encontrado")</code></pre>
                 </div>
 
@@ -334,21 +338,38 @@ async function consultarRuc(ruc) {
   return cuerpo.success ? cuerpo.data : null;
 }
 
-const empresa = await consultarRuc('20100070970');
+const empresa = await consultarRuc('20000000001');
 console.log(empresa?.nombre ?? 'No encontrado');</code></pre>
                 </div>
             </section>
 
+            {{-- Llevaba al contacto de la landing, que es el de facturacion: quien
+                 viene a por consultas acababa preguntando por lo que no era. Va
+                 derecho a WhatsApp y con el asunto puesto, asi se sabe de que
+                 pagina llega. --}}
             <section class="rounded-lg border border-blue-200 bg-blue-50 p-5">
                 <p class="font-medium text-blue-900">¿Lo quieres probar?</p>
                 <p class="mt-1 text-sm text-blue-800">
                     Escríbenos y te damos credenciales de prueba para que dejes tu integración lista
                     antes de contratar nada.
                 </p>
-                <a href="{{ route('landing') }}#contacto"
-                   class="mt-3 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                    Pedir credenciales
-                </a>
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <a href="https://wa.me/51921676408?text={{ rawurlencode('Hola, me interesa la API de RUC y DNI. Quisiera credenciales de prueba.') }}"
+                       target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.174.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                        </svg>
+                        Escribir por WhatsApp
+                    </a>
+                    <a href="mailto:sistemasdesk04@gmail.com?subject={{ rawurlencode('API de RUC y DNI - credenciales de prueba') }}"
+                       class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        Por correo
+                    </a>
+                </div>
             </section>
 
         </main>

@@ -81,7 +81,7 @@
                 . route('docs.consultas') . "\n\n"
                 . "Para probar rápido:\n"
                 . "curl -H \"X-Api-Key: TU_KEY\" -H \"X-Api-Secret: TU_SECRET\" "
-                . url('/api/consultas/ruc') . "/20100070970\n\n"
+                . url('/api/consultas/ruc') . "/20000000001\n\n"
                 . "Cualquier duda con la integración, escríbenos.\n\n"
                 . "Un saludo.";
         @endphp
