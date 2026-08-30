@@ -1,65 +1,73 @@
-{{-- Una tarjeta por escalon, dentro de cada api. Se ve de un vistazo que
-     incluye cada plan de cada servicio, que es la pregunta que se hace uno al
-     entrar aqui: "¿cuanto le doy al que paga 29?". --}}
+{{-- Con el aspecto de una tabla de precios, pero editable: esta pantalla es
+     donde se decide cuanto incluye cada plan, no donde se contrata. El numero
+     va grande porque es lo que se viene a mirar y a cambiar. --}}
 <form method="POST" action="{{ route('super-admin.consultas.cuotas') }}" class="space-y-5">
     @csrf
     @method('PUT')
 
+    @php
+        // Un color por escalon, el mismo en las dos apis: asi se compara de un
+        // vistazo "el Pro de RUC" con "el Pro de DNI".
+        $tonos = [
+            'gratis' => ['texto' => 'text-green-600', 'borde' => 'border-gray-200', 'fondo' => 'bg-white'],
+            'basico' => ['texto' => 'text-blue-600', 'borde' => 'border-gray-200', 'fondo' => 'bg-white'],
+            'pro' => ['texto' => 'text-purple-600', 'borde' => 'border-purple-300', 'fondo' => 'bg-purple-50/30'],
+            'empresarial' => ['texto' => 'text-orange-600', 'borde' => 'border-orange-200', 'fondo' => 'bg-orange-50/30'],
+        ];
+    @endphp
+
     @foreach($apis as $api)
-        <section class="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-5 py-4">
+        <section class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
                 <div class="flex items-center gap-3">
-                    <span class="flex h-10 w-10 items-center justify-center rounded-lg
-                                 {{ $api->slug === 'ruc' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600' }}">
+                    <span class="flex h-11 w-11 items-center justify-center rounded-xl
+                                 {{ $api->slug === 'ruc' ? 'bg-green-50 text-green-600' : 'bg-purple-50 text-purple-600' }}">
                         @if($api->slug === 'ruc')
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                             </svg>
                         @else
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
                         @endif
                     </span>
                     <div>
-                        <p class="text-sm font-semibold text-gray-900">{{ $api->nombre }}</p>
+                        <p class="text-base font-bold text-gray-900">{{ strtoupper($api->slug) === 'RUC' ? 'API RUC' : 'API DNI' }}</p>
                         <p class="text-xs text-gray-500">{{ $api->descripcion }}</p>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    @unless($api->activa)
-                        <span class="rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">Apagada</span>
-                    @endunless
-                    @if($api->modo_prueba)
-                        <span class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">En pruebas</span>
-                    @endif
-                    @if($api->activa && ! $api->modo_prueba)
-                        <span class="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">Activa</span>
-                    @endif
-                </div>
+                <span class="rounded-full px-2.5 py-1 text-xs font-medium
+                    @if(! $api->activa) bg-red-50 text-red-700
+                    @elseif($api->modo_prueba) bg-amber-50 text-amber-700
+                    @else bg-green-50 text-green-700 @endif">
+                    {{ ! $api->activa ? 'Apagada' : ($api->modo_prueba ? 'En pruebas' : 'Activa') }}
+                </span>
             </div>
 
-            <div class="grid gap-3 p-5 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 @foreach($api->planes as $plan)
-                    <div class="rounded-lg border p-4 {{ $plan->a_medida ? 'border-amber-200 bg-amber-50/40' : 'border-gray-200' }}">
-                        <p class="text-sm font-semibold {{ $plan->a_medida ? 'text-amber-700' : 'text-gray-900' }}">
-                            {{ $plan->nombre }}
-                        </p>
+                    @php $t = $tonos[$plan->slug] ?? $tonos['gratis']; @endphp
 
-                        <label for="c_{{ $api->id }}_{{ $plan->id }}" class="mt-3 mb-1 block text-xs text-gray-500">
-                            Consultas al mes
-                        </label>
+                    <div class="rounded-xl border-2 p-4 text-center transition {{ $t['borde'] }} {{ $t['fondo'] }}">
+                        <p class="text-sm font-bold {{ $t['texto'] }}">{{ $plan->nombre }}</p>
+
                         <input type="number" min="0" max="10000000"
                                id="c_{{ $api->id }}_{{ $plan->id }}"
                                name="cuotas[{{ $api->id }}][{{ $plan->id }}]"
                                value="{{ old('cuotas.' . $api->id . '.' . $plan->id, $plan->pivot->limite_mensual) }}"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                               class="mt-3 w-full rounded-lg border border-transparent bg-transparent text-center text-2xl font-bold text-gray-900
+                                      transition hover:border-gray-200 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100">
+                        <label for="c_{{ $api->id }}_{{ $plan->id }}" class="block text-xs text-gray-500">consultas/mes</label>
 
-                        <p class="mt-2 text-xs {{ $plan->a_medida ? 'text-amber-700' : 'text-gray-500' }}">
-                            {{ $plan->precio() }}{{ $plan->a_medida ? '' : ' /mes' }}
+                        <p class="mt-3 border-t border-gray-100 pt-3 text-base font-bold text-gray-900">
+                            {{ $plan->a_medida ? 'Personalizado' : 'S/ ' . rtrim(rtrim(number_format((float) $plan->precio_mensual, 2), '0'), '.') }}
+                            @unless($plan->a_medida)
+                                <span class="text-xs font-normal text-gray-500">/mes</span>
+                            @endunless
                         </p>
-                        <p class="text-xs text-gray-400">{{ $plan->descripcion }}</p>
+                        <p class="mt-0.5 text-xs text-gray-400">{{ $plan->descripcion }}</p>
                     </div>
                 @endforeach
             </div>
@@ -72,7 +80,7 @@
         </button>
         <p class="text-xs text-gray-500">
             Un 0 deja ese plan sin acceso a esa consulta: responde 403 en vez de descontar.
-            Las consultas no usadas no se acumulan al mes siguiente.
+            Las no usadas no se acumulan al mes siguiente.
         </p>
     </div>
 </form>
