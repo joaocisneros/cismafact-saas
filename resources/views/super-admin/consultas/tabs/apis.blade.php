@@ -31,6 +31,60 @@
         </div>
     @endif
 
+    {{-- Lo que se ofrece, y si esta encendido. Apagar una consulta la deja
+         fuera de servicio al instante para todo el mundo, sin desplegar nada:
+         sirve para cuando el proveedor esta caido, en vez de que cada cliente
+         se coma el error por su cuenta. --}}
+    <section class="mb-5 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div class="px-5 py-3">
+            <h2 class="text-sm font-semibold text-gray-900">Consultas que ofreces</h2>
+        </div>
+
+        @foreach($apis as $api)
+            <div class="flex flex-wrap items-center gap-4 px-5 py-3">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg
+                             {{ $api->slug === 'ruc' ? 'bg-green-50 text-green-600' : 'bg-purple-50 text-purple-600' }}">
+                    @if($api->slug === 'ruc')
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                    @else
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                    @endif
+                </span>
+
+                <div class="min-w-0 flex-1">
+                    <p class="text-sm font-medium text-gray-900">{{ $api->nombre }}</p>
+                    <p class="font-mono text-xs text-gray-400">/api/consultas/{{ $api->slug }}/{numero}</p>
+                </div>
+
+                <p class="w-24 shrink-0 text-sm text-gray-600">
+                    {{ number_format($api->consultas_mes) }}
+                    <span class="text-xs text-gray-400">este mes</span>
+                </p>
+
+                <span class="w-24 shrink-0 rounded-full px-2 py-0.5 text-center text-xs font-medium
+                    {{ $api->activa ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700' }}">
+                    {{ $api->activa ? '● Activa' : 'Apagada' }}
+                </span>
+
+                <form method="POST" action="{{ route('super-admin.consultas.apis.alternar', $api) }}" class="shrink-0">
+                    @csrf
+                    <input type="hidden" name="campo" value="activa">
+                    <button type="submit"
+                            class="rounded-lg border px-3 py-1.5 text-xs font-medium transition
+                                   {{ $api->activa
+                                        ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                        : 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100' }}">
+                        {{ $api->activa ? 'Apagar' : 'Encender' }}
+                    </button>
+                </form>
+            </div>
+        @endforeach
+    </section>
+
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
             <h2 class="text-sm font-semibold text-gray-900">API Keys</h2>
