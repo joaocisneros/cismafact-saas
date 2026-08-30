@@ -31,10 +31,11 @@
         </div>
     @endif
 
-    {{-- Lo que se ofrece, y si esta encendido. Apagar una consulta la deja
-         fuera de servicio al instante para todo el mundo, sin desplegar nada:
-         sirve para cuando el proveedor esta caido, en vez de que cada cliente
-         se coma el error por su cuenta. --}}
+    {{-- Lo que se ofrece y cuanto se usa. Sin interruptor: apagar una consulta
+         no ahorraba nada —el proveedor es gratuito y el sistema ya responde
+         solo cuando no contesta— y era un boton mas que entender. El contador
+         si dice algo: si nadie usa una consulta en meses, no vale la pena
+         mantenerla. --}}
     <section class="mb-5 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="px-5 py-3">
             <h2 class="text-sm font-semibold text-gray-900">Consultas que ofreces</h2>
@@ -60,27 +61,14 @@
                     <p class="font-mono text-xs text-gray-400">/api/consultas/{{ $api->slug }}/{numero}</p>
                 </div>
 
-                <p class="w-24 shrink-0 text-sm text-gray-600">
+                <p class="shrink-0 text-sm text-gray-600">
                     {{ number_format($api->consultas_mes) }}
                     <span class="text-xs text-gray-400">este mes</span>
                 </p>
 
-                <span class="w-24 shrink-0 rounded-full px-2 py-0.5 text-center text-xs font-medium
-                    {{ $api->activa ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700' }}">
-                    {{ $api->activa ? '● Activa' : 'Apagada' }}
-                </span>
-
-                <form method="POST" action="{{ route('super-admin.consultas.apis.alternar', $api) }}" class="shrink-0">
-                    @csrf
-                    <input type="hidden" name="campo" value="activa">
-                    <button type="submit"
-                            class="rounded-lg border px-3 py-1.5 text-xs font-medium transition
-                                   {{ $api->activa
-                                        ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                                        : 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100' }}">
-                        {{ $api->activa ? 'Apagar' : 'Encender' }}
-                    </button>
-                </form>
+                @unless($api->activa)
+                    <span class="shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">Apagada</span>
+                @endunless
             </div>
         @endforeach
     </section>
