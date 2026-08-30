@@ -11,7 +11,7 @@
         <div class="mb-5 rounded-xl border-2 border-green-300 bg-green-50 p-5">
             <p class="text-sm font-semibold text-green-900">«{{ $nueva['nombre'] }}» creada</p>
             <p class="mt-1 text-xs text-green-800">
-                Cópiala ahora: <strong>el secreto no se vuelve a mostrar.</strong> Si se pierde, se genera otra llave.
+                Cópiala ahora: <strong>el secreto no se vuelve a mostrar.</strong> Si se pierde, se genera otra.
             </p>
 
             <div class="mt-3 space-y-2">
@@ -33,14 +33,14 @@
 
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h2 class="text-sm font-semibold text-gray-900">Llaves de acceso</h2>
+            <h2 class="text-sm font-semibold text-gray-900">API Keys</h2>
             <p class="mt-0.5 text-xs text-gray-500">
-                Las de las consultas, no las de emitir. Bloquear una no afecta a la facturación.
+                Las de las consultas de RUC y DNI. Son distintas de las de emitir: bloquear una no afecta a la facturación.
             </p>
         </div>
         <button type="button" @click="nueva = true; llave = null"
                 class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
-            Nueva llave
+            Nueva API Key
         </button>
     </div>
 
@@ -132,7 +132,7 @@
             </div>
         @empty
             <div class="px-5 py-12 text-center">
-                <p class="text-sm text-gray-500">Todavía no hay ninguna llave.</p>
+                <p class="text-sm text-gray-500">Todavía no hay ninguna API Key.</p>
                 <p class="mt-1 text-xs text-gray-400">Crea una para que alguien pueda usar las consultas.</p>
             </div>
         @endforelse
@@ -156,7 +156,7 @@
                 <template x-if="!nueva"><input type="hidden" name="_method" value="PUT"></template>
 
                 <div class="border-b border-gray-100 px-5 py-4">
-                    <h3 class="text-base font-semibold text-gray-900" x-text="nueva ? 'Nueva llave' : 'Editar llave'"></h3>
+                    <h3 class="text-base font-semibold text-gray-900" x-text="nueva ? 'Nueva API Key' : 'Editar llave'"></h3>
                 </div>
 
                 <div class="space-y-4 px-5 py-4">
@@ -231,7 +231,7 @@
                             @endforeach
                         </div>
                         <p class="mt-1 text-xs text-gray-500">
-                            Si le roban esta llave, solo podrán usar lo que esté marcado.
+                            Si le roban esta API Key, solo podrán usar lo que esté marcado.
                         </p>
                     </div>
 
