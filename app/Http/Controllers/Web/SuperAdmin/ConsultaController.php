@@ -26,14 +26,23 @@ class ConsultaController extends Controller
                 ->all(),
             'cabecera' => $this->cabecera(),
             'mes' => $this->consumoDelMes(),
-            // Lo gastado por cada llave este mes. Se llamaba 'empresas' y
-            // chocaba con la lista de empresas de mas abajo: la segunda pisaba
-            // a la primera y la pestaña de consumo se quedaba sin datos.
-            'consumo' => $this->porLlave(),
             'guardadas' => $this->guardadas(),
             // Las ultimas consultas, una por fila. Es lo que se mira cuando un
             // cliente dice "me falla": ahi se ve que pidio y que le pasó.
+            //
+            // Lo gastado por cada llave NO va aqui: eso ya sale en «Mis APIs»,
+            // junto a su llave y con su tope al lado, que es donde se mira para
+            // saber si a alguien le queda cuota. Tenerlo en dos sitios era
+            // repetir lo mismo peor contado.
+            'solo_fallos' => $fallos = request()->boolean('fallos'),
+            // Cuantos han fallado este mes. Va en el boton del filtro: si pone
+            // cero, no hace falta ni entrar a mirar.
+            'fallos_mes' => DB::table('consultas_consumo')
+                ->where('exito', false)
+                ->where('created_at', '>=', now()->startOfMonth())
+                ->count(),
             'historial' => DB::table('consultas_consumo')
+                ->when($fallos, fn ($q) => $q->where('consultas_consumo.exito', false))
                 ->leftJoin('consulta_llaves', 'consulta_llaves.id', '=', 'consultas_consumo.llave_id')
                 ->leftJoin('apis', 'apis.id', '=', 'consultas_consumo.api_id')
                 ->orderByDesc('consultas_consumo.id')
@@ -290,26 +299,6 @@ class ConsultaController extends Controller
         ];
     }
 
-    /** Quien consulta y cuanto gasta, por llave, ordenado por quien mas usa. */
-    private function porLlave()
-    {
-        return DB::table('consultas_consumo')
-            ->join('consulta_llaves', 'consulta_llaves.id', '=', 'consultas_consumo.llave_id')
-            ->leftJoin('companies', 'companies.id', '=', 'consulta_llaves.company_id')
-            ->leftJoin('api_planes', 'api_planes.id', '=', 'consulta_llaves.api_plan_id')
-            ->where('consultas_consumo.created_at', '>=', now()->startOfMonth())
-            ->where('consultas_consumo.exito', true)
-            ->groupBy('consulta_llaves.id', 'consulta_llaves.nombre', 'consulta_llaves.entorno',
-                      'companies.razon_social', 'consulta_llaves.titular', 'api_planes.nombre')
-            ->selectRaw('consulta_llaves.id, consulta_llaves.nombre as llave,
-                         consulta_llaves.entorno,
-                         COALESCE(companies.razon_social, consulta_llaves.titular) as titular,
-                         api_planes.nombre as plan, COUNT(*) as usadas,
-                         SUM(consultas_consumo.fuente = ?) as al_proveedor', ['proveedor'])
-            ->orderByDesc('usadas')
-            ->limit(20)
-            ->get();
-    }
 
     /** @return array<string,int> */
     private function guardadas(): array
