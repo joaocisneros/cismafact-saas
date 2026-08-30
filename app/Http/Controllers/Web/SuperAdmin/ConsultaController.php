@@ -209,16 +209,21 @@ class ConsultaController extends Controller
     {
         $mes = now()->startOfMonth();
 
+        // Contra el plan de CONSULTAS de la llave, no contra el de facturacion:
+        // son dos cosas distintas y cruzarlas daria avisos falsos.
         $cercaDelTope = DB::table('consultas_consumo')
-            ->join('companies', 'companies.id', '=', 'consultas_consumo.company_id')
-            ->join('plans', 'plans.id', '=', 'companies.plan_id')
+            ->join('consulta_llaves', 'consulta_llaves.id', '=', 'consultas_consumo.llave_id')
+            ->join('api_plan_limite', function ($j) {
+                $j->on('api_plan_limite.api_plan_id', '=', 'consulta_llaves.api_plan_id')
+                  ->on('api_plan_limite.api_id', '=', 'consultas_consumo.api_id');
+            })
             ->where('consultas_consumo.created_at', '>=', $mes)
-            ->where('plans.consultas_limit', '>', 0)
+            ->where('api_plan_limite.limite_mensual', '>', 0)
             // El select explicito no es adorno: con GROUP BY, MySQL rechaza el
             // "select *" que pone Laravel por defecto (only_full_group_by).
-            ->select('companies.id')
-            ->groupBy('companies.id', 'plans.consultas_limit')
-            ->havingRaw('COUNT(*) >= plans.consultas_limit * 0.8')
+            ->select('consulta_llaves.id')
+            ->groupBy('consulta_llaves.id', 'consultas_consumo.api_id', 'api_plan_limite.limite_mensual')
+            ->havingRaw('COUNT(*) >= api_plan_limite.limite_mensual * 0.8')
             ->get()
             ->count();
 
@@ -260,16 +265,20 @@ class ConsultaController extends Controller
         ];
     }
 
-    /** Quien consulta y cuanto le queda, ordenado por quien mas gasta. */
+    /** Quien consulta y cuanto gasta, por llave, ordenado por quien mas usa. */
     private function porEmpresa()
     {
         return DB::table('consultas_consumo')
-            ->join('companies', 'companies.id', '=', 'consultas_consumo.company_id')
-            ->leftJoin('plans', 'plans.id', '=', 'companies.plan_id')
+            ->join('consulta_llaves', 'consulta_llaves.id', '=', 'consultas_consumo.llave_id')
+            ->leftJoin('companies', 'companies.id', '=', 'consulta_llaves.company_id')
+            ->leftJoin('api_planes', 'api_planes.id', '=', 'consulta_llaves.api_plan_id')
             ->where('consultas_consumo.created_at', '>=', now()->startOfMonth())
-            ->groupBy('companies.id', 'companies.razon_social', 'companies.ruc', 'plans.name', 'plans.consultas_limit')
-            ->selectRaw('companies.id, companies.razon_social, companies.ruc, plans.name as plan,
-                         plans.consultas_limit as tope, COUNT(*) as usadas,
+            ->groupBy('consulta_llaves.id', 'consulta_llaves.nombre', 'consulta_llaves.entorno',
+                      'companies.razon_social', 'consulta_llaves.titular', 'api_planes.nombre')
+            ->selectRaw('consulta_llaves.id, consulta_llaves.nombre as llave,
+                         consulta_llaves.entorno,
+                         COALESCE(companies.razon_social, consulta_llaves.titular) as titular,
+                         api_planes.nombre as plan, COUNT(*) as usadas,
                          SUM(consultas_consumo.fuente = ?) as al_proveedor', ['proveedor'])
             ->orderByDesc('usadas')
             ->limit(20)
