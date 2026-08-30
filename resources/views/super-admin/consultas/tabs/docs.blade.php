@@ -115,13 +115,13 @@
 
         {{-- Los datos a un lado y lo que se va a mandar al otro, para verlo
              cambiar segun se rellena en vez de tener que bajar a mirarlo. --}}
-        <div class="grid gap-5 px-5 py-5 lg:h-[19rem] lg:grid-cols-5">
+        <div class="grid gap-5 px-5 py-5 lg:h-[15rem] lg:grid-cols-5">
 
-            <div class="space-y-4 overflow-y-auto lg:col-span-2">
+            <div class="overflow-y-auto lg:col-span-2">
                 <div>
                     <label for="llave-entrega" class="block text-xs font-medium text-gray-700">¿A qué cliente?</label>
                     <select id="llave-entrega" x-model="llaveId"
-                            class="mt-1 w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            class="mt-1.5 w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         <option value="">Elige una llave…</option>
                         @foreach($paraEntregar as $l)
                             <option value="{{ $l['id'] }}">
@@ -136,24 +136,19 @@
                     @endif
                 </div>
 
-                <div>
+                <div class="mt-5 border-t border-gray-100 pt-5">
                     <label for="secreto-entrega" class="block text-xs font-medium text-gray-700">
-                        API Secret <span class="font-normal text-gray-400">(si lo tienes a mano)</span>
+                        API Secret <span class="font-normal text-gray-400">(opcional)</span>
                     </label>
                     <input id="secreto-entrega" type="text" x-model="secreto" autocomplete="off"
-                           placeholder="Pégalo y entra solo en el mensaje"
-                           class="mt-1 w-full rounded-lg border-gray-300 font-mono text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <p class="mt-1 text-xs text-gray-500">
-                        No se guarda ni se envía a ninguna parte: solo se pega en el texto de al lado.
+                           placeholder="Pégalo aquí"
+                           class="mt-1.5 w-full rounded-lg border-gray-300 font-mono text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <p class="mt-1.5 flex items-start gap-1.5 text-xs leading-relaxed text-gray-500">
+                        <svg class="mt-px h-3.5 w-3.5 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>Solo se ve al crear la llave, en <span class="font-medium">Mis APIs</span>. No se guarda aquí.</span>
                     </p>
-                </div>
-
-                {{-- Pegado al campo del secreto, que es donde hace falta saberlo --}}
-                <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900">
-                    <span class="font-medium">Se enseña una sola vez.</span>
-                    Se copia al crear la llave, en <span class="font-medium">Mis APIs</span>. Si ya
-                    cerraste esa ventana no se puede recuperar —está cifrado— y hay que generar
-                    credenciales nuevas.
                 </div>
             </div>
 
