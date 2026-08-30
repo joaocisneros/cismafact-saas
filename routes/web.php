@@ -13,6 +13,7 @@ use App\Http\Controllers\Web\SuperAdmin\DocumentController as SuperAdminDocument
 use App\Http\Controllers\Web\SuperAdmin\PlanController as SuperAdminPlanController;
 use App\Http\Controllers\Web\SuperAdmin\ApiGlobalController as SuperAdminApiGlobalController;
 use App\Http\Controllers\Web\SuperAdmin\ConsultaController as SuperAdminConsultaController;
+use App\Http\Controllers\Web\SuperAdmin\PadronController as SuperAdminPadronController;
 use App\Http\Controllers\Web\SuperAdmin\SettingController as SuperAdminSettingController;
 use App\Http\Controllers\Web\SuperAdmin\SupportController as SuperAdminSupportController;
 use App\Http\Controllers\Web\SuperAdmin\ExportController as SuperAdminExportController;
@@ -215,6 +216,11 @@ Route::prefix('super-admin')
         Route::put('/consultas', [SuperAdminConsultaController::class, 'update'])->name('consultas.update');
         Route::post('/consultas/probar', [SuperAdminConsultaController::class, 'probar'])->name('consultas.probar');
         Route::delete('/consultas/cache', [SuperAdminConsultaController::class, 'vaciarCache'])->name('consultas.cache.vaciar');
+
+        // Padron reducido de SUNAT: estado y actualizacion.
+        Route::get('/padron', [SuperAdminPadronController::class, 'index'])->name('padron');
+        Route::post('/padron/actualizar', [SuperAdminPadronController::class, 'actualizar'])->name('padron.actualizar');
+        Route::get('/padron/estado', [SuperAdminPadronController::class, 'estado'])->name('padron.estado');
 
         Route::get('/settings', [SuperAdminSettingController::class, 'index'])->name('settings');
         Route::put('/settings', [SuperAdminSettingController::class, 'update'])->name('settings.update');

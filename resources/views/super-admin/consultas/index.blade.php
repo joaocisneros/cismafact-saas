@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Consultas RUC y DNI')
+@section('title', 'API RUC y DNI')
 
 @section('content')
 <div class="space-y-6">
@@ -22,7 +22,8 @@
             <p class="mt-1 text-xs text-gray-500">{{ number_format($cache['ruc']) }} RUC · {{ number_format($cache['dni']) }} DNI</p>
         </div>
 
-        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <a href="{{ route('super-admin.padron') }}"
+           class="block rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition hover:border-gray-300 hover:shadow-md">
             <p class="text-xs text-gray-500">Padrón local de SUNAT</p>
             <p class="mt-1 text-2xl font-semibold {{ $padron['filas'] ? 'text-gray-900' : 'text-gray-400' }}">
                 {{ number_format($padron['filas']) }}
@@ -30,7 +31,7 @@
             <p class="mt-1 text-xs text-gray-500">
                 {{ $padron['filas'] ? 'RUC en la copia local' : 'Sin importar todavía' }}
             </p>
-        </div>
+        </a>
 
         <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <p class="text-xs text-gray-500">Proveedor externo</p>
@@ -159,43 +160,6 @@
                             </div>
                         @endforeach
                     </dl>
-                </div>
-            @endif
-        </div>
-    </section>
-
-    <section class="rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-5 py-4">
-            <div>
-                <h2 class="text-base font-semibold text-gray-900">Padrón local de SUNAT</h2>
-                <p class="mt-0.5 text-xs text-gray-500">
-                    Copia del padrón reducido. Responde sin salir a internet y sin límite.
-                </p>
-            </div>
-        </div>
-
-        <div class="space-y-3 p-5 text-sm">
-            @if($padron['filas'])
-                <p class="text-gray-700">
-                    <span class="font-semibold">{{ number_format($padron['filas']) }}</span> RUC importados.
-                </p>
-                @if($padron['ultima'])
-                    <p class="text-xs text-gray-500">
-                        Última importación: {{ $padron['ultima']->estado }},
-                        {{ \Illuminate\Support\Carbon::parse($padron['ultima']->terminada_en ?? $padron['ultima']->created_at)->format('d/m/Y H:i') }}
-                    </p>
-                @endif
-            @else
-                <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
-                    <p class="font-semibold">Todavía no está importado</p>
-                    <p class="mt-1 text-xs leading-relaxed">
-                        Son unos <strong>11 millones de RUC, 2-3 GB</strong>. Antes de importarlo hay que tener
-                        ese espacio en la base de datos, y la importación corre en segundo plano porque no
-                        cabe en una petición web.
-                    </p>
-                    <p class="mt-1.5 text-xs">
-                        Mientras tanto no falta nada: las consultas se resuelven por caché y proveedor.
-                    </p>
                 </div>
             @endif
         </div>
