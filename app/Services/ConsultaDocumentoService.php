@@ -213,7 +213,7 @@ class ConsultaDocumentoService
                 $peticion = $peticion->withToken($token);
             }
 
-            $r = $peticion->get(rtrim($base, '/') . "/{$tipo}/{$numero}");
+            $r = $peticion->get($this->direccion($base, $tipo, $numero));
 
             if (! $r->successful()) {
                 return null;
@@ -229,6 +229,24 @@ class ConsultaDocumentoService
 
             return null;
         }
+    }
+
+    /**
+     * La direccion a la que se pregunta.
+     *
+     * Cada proveedor la arma a su manera: unos esperan el numero en la ruta
+     * (/ruc/20…) y otros como parametro (?numero=20…). Con {tipo} y {numero}
+     * en la direccion configurada se soportan ambos y cualquier otro invento,
+     * sin tener que tocar el codigo para cada proveedor nuevo. Si no lleva
+     * marcas, se asume la forma de ruta, que es la mas comun.
+     */
+    private function direccion(string $base, string $tipo, string $numero): string
+    {
+        if (str_contains($base, '{numero}')) {
+            return strtr($base, ['{tipo}' => $tipo, '{numero}' => $numero]);
+        }
+
+        return rtrim($base, '/') . "/{$tipo}/{$numero}";
     }
 
     /** Un ajuste de la tabla settings, que es donde los deja el Super Admin. */
