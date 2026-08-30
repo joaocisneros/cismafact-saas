@@ -1,86 +1,202 @@
-{{-- Con el aspecto de una tabla de precios, pero editable: esta pantalla es
-     donde se decide cuanto incluye cada plan, no donde se contrata. El numero
-     va grande porque es lo que se viene a mirar y a cambiar. --}}
-<form method="POST" action="{{ route('super-admin.consultas.cuotas') }}" class="space-y-5">
-    @csrf
-    @method('PUT')
+{{-- Una tabla y no un bloque por servicio.
+     Con "API RUC" arriba y "API DNI" debajo, cada uno con sus planes, parecia
+     que se elige uno U otro. Puestas como filas de la misma tabla se ve que un
+     plan incluye las dos, cada una con su tope, y que un 0 la deja fuera: eso
+     es lo que permite vender "Solo RUC", "Solo DNI" y "Completo" sin inventar
+     ningun mecanismo nuevo. --}}
+<div x-data="{ plan: null, nuevo: false }">
 
     @php
-        // Un color por escalon, el mismo en las dos apis: asi se compara de un
-        // vistazo "el Pro de RUC" con "el Pro de DNI".
         $tonos = [
-            'gratis' => ['texto' => 'text-green-600', 'borde' => 'border-gray-200', 'fondo' => 'bg-white'],
-            'basico' => ['texto' => 'text-blue-600', 'borde' => 'border-gray-200', 'fondo' => 'bg-white'],
-            'pro' => ['texto' => 'text-purple-600', 'borde' => 'border-purple-300', 'fondo' => 'bg-purple-50/30'],
-            'empresarial' => ['texto' => 'text-orange-600', 'borde' => 'border-orange-200', 'fondo' => 'bg-orange-50/30'],
+            'text-green-600', 'text-blue-600', 'text-purple-600',
+            'text-orange-600', 'text-teal-600', 'text-pink-600',
         ];
     @endphp
 
-    @foreach($apis as $api)
-        <section class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
-                <div class="flex items-center gap-3">
-                    <span class="flex h-11 w-11 items-center justify-center rounded-xl
-                                 {{ $api->slug === 'ruc' ? 'bg-green-50 text-green-600' : 'bg-purple-50 text-purple-600' }}">
-                        @if($api->slug === 'ruc')
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                            </svg>
-                        @else
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                            </svg>
-                        @endif
-                    </span>
-                    <div>
-                        <p class="text-base font-bold text-gray-900">{{ strtoupper($api->slug) === 'RUC' ? 'API RUC' : 'API DNI' }}</p>
-                        <p class="text-xs text-gray-500">{{ $api->descripcion }}</p>
-                    </div>
-                </div>
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <h2 class="text-sm font-semibold text-gray-900">Qué incluye cada plan</h2>
+            <p class="mt-0.5 text-xs text-gray-500">
+                Al mes. Un 0 deja esa consulta fuera del plan: así se arman paquetes como «Solo RUC» o «Solo DNI».
+            </p>
+        </div>
+        <button type="button" @click="nuevo = true; plan = null"
+                class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
+            Nuevo plan
+        </button>
+    </div>
 
-                <span class="rounded-full px-2.5 py-1 text-xs font-medium
-                    @if(! $api->activa) bg-red-50 text-red-700
-                    @elseif($api->modo_prueba) bg-amber-50 text-amber-700
-                    @else bg-green-50 text-green-700 @endif">
-                    {{ ! $api->activa ? 'Apagada' : ($api->modo_prueba ? 'En pruebas' : 'Activa') }}
-                </span>
-            </div>
+    <form method="POST" action="{{ route('super-admin.consultas.cuotas') }}" class="space-y-4">
+        @csrf
+        @method('PUT')
 
-            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                @foreach($api->planes as $plan)
-                    @php $t = $tonos[$plan->slug] ?? $tonos['gratis']; @endphp
+        <section class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+            <table class="min-w-full">
+                <thead>
+                    <tr>
+                        <th class="w-56 border-b border-gray-200 px-5 py-4 text-left align-bottom">
+                            <span class="text-xs font-medium uppercase text-gray-400">Consulta</span>
+                        </th>
 
-                    <div class="rounded-xl border-2 p-4 text-center transition {{ $t['borde'] }} {{ $t['fondo'] }}">
-                        <p class="text-sm font-bold {{ $t['texto'] }}">{{ $plan->nombre }}</p>
+                        @foreach($planesApi as $i => $plan)
+                            <th class="border-b-2 border-l border-gray-200 px-5 py-4 text-center">
+                                <p class="text-sm font-bold {{ $tonos[$i % count($tonos)] }}">{{ $plan->nombre }}</p>
+                                <p class="mt-1 text-lg font-bold text-gray-900">
+                                    {{ $plan->a_medida ? 'Personalizado' : 'S/ ' . rtrim(rtrim(number_format((float) $plan->precio_mensual, 2), '0'), '.') }}
+                                    @unless($plan->a_medida)
+                                        <span class="text-xs font-normal text-gray-500">/mes</span>
+                                    @endunless
+                                </p>
+                                <p class="text-xs font-normal text-gray-400">{{ $plan->descripcion }}</p>
 
-                        <input type="number" min="0" max="10000000"
-                               id="c_{{ $api->id }}_{{ $plan->id }}"
-                               name="cuotas[{{ $api->id }}][{{ $plan->id }}]"
-                               value="{{ old('cuotas.' . $api->id . '.' . $plan->id, $plan->pivot->limite_mensual) }}"
-                               class="mt-3 w-full rounded-lg border border-transparent bg-transparent text-center text-2xl font-bold text-gray-900
-                                      transition hover:border-gray-200 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100">
-                        <label for="c_{{ $api->id }}_{{ $plan->id }}" class="block text-xs text-gray-500">consultas/mes</label>
+                                <button type="button"
+                                        @click="plan = {{ Illuminate\Support\Js::from([
+                                            'id' => $plan->id,
+                                            'nombre' => $plan->nombre,
+                                            'descripcion' => $plan->descripcion,
+                                            'precio_mensual' => (float) $plan->precio_mensual,
+                                            'a_medida' => (bool) $plan->a_medida,
+                                        ]) }}; nuevo = false"
+                                        class="mt-2 text-xs font-normal text-blue-600 hover:underline">
+                                    Editar
+                                </button>
+                            </th>
+                        @endforeach
+                    </tr>
+                </thead>
 
-                        <p class="mt-3 border-t border-gray-100 pt-3 text-base font-bold text-gray-900">
-                            {{ $plan->a_medida ? 'Personalizado' : 'S/ ' . rtrim(rtrim(number_format((float) $plan->precio_mensual, 2), '0'), '.') }}
-                            @unless($plan->a_medida)
-                                <span class="text-xs font-normal text-gray-500">/mes</span>
-                            @endunless
-                        </p>
-                        <p class="mt-0.5 text-xs text-gray-400">{{ $plan->descripcion }}</p>
-                    </div>
-                @endforeach
-            </div>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach($apis as $api)
+                        <tr>
+                            <td class="px-5 py-4">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg
+                                                 {{ $api->slug === 'ruc' ? 'bg-green-50 text-green-600' : 'bg-purple-50 text-purple-600' }}">
+                                        @if($api->slug === 'ruc')
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                            </svg>
+                                        @else
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                            </svg>
+                                        @endif
+                                    </span>
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-semibold text-gray-900">{{ $api->nombre }}</p>
+                                        <p class="truncate text-xs text-gray-500">{{ $api->descripcion ?: '—' }}</p>
+                                    </div>
+                                </div>
+                            </td>
+
+                            @foreach($planesApi as $plan)
+                                @php $tope = $api->planes->firstWhere('id', $plan->id)?->pivot->limite_mensual ?? 0; @endphp
+                                <td class="border-l border-gray-200 px-4 py-4 text-center">
+                                    <input type="number" min="0" max="10000000"
+                                           name="cuotas[{{ $api->id }}][{{ $plan->id }}]"
+                                           value="{{ old('cuotas.' . $api->id . '.' . $plan->id, $tope) }}"
+                                           class="w-full rounded-lg border border-transparent bg-transparent text-center text-xl font-bold
+                                                  {{ $tope > 0 ? 'text-gray-900' : 'text-gray-300' }}
+                                                  transition hover:border-gray-200 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                    <p class="text-xs {{ $tope > 0 ? 'text-gray-400' : 'text-gray-300' }}">
+                                        {{ $tope > 0 ? 'consultas/mes' : 'no incluida' }}
+                                    </p>
+                                </td>
+                            @endforeach
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </section>
-    @endforeach
 
-    <div class="flex flex-wrap items-center gap-3">
         <button type="submit" class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700">
             Guardar cuotas
         </button>
-        <p class="text-xs text-gray-500">
-            Un 0 deja ese plan sin acceso a esa consulta: responde 403 en vez de descontar.
-            Las no usadas no se acumulan al mes siguiente.
-        </p>
+    </form>
+
+    {{-- Crear y editar en modal: la tabla ya es ancha, y meter ahi dentro un
+         formulario de cinco campos la volveria ilegible. --}}
+    <div x-show="plan || nuevo" x-cloak
+         @keydown.escape.window="plan = null; nuevo = false"
+         class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-6">
+        <div @click.outside="plan = null; nuevo = false"
+             class="my-auto w-full max-w-md rounded-xl bg-white shadow-xl">
+
+            <form method="POST"
+                  :action="nuevo
+                      ? '{{ route('super-admin.consultas.planes.guardar') }}'
+                      : '{{ url('super-admin/consultas/planes') }}/' + (plan?.id ?? '')">
+                @csrf
+                <template x-if="!nuevo"><input type="hidden" name="_method" value="PUT"></template>
+
+                <div class="border-b border-gray-100 px-5 py-4">
+                    <h3 class="text-base font-semibold text-gray-900" x-text="nuevo ? 'Nuevo plan' : 'Editar plan'"></h3>
+                    <p class="mt-0.5 text-xs text-gray-500">
+                        Las cuotas de cada consulta se ponen luego, en la tabla.
+                    </p>
+                </div>
+
+                <div class="space-y-4 px-5 py-4">
+                    <div>
+                        <label for="p_nombre" class="mb-1 block text-sm font-medium text-gray-700">Nombre</label>
+                        <input type="text" name="nombre" id="p_nombre" required maxlength="60"
+                               :value="plan?.nombre ?? ''"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Solo RUC">
+                    </div>
+
+                    <div>
+                        <label for="p_desc" class="mb-1 block text-sm font-medium text-gray-700">Descripción</label>
+                        <input type="text" name="descripcion" id="p_desc" maxlength="120"
+                               :value="plan?.descripcion ?? ''"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Para quien solo consulta empresas">
+                    </div>
+
+                    <div x-data="{ aMedida: false }" x-effect="aMedida = plan?.a_medida ?? false">
+                        <label for="p_precio" class="mb-1 block text-sm font-medium text-gray-700">Precio al mes</label>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-gray-500">S/</span>
+                            <input type="number" name="precio_mensual" id="p_precio" required min="0" max="99999" step="0.01"
+                                   :value="plan?.precio_mensual ?? 0" :disabled="aMedida"
+                                   class="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400">
+                        </div>
+
+                        <label class="mt-2 flex items-center gap-2 text-sm text-gray-700">
+                            <input type="checkbox" name="a_medida" value="1" x-model="aMedida"
+                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            Precio a convenir
+                            <span class="text-xs text-gray-500">— enseña «Personalizado» en vez de un importe</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between gap-2 border-t border-gray-100 px-5 py-4">
+                    <template x-if="!nuevo">
+                        <button type="button"
+                                @click="if (confirm('Se elimina el plan. Si hay llaves dentro no se podrá. ¿Continuar?')) $refs.borrar.submit()"
+                                class="text-sm font-medium text-red-600 hover:underline">
+                            Eliminar
+                        </button>
+                    </template>
+                    <div class="ml-auto flex gap-2">
+                        <button type="button" @click="plan = null; nuevo = false"
+                                class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-50">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
+                            Guardar
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <form x-ref="borrar" method="POST" class="hidden"
+                  :action="'{{ url('super-admin/consultas/planes') }}/' + (plan?.id ?? '')">
+                @csrf
+                @method('DELETE')
+            </form>
+        </div>
     </div>
-</form>
+
+</div>

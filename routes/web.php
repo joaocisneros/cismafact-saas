@@ -13,6 +13,7 @@ use App\Http\Controllers\Web\SuperAdmin\DocumentController as SuperAdminDocument
 use App\Http\Controllers\Web\SuperAdmin\PlanController as SuperAdminPlanController;
 use App\Http\Controllers\Web\SuperAdmin\ApiGlobalController as SuperAdminApiGlobalController;
 use App\Http\Controllers\Web\SuperAdmin\ConsultaController as SuperAdminConsultaController;
+use App\Http\Controllers\Web\SuperAdmin\ConsultaLlaveController as SuperAdminConsultaLlaveController;
 use App\Http\Controllers\Web\SuperAdmin\PadronController as SuperAdminPadronController;
 use App\Http\Controllers\Web\SuperAdmin\SettingController as SuperAdminSettingController;
 use App\Http\Controllers\Web\SuperAdmin\SupportController as SuperAdminSupportController;
@@ -214,6 +215,19 @@ Route::prefix('super-admin')
         // Consultas de RUC y DNI: proveedor, cache y padron.
         Route::get('/consultas', [SuperAdminConsultaController::class, 'index'])->name('consultas');
         Route::put('/consultas/cuotas', [SuperAdminConsultaController::class, 'cuotas'])->name('consultas.cuotas');
+        Route::post('/consultas/planes', [SuperAdminConsultaController::class, 'guardarPlan'])->name('consultas.planes.guardar');
+        Route::put('/consultas/planes/{plan}', [SuperAdminConsultaController::class, 'actualizarPlan'])->name('consultas.planes.actualizar');
+        Route::delete('/consultas/planes/{plan}', [SuperAdminConsultaController::class, 'borrarPlan'])->name('consultas.planes.borrar');
+        Route::post('/consultas/apis', [SuperAdminConsultaController::class, 'guardarApi'])->name('consultas.apis.guardar');
+        Route::put('/consultas/apis/{api}', [SuperAdminConsultaController::class, 'actualizarApi'])->name('consultas.apis.actualizar');
+        Route::post('/consultas/apis/{api}/alternar', [SuperAdminConsultaController::class, 'alternarApi'])->name('consultas.apis.alternar');
+        Route::delete('/consultas/apis/{api}', [SuperAdminConsultaController::class, 'borrarApi'])->name('consultas.apis.borrar');
+
+        // Las llaves con las que se entra a las consultas.
+        Route::post('/consultas/llaves', [SuperAdminConsultaLlaveController::class, 'store'])->name('consultas.llaves.guardar');
+        Route::put('/consultas/llaves/{llave}', [SuperAdminConsultaLlaveController::class, 'update'])->name('consultas.llaves.actualizar');
+        Route::post('/consultas/llaves/{llave}/alternar', [SuperAdminConsultaLlaveController::class, 'alternar'])->name('consultas.llaves.alternar');
+        Route::delete('/consultas/llaves/{llave}', [SuperAdminConsultaLlaveController::class, 'destroy'])->name('consultas.llaves.borrar');
 
         // Padron reducido de SUNAT: estado y actualizacion.
         Route::get('/padron', [SuperAdminPadronController::class, 'index'])->name('padron');

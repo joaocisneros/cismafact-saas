@@ -11,9 +11,6 @@
         'planes' => 'Planes',
         'apis' => 'Mis APIs',
         'consumo' => 'Consumo',
-        'keys' => 'API Keys',
-        'historial' => 'Historial',
-        'webhooks' => 'Webhooks',
         'docs' => 'Documentación',
     ];
 

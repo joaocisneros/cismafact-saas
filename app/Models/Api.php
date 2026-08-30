@@ -29,6 +29,11 @@ class Api extends Model
             ->withTimestamps();
     }
 
+    public function consumo()
+    {
+        return $this->hasMany(\App\Models\ConsultaConsumo::class, 'api_id');
+    }
+
     /** Cuanto incluye un plan de consulta de esta api al mes. 0 = sin acceso. */
     public function limiteDelPlan(?int $planId): int
     {

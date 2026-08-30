@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Web\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Api;
+use App\Models\ApiPlan;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,9 +34,159 @@ class ConsultaController extends Controller
             // numero que esta viendo solo obliga a ir y volver.
             // Cada api con sus planes y lo que incluye en cada uno: es lo que
             // se enseña en la pestaña, una tarjeta por escalon.
-            'apis' => \App\Models\Api::with(['planes' => fn ($q) => $q->orderBy('orden')])->get(),
-            'planesApi' => \App\Models\ApiPlan::orderBy('orden')->get(),
+            'apis' => Api::with(['planes' => fn ($q) => $q->orderBy('orden')])
+                ->withCount(['consumo as consultas_mes' => fn ($q) => $q->where('created_at', '>=', now()->startOfMonth())])
+                ->get(),
+            'planesApi' => ApiPlan::orderBy('orden')->get(),
+            'llaves' => \App\Models\ConsultaLlave::with(['empresa:id,razon_social,ruc', 'plan'])
+                ->withCount(['consumo as usadas_mes' => fn ($q) => $q->where('created_at', '>=', now()->startOfMonth())])
+                ->latest('id')
+                ->get(),
+            'empresas' => \App\Models\Company::orderBy('razon_social')->get(['id', 'razon_social', 'ruc']),
         ]);
+    }
+
+    /**
+     * Crear un plan.
+     *
+     * Los paquetes que se venden son datos, no codigo: "Solo RUC", "Solo DNI"
+     * y "Completo" son tres planes con distintas cuotas, y armarlos aqui evita
+     * tener que inventar un mecanismo para cada combinacion que se ocurra.
+     */
+    public function guardarPlan(Request $request)
+    {
+        $datos = $request->validate([
+            'nombre' => 'required|string|max:60',
+            'descripcion' => 'nullable|string|max:120',
+            'precio_mensual' => 'required|numeric|min:0|max:99999',
+            'a_medida' => 'nullable|boolean',
+        ]);
+
+        $plan = ApiPlan::create($datos + [
+            'slug' => $this->slugLibre($datos['nombre']),
+            'a_medida' => (bool) ($datos['a_medida'] ?? false),
+            'activo' => true,
+            'orden' => (int) ApiPlan::max('orden') + 1,
+        ]);
+
+        // Nace con 0 en todas las consultas: existe pero no incluye nada, y se
+        // rellena en la tabla. Mas prudente que regalarlas sin querer.
+        foreach (Api::pluck('id') as $api) {
+            $plan->apis()->attach($api, ['limite_mensual' => 0]);
+        }
+
+        return back()->with('success', "Plan «{$plan->nombre}» creado. Ponle las cuotas en la tabla.");
+    }
+
+    public function actualizarPlan(Request $request, ApiPlan $plan)
+    {
+        $plan->update($request->validate([
+            'nombre' => 'required|string|max:60',
+            'descripcion' => 'nullable|string|max:120',
+            'precio_mensual' => 'required|numeric|min:0|max:99999',
+            'a_medida' => 'nullable|boolean',
+        ]) + ['a_medida' => (bool) $request->boolean('a_medida')]);
+
+        return back()->with('success', 'Plan actualizado.');
+    }
+
+    public function borrarPlan(ApiPlan $plan)
+    {
+        // Con llaves dentro no se borra: dejarlas sin plan seria cortarles el
+        // servicio sin avisar. Primero se mueven a otro.
+        $cuantas = \App\Models\ConsultaLlave::where('api_plan_id', $plan->id)->count();
+
+        if ($cuantas > 0) {
+            return back()->with('error',
+                "No se puede borrar «{$plan->nombre}»: hay {$cuantas} llave(s) en él. "
+                . 'Cámbialas de plan primero.');
+        }
+
+        $nombre = $plan->nombre;
+        $plan->delete();
+
+        return back()->with('success', "Plan «{$nombre}» eliminado.");
+    }
+
+    /** Un slug que no choque con otro plan. */
+    private function slugLibre(string $nombre): string
+    {
+        $base = \Illuminate\Support\Str::slug($nombre) ?: 'plan';
+        $slug = $base;
+        $n = 2;
+
+        while (ApiPlan::where('slug', $slug)->exists()) {
+            $slug = $base . '-' . $n++;
+        }
+
+        return $slug;
+    }
+
+    /**
+     * Crear una api.
+     *
+     * El slug es lo que va en la direccion (/api/consultas/<slug>/…), asi que
+     * no se puede cambiar despues sin romperle la integracion a quien ya la
+     * use: se pide al crear y luego se queda quieto.
+     */
+    public function guardarApi(Request $request)
+    {
+        $datos = $request->validate([
+            'nombre' => 'required|string|max:80',
+            'slug' => ['required', 'string', 'max:40', 'regex:/^[a-z0-9\-]+$/', 'unique:apis,slug'],
+            'descripcion' => 'nullable|string|max:180',
+        ], [
+            'slug.regex' => 'El identificador va en minúsculas, sin espacios ni acentos. Ej: ruc, tipo-cambio.',
+            'slug.unique' => 'Ya hay una consulta con ese identificador.',
+        ]);
+
+        $api = Api::create($datos + ['activa' => true, 'modo_prueba' => false]);
+
+        // Nace en todos los planes con 0: existe pero no la incluye ninguno,
+        // y se decide plan por plan en la pestaña de al lado. Mas prudente que
+        // regalarla en todos sin querer.
+        foreach (ApiPlan::pluck('id') as $plan) {
+            $api->planes()->attach($plan, ['limite_mensual' => 0]);
+        }
+
+        return back()->with('success', "«{$api->nombre}» creada. Ponle cuotas en Planes para que alguien pueda usarla.");
+    }
+
+    public function actualizarApi(Request $request, Api $api)
+    {
+        $api->update($request->validate([
+            'nombre' => 'required|string|max:80',
+            'descripcion' => 'nullable|string|max:180',
+        ]));
+
+        return back()->with('success', 'Consulta actualizada.');
+    }
+
+    /** Encender/apagar, o entrar y salir del modo pruebas. */
+    public function alternarApi(Request $request, Api $api)
+    {
+        $campo = $request->validate([
+            'campo' => 'required|in:activa,modo_prueba',
+        ])['campo'];
+
+        $api->update([$campo => ! $api->$campo]);
+
+        $aviso = $campo === 'activa'
+            ? ($api->activa ? 'encendida' : 'apagada: responde 503 y no gasta cuota')
+            : ($api->modo_prueba ? 'en modo pruebas: devuelve datos de ejemplo' : 'fuera del modo pruebas');
+
+        return back()->with('success', "«{$api->nombre}» {$aviso}.");
+    }
+
+    public function borrarApi(Api $api)
+    {
+        // El consumo no se borra con ella: es lo que se cobro, y quedarse sin
+        // el historial por retirar un servicio seria perder la contabilidad.
+        // La columna api_id queda en nulo (nullOnDelete).
+        $nombre = $api->nombre;
+        $api->delete();
+
+        return back()->with('success', "«{$nombre}» eliminada. El consumo que hubo se conserva.");
     }
 
     /** Lo que incluye cada plan de cada api. */
