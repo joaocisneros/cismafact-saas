@@ -28,7 +28,7 @@
                         </div>
                         <div class="divide-y divide-indigo-100">
                             @foreach(['URL base' => url('/api/consultas'), 'X-Api-Key' => $nueva['clave'], 'X-Api-Secret' => $nueva['secreto']] as $etiqueta => $valor)
-                                <div class="flex items-center gap-3 px-4 py-3">
+                                <div class="flex items-center gap-3 px-4 py-2.5">
                                     <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">{{ $etiqueta }}</span>
                                     <code class="min-w-0 flex-1 break-all rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100">{{ $valor }}</code>
                                     <button type="button" onclick="window.copyCompanyCredential(this, @js($valor))"
@@ -330,6 +330,23 @@
                         <span x-text="detalle?.plan ?? 'sin plan'"></span>
                     </p>
                 </div>
+                <span class="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+                      :class="{
+                          'bg-emerald-50 text-emerald-700': detalle?.estado === 'activa',
+                          'bg-blue-50 text-blue-700': detalle?.estado === 'sandbox',
+                          'bg-amber-50 text-amber-700': detalle?.estado === 'vencida',
+                          'bg-red-50 text-red-700': detalle?.estado === 'bloqueada',
+                      }">
+                    <span class="h-1.5 w-1.5 rounded-full"
+                          :class="{
+                              'bg-emerald-500': detalle?.estado === 'activa',
+                              'bg-blue-500': detalle?.estado === 'sandbox',
+                              'bg-amber-500': detalle?.estado === 'vencida',
+                              'bg-red-500': detalle?.estado === 'bloqueada',
+                          }"></span>
+                    <span x-text="({ activa: 'Activa', sandbox: 'Sandbox', vencida: 'Vencida', bloqueada: 'Bloqueada' })[detalle?.estado]"></span>
+                </span>
+
                 <button type="button" @click="detalle = null" aria-label="Cerrar"
                         class="shrink-0 rounded-md p-2 text-gray-500 hover:bg-gray-100">
                     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -341,27 +358,8 @@
             {{-- Con la misma forma que el modal de credenciales del modulo API:
                  el panel indigo con lo que se le entrega al programador, y
                  debajo los tres datos de apoyo en una franja. --}}
-            <div class="p-5">
-                <div class="flex justify-end">
-                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
-                          :class="{
-                              'bg-emerald-50 text-emerald-700': detalle?.estado === 'activa',
-                              'bg-blue-50 text-blue-700': detalle?.estado === 'sandbox',
-                              'bg-amber-50 text-amber-700': detalle?.estado === 'vencida',
-                              'bg-red-50 text-red-700': detalle?.estado === 'bloqueada',
-                          }">
-                        <span class="h-1.5 w-1.5 rounded-full"
-                              :class="{
-                                  'bg-emerald-500': detalle?.estado === 'activa',
-                                  'bg-blue-500': detalle?.estado === 'sandbox',
-                                  'bg-amber-500': detalle?.estado === 'vencida',
-                                  'bg-red-500': detalle?.estado === 'bloqueada',
-                              }"></span>
-                        <span x-text="({ activa: 'Activa', sandbox: 'Sandbox', vencida: 'Vencida', bloqueada: 'Bloqueada' })[detalle?.estado]"></span>
-                    </span>
-                </div>
-
-                <div class="mt-3 overflow-hidden rounded-lg border border-indigo-200 bg-indigo-50/40">
+            <div class="p-4">
+                <div class="overflow-hidden rounded-lg border border-indigo-200 bg-indigo-50/40">
                     <div class="flex items-center justify-between border-b border-indigo-200 bg-indigo-50 px-4 py-2.5">
                         <span class="text-xs font-semibold uppercase tracking-wide text-indigo-700">Credenciales</span>
                         <span class="rounded px-2 py-0.5 text-xs font-medium"
@@ -370,34 +368,34 @@
                     </div>
 
                     <div class="divide-y divide-indigo-100">
-                        <div class="flex items-center gap-3 px-4 py-3">
+                        <div class="flex items-center gap-3 px-4 py-2.5">
                             <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">URL base</span>
                             <code class="min-w-0 flex-1 break-all rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100">{{ url('/api/consultas') }}</code>
                             <button type="button" onclick="window.copyCompanyCredential(this, @js(url('/api/consultas')))"
                                     class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
                         </div>
 
-                        <div class="flex items-center gap-3 px-4 py-3">
+                        <div class="flex items-center gap-3 px-4 py-2.5">
                             <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">X-Api-Key</span>
                             <code class="min-w-0 flex-1 break-all rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100" x-text="detalle?.clave"></code>
                             <button type="button" @click="window.copyCompanyCredential($el, detalle?.clave)"
                                     class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
                         </div>
 
-                        <div class="flex items-center gap-3 px-4 py-3">
+                        <div class="flex items-center gap-3 px-4 py-2.5">
                             <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">X-Api-Secret</span>
                             <code class="min-w-0 flex-1 rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-400 ring-1 ring-indigo-100">
                                 ··················<span x-text="detalle?.pista"></span>
                             </code>
                         </div>
 
-                        <div class="px-4 py-2.5 text-xs text-gray-500">
+                        <div class="px-4 py-2 text-xs text-gray-500">
                             El secreto solo lo tiene el cliente. Si lo perdió, hay que crearle otra API Key.
                         </div>
                     </div>
                 </div>
 
-                <dl class="mt-5 grid grid-cols-3 gap-px overflow-hidden rounded-lg bg-gray-200 text-center">
+                <dl class="mt-4 grid grid-cols-4 gap-px overflow-hidden rounded-lg bg-gray-200 text-center">
                     <div class="bg-white px-3 py-2.5">
                         <dt class="text-xs text-gray-500">Este mes</dt>
                         <dd class="mt-0.5 truncate text-sm font-semibold text-gray-900">
@@ -414,11 +412,11 @@
                         <dt class="text-xs text-gray-500">Creada</dt>
                         <dd class="mt-0.5 truncate text-sm font-semibold text-gray-900" x-text="detalle?.creada"></dd>
                     </div>
+                    <div class="bg-white px-3 py-2.5">
+                        <dt class="text-xs text-gray-500">Vence</dt>
+                        <dd class="mt-0.5 truncate text-sm font-semibold text-gray-900" x-text="detalle?.expira ?? 'No caduca'"></dd>
+                    </div>
                 </dl>
-
-                <p class="mt-3 text-center text-xs text-gray-500">
-                    Vence: <span class="font-medium text-gray-700" x-text="detalle?.expira ?? 'no caduca'"></span>
-                </p>
             </div>
 
             <div class="flex justify-end border-t border-gray-200 px-5 py-4">
