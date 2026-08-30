@@ -31,6 +31,49 @@
         </div>
     @endif
 
+    {{-- Las mismas tarjetas del Dashboard, con el mismo componente: si aqui se
+         dibujaran a mano acabarian pareciendose pero no siendo iguales. --}}
+    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <x-stat-card title="Consultas este mes" :value="number_format($mes['total'])"
+                     :subtitle="number_format($mes['ruc']) . ' RUC · ' . number_format($mes['dni']) . ' DNI'"
+                     color="blue">
+            <x-slot:icon>
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </x-slot:icon>
+        </x-stat-card>
+
+        <x-stat-card title="Resueltas en casa" :value="number_format($mes['en_casa'])"
+                     :subtitle="$mes['total'] ? round($mes['en_casa'] / $mes['total'] * 100) . '% sin salir a internet' : 'Sin consultas todavía'"
+                     color="green">
+            <x-slot:icon>
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </x-slot:icon>
+        </x-stat-card>
+
+        <x-stat-card title="Fueron al proveedor" :value="number_format($mes['al_proveedor'])"
+                     subtitle="Lo que cuesta de verdad" color="orange">
+            <x-slot:icon>
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+            </x-slot:icon>
+        </x-stat-card>
+
+        <x-stat-card title="Padrón local" :value="$padron ? number_format($padron) : 'Vacío'"
+                     :subtitle="$padron ? 'RUC en tu base' : 'Sin importar todavía'"
+                     :color="$padron ? 'indigo' : 'yellow'">
+            <x-slot:icon>
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+                </svg>
+            </x-slot:icon>
+        </x-stat-card>
+    </section>
+
     <nav class="overflow-x-auto border-b border-gray-200">
         <div class="flex gap-1 whitespace-nowrap">
             @foreach($pestanas as $clave => $nombre)
