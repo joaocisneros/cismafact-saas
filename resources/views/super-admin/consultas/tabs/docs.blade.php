@@ -115,9 +115,9 @@
 
         {{-- Los datos a un lado y lo que se va a mandar al otro, para verlo
              cambiar segun se rellena en vez de tener que bajar a mirarlo. --}}
-        <div class="grid gap-5 px-5 py-5 lg:grid-cols-5">
+        <div class="grid gap-5 px-5 py-5 lg:h-[19rem] lg:grid-cols-5">
 
-            <div class="space-y-4 lg:col-span-2">
+            <div class="space-y-4 overflow-y-auto lg:col-span-2">
                 <div>
                     <label for="llave-entrega" class="block text-xs font-medium text-gray-700">¿A qué cliente?</label>
                     <select id="llave-entrega" x-model="llaveId"
@@ -167,7 +167,7 @@
                     </div>
 
                     <template x-if="llaveId">
-                        <pre class="max-h-96 flex-1 overflow-auto whitespace-pre-wrap p-4 text-xs leading-relaxed text-gray-700" x-text="mensaje()"></pre>
+                        <pre class="max-h-72 min-h-0 flex-1 overflow-auto whitespace-pre-wrap p-4 text-xs leading-relaxed text-gray-700 lg:max-h-none" x-text="mensaje()"></pre>
                     </template>
 
                     <template x-if="! llaveId">
