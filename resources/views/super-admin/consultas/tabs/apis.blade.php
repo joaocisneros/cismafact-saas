@@ -3,30 +3,45 @@
      facturar, y bloquearle una cosa no debe cortarle la otra. Un mismo titular
      quiere varias —una por sistema suyo— para poder cortar una sin dejar las
      demas sin servicio. --}}
-<div x-data="{ llave: null, nueva: false }">
+<div x-data="{ llave: null, nueva: false, detalle: null }">
 
     @if($nueva = session('llave_creada'))
-        {{-- El secreto se enseña UNA vez. Despues queda cifrado y no se vuelve
-             a mostrar: si se pierde, se genera otra llave. --}}
-        <div class="mb-5 rounded-xl border-2 border-green-300 bg-green-50 p-5">
-            <p class="text-sm font-semibold text-green-900">«{{ $nueva['nombre'] }}» creada</p>
-            <p class="mt-1 text-xs text-green-800">
-                Cópiala ahora: <strong>el secreto no se vuelve a mostrar.</strong> Si se pierde, se genera otra.
-            </p>
+        {{-- En modal y no como cartel: el secreto solo se enseña una vez y hay
+             que copiarlo ahora, asi que tiene que cortar el paso en vez de
+             quedar arriba del todo empujando la pagina. --}}
+        <div x-data="{ abierto: true }" x-show="abierto" x-cloak
+             @keydown.escape.window="abierto = false"
+             class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-6">
+            <div class="my-auto w-full max-w-lg rounded-xl bg-white shadow-xl">
+                <div class="border-b border-gray-100 px-5 py-4">
+                    <h3 class="text-base font-semibold text-gray-900">«{{ $nueva['nombre'] }}» creada</h3>
+                    <p class="mt-0.5 text-xs text-gray-500">
+                        Cópiala ahora: <strong class="text-gray-700">el secreto no se vuelve a mostrar.</strong>
+                        Si se pierde, se genera otra.
+                    </p>
+                </div>
 
-            <div class="mt-3 space-y-2">
-                @foreach(['Clave' => $nueva['clave'], 'Secreto' => $nueva['secreto']] as $etiqueta => $valor)
-                    <div>
-                        <p class="text-xs font-medium text-green-900">{{ $etiqueta }}</p>
-                        <div class="mt-0.5 flex items-center gap-2">
-                            <code class="flex-1 truncate rounded-lg border border-green-200 bg-white px-3 py-2 font-mono text-xs text-gray-800">{{ $valor }}</code>
-                            <button type="button" onclick="window.copyCompanyCredential(this, @js($valor))"
-                                    class="shrink-0 rounded-lg border border-green-300 bg-white px-3 py-2 text-xs font-medium text-green-800 transition hover:bg-green-100">
-                                Copiar
-                            </button>
+                <div class="space-y-3 px-5 py-4">
+                    @foreach(['Clave' => $nueva['clave'], 'Secreto' => $nueva['secreto']] as $etiqueta => $valor)
+                        <div>
+                            <p class="mb-1 text-xs font-medium text-gray-700">{{ $etiqueta }}</p>
+                            <div class="flex items-center gap-2">
+                                <code class="flex-1 truncate rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-xs text-gray-800">{{ $valor }}</code>
+                                <button type="button" onclick="window.copyCompanyCredential(this, @js($valor))"
+                                        class="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50">
+                                    Copiar
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                @endforeach
+                    @endforeach
+                </div>
+
+                <div class="flex justify-end border-t border-gray-100 px-5 py-4">
+                    <button type="button" @click="abierto = false"
+                            class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
+                        Ya la copié
+                    </button>
+                </div>
             </div>
         </div>
     @endif
@@ -49,7 +64,7 @@
             @php
                 $estado = $l->estado();
                 $tope = $l->plan
-                    ? $apis->whereIn('slug', (array) $l->servicios)->map(fn ($a) => $a->limiteDelPlan($l->api_plan_id))->max() ?? 0
+                    ? $apis->whereIn('slug', (array) $l->servicios)->sum(fn ($a) => $a->limiteDelPlan($l->api_plan_id))
                     : 0;
                 $pct = $tope > 0 ? min(100, round($l->usadas_mes / $tope * 100)) : 0;
             @endphp
@@ -77,7 +92,9 @@
                         @endif
                     </p>
 
-                    <p class="mt-1 font-mono text-xs text-gray-400">{{ $l->clave }}</p>
+                    {{-- Recortada: entera ensuciaba la fila y aqui no se puede
+                         copiar. Va completa en el detalle, con su boton. --}}
+                    <p class="mt-1 font-mono text-xs text-gray-400">{{ Str::limit($l->clave, 30) }}</p>
                 </div>
 
                 <div class="w-40 shrink-0">
@@ -91,6 +108,26 @@
                 </div>
 
                 <div class="flex shrink-0 items-center gap-1.5">
+                    <button type="button"
+                            @click="detalle = {{ Illuminate\Support\Js::from([
+                                'nombre' => $l->nombre,
+                                'estado' => $estado,
+                                'entorno' => $l->entorno,
+                                'clave' => $l->clave,
+                                'pista' => $l->secreto_pista,
+                                'titular' => $l->nombreDelTitular(),
+                                'plan' => $l->plan?->nombre,
+                                'servicios' => collect($l->servicios)->map(fn ($x) => strtoupper($x))->join(' y '),
+                                'usadas' => $l->usadas_mes,
+                                'tope' => $tope,
+                                'creada' => $l->created_at->format('d/m/Y'),
+                                'expira' => $l->expira_en?->format('d/m/Y'),
+                                'ultimo_uso' => $l->ultimo_uso_en?->format('d/m/Y H:i'),
+                            ]) }}"
+                            class="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50">
+                        Ver
+                    </button>
+
                     <button type="button"
                             @click="llave = {{ Illuminate\Support\Js::from([
                                 'id' => $l->id,
@@ -279,6 +316,105 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    {{-- Detalle de una API Key. La clave se copia de aqui; el secreto no esta,
+         y se dice por que: solo lo tiene el cliente. --}}
+    <div x-show="detalle" x-cloak
+         @keydown.escape.window="detalle = null"
+         class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-6">
+        <div @click.outside="detalle = null"
+             class="my-auto w-full max-w-lg rounded-xl bg-white shadow-xl">
+
+            <div class="flex items-start justify-between gap-3 border-b border-gray-100 px-5 py-4">
+                <div class="min-w-0">
+                    <h3 class="truncate text-base font-semibold text-gray-900" x-text="detalle?.nombre"></h3>
+                    <p class="mt-0.5 truncate text-xs text-gray-500">
+                        <span x-text="detalle?.titular"></span> ·
+                        <span x-text="detalle?.servicios"></span> ·
+                        <span x-text="detalle?.plan ?? 'sin plan'"></span>
+                    </p>
+                </div>
+                <button type="button" @click="detalle = null"
+                        class="shrink-0 text-2xl leading-none text-gray-400 transition hover:text-gray-600">&times;</button>
+            </div>
+
+            <div class="space-y-4 px-5 py-4">
+                <span class="inline-block rounded-full px-2.5 py-1 text-xs font-medium"
+                      :class="{
+                          'bg-green-50 text-green-700': detalle?.estado === 'activa',
+                          'bg-blue-50 text-blue-700': detalle?.estado === 'sandbox',
+                          'bg-amber-50 text-amber-700': detalle?.estado === 'vencida',
+                          'bg-red-50 text-red-700': detalle?.estado === 'bloqueada',
+                      }"
+                      x-text="({ activa: '● Activa', sandbox: 'Sandbox', vencida: 'Vencida', bloqueada: 'Bloqueada' })[detalle?.estado]"></span>
+
+                <div>
+                    <p class="mb-1 text-xs font-medium text-gray-700">Dirección</p>
+                    <div class="flex items-center gap-2">
+                        <code class="flex-1 truncate rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-xs text-gray-800">{{ url('/api/consultas') }}</code>
+                        <button type="button" onclick="window.copyCompanyCredential(this, @js(url('/api/consultas')))"
+                                class="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50">
+                            Copiar
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="mb-1 text-xs font-medium text-gray-700">X-Api-Key</p>
+                    <div class="flex items-center gap-2">
+                        <code class="flex-1 truncate rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-xs text-gray-800" x-text="detalle?.clave"></code>
+                        <button type="button" @click="window.copyCompanyCredential($el, detalle?.clave)"
+                                class="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50">
+                            Copiar
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="mb-1 text-xs font-medium text-gray-700">X-Api-Secret</p>
+                    <code class="block rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-xs text-gray-400">
+                        ··················<span x-text="detalle?.pista"></span>
+                    </code>
+                    <p class="mt-1 text-xs text-gray-500">
+                        Solo lo tiene el cliente. Si lo perdió, hay que crearle otra API Key.
+                    </p>
+                </div>
+
+                <dl class="grid gap-x-6 gap-y-2 border-t border-gray-100 pt-4 text-xs sm:grid-cols-2">
+                    <div class="flex gap-2">
+                        <dt class="w-24 shrink-0 text-gray-500">Este mes</dt>
+                        <dd class="font-medium text-gray-800">
+                            <span x-text="(detalle?.usadas ?? 0).toLocaleString('es-PE')"></span>
+                            de <span x-text="(detalle?.tope ?? 0).toLocaleString('es-PE')"></span>
+                        </dd>
+                    </div>
+                    <div class="flex gap-2">
+                        <dt class="w-24 shrink-0 text-gray-500">Entorno</dt>
+                        <dd class="font-medium text-gray-800" x-text="detalle?.entorno === 'sandbox' ? 'Sandbox' : 'Producción'"></dd>
+                    </div>
+                    <div class="flex gap-2">
+                        <dt class="w-24 shrink-0 text-gray-500">Creada</dt>
+                        <dd class="font-medium text-gray-800" x-text="detalle?.creada"></dd>
+                    </div>
+                    <div class="flex gap-2">
+                        <dt class="w-24 shrink-0 text-gray-500">Vence</dt>
+                        <dd class="font-medium text-gray-800" x-text="detalle?.expira ?? 'no caduca'"></dd>
+                    </div>
+                    <div class="flex gap-2">
+                        <dt class="w-24 shrink-0 text-gray-500">Último uso</dt>
+                        <dd class="font-medium text-gray-800" x-text="detalle?.ultimo_uso ?? 'nunca'"></dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="flex justify-end border-t border-gray-100 px-5 py-4">
+                <button type="button" @click="detalle = null"
+                        class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-50">
+                    Cerrar
+                </button>
+            </div>
         </div>
     </div>
 
