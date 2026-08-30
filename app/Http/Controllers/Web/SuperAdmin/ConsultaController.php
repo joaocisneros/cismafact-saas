@@ -62,6 +62,8 @@ class ConsultaController extends Controller
             'a_medida' => 'nullable|boolean',
         ]);
 
+        $cuotas = (array) $request->input('cuotas', []);
+
         $plan = ApiPlan::create($datos + [
             'slug' => $this->slugLibre($datos['nombre']),
             'a_medida' => (bool) ($datos['a_medida'] ?? false),
@@ -69,13 +71,11 @@ class ConsultaController extends Controller
             'orden' => (int) ApiPlan::max('orden') + 1,
         ]);
 
-        // Nace con 0 en todas las consultas: existe pero no incluye nada, y se
-        // rellena en la tabla. Mas prudente que regalarlas sin querer.
         foreach (Api::pluck('id') as $api) {
-            $plan->apis()->attach($api, ['limite_mensual' => 0]);
+            $plan->apis()->attach($api, ['limite_mensual' => max(0, (int) ($cuotas[$api] ?? 0))]);
         }
 
-        return back()->with('success', "Plan «{$plan->nombre}» creado. Ponle las cuotas en la tabla.");
+        return back()->with('success', "Plan «{$plan->nombre}» creado.");
     }
 
     public function actualizarPlan(Request $request, ApiPlan $plan)
@@ -85,9 +85,16 @@ class ConsultaController extends Controller
             'descripcion' => 'nullable|string|max:120',
             'precio_mensual' => 'required|numeric|min:0|max:99999',
             'a_medida' => 'nullable|boolean',
-        ]) + ['a_medida' => (bool) $request->boolean('a_medida')]);
+        ]) + ['a_medida' => $request->boolean('a_medida')]);
 
-        return back()->with('success', 'Plan actualizado.');
+        // syncWithoutDetaching y no sync: una consulta que no venga en el
+        // formulario —porque se creo despues de abrir la pantalla— no debe
+        // perder la cuota que ya tenia.
+        foreach ((array) $request->input('cuotas', []) as $api => $tope) {
+            $plan->apis()->syncWithoutDetaching([$api => ['limite_mensual' => max(0, (int) $tope)]]);
+        }
+
+        return back()->with('success', "Plan «{$plan->nombre}» actualizado.");
     }
 
     public function borrarPlan(ApiPlan $plan)
@@ -187,30 +194,6 @@ class ConsultaController extends Controller
         $api->delete();
 
         return back()->with('success', "«{$nombre}» eliminada. El consumo que hubo se conserva.");
-    }
-
-    /** Lo que incluye cada plan de cada api. */
-    public function cuotas(Request $request)
-    {
-        $datos = $request->validate([
-            'cuotas' => 'required|array',
-            'cuotas.*' => 'required|array',
-            'cuotas.*.*' => 'required|integer|min:0|max:10000000',
-        ], [
-            'cuotas.*.*.integer' => 'Las cuotas se escriben en números enteros.',
-            'cuotas.*.*.min' => 'Una cuota no puede ser negativa. Escribe 0 para dejar ese plan sin acceso.',
-        ]);
-
-        foreach ($datos['cuotas'] as $api => $porPlan) {
-            foreach ($porPlan as $plan => $tope) {
-                DB::table('api_plan_limite')
-                    ->where('api_id', $api)
-                    ->where('api_plan_id', $plan)
-                    ->update(['limite_mensual' => (int) $tope, 'updated_at' => now()]);
-            }
-        }
-
-        return back()->with('success', 'Cuotas actualizadas.');
     }
 
     /**

@@ -1,9 +1,13 @@
 {{-- Una tabla y no un bloque por servicio.
      Con "API RUC" arriba y "API DNI" debajo, cada uno con sus planes, parecia
-     que se elige uno U otro. Puestas como filas de la misma tabla se ve que un
-     plan incluye las dos, cada una con su tope, y que un 0 la deja fuera: eso
-     es lo que permite vender "Solo RUC", "Solo DNI" y "Completo" sin inventar
-     ningun mecanismo nuevo. --}}
+     que se elige uno U otro. Puestos los planes como columnas y las consultas
+     como filas se ve que un plan incluye las dos, cuanto de cada una, y que un
+     0 la deja fuera: eso es lo que permite vender "Solo RUC", "Solo DNI" y
+     "Completo" sin inventar ningun mecanismo nuevo.
+
+     La tabla solo enseña. Todo lo de un plan —nombre, precio y cuotas— se
+     edita en su modal: tener aqui unos campos sueltos con un boton de guardar
+     al final obligaba a recordar que quedaba algo sin guardar. --}}
 <div x-data="{ plan: null, nuevo: false }">
 
     @php
@@ -17,7 +21,7 @@
         <div>
             <h2 class="text-sm font-semibold text-gray-900">Qué incluye cada plan</h2>
             <p class="mt-0.5 text-xs text-gray-500">
-                Al mes. Un 0 deja esa consulta fuera del plan: así se arman paquetes como «Solo RUC» o «Solo DNI».
+                Al mes. Una consulta sin cuota queda fuera del plan: así se arman paquetes como «Solo RUC».
             </p>
         </div>
         <button type="button" @click="nuevo = true; plan = null"
@@ -26,96 +30,92 @@
         </button>
     </div>
 
-    <form method="POST" action="{{ route('super-admin.consultas.cuotas') }}" class="space-y-4">
-        @csrf
-        @method('PUT')
+    <section class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+        <table class="min-w-full">
+            <thead>
+                <tr>
+                    {{-- Esta celda cruza "los servicios" con "los planes", asi
+                         que dice de que va la tabla en vez de repetir la
+                         palabra de la primera columna. --}}
+                    <th class="w-64 border-b border-gray-200 px-5 py-4 text-left align-middle">
+                        <p class="text-sm font-semibold text-gray-900">Servicios y planes</p>
+                        <p class="mt-0.5 text-xs font-normal text-gray-500">Consultas incluidas al mes</p>
+                    </th>
 
-        <section class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-            <table class="min-w-full">
-                <thead>
-                    <tr>
-                        <th class="w-56 border-b border-gray-200 px-5 py-4 text-left align-bottom">
-                            <span class="text-xs font-medium uppercase text-gray-400">Consulta</span>
+                    @foreach($planesApi as $i => $plan)
+                        <th class="border-b-2 border-l border-gray-200 px-5 py-4 text-center">
+                            <p class="text-sm font-bold {{ $tonos[$i % count($tonos)] }}">{{ $plan->nombre }}</p>
+                            <p class="mt-1 text-lg font-bold text-gray-900">
+                                {{ $plan->a_medida ? 'Personalizado' : 'S/ ' . rtrim(rtrim(number_format((float) $plan->precio_mensual, 2), '0'), '.') }}
+                                @unless($plan->a_medida)
+                                    <span class="text-xs font-normal text-gray-500">/mes</span>
+                                @endunless
+                            </p>
+                            <p class="text-xs font-normal text-gray-400">{{ $plan->descripcion }}</p>
+
+                            <button type="button"
+                                    @click="plan = {{ Illuminate\Support\Js::from([
+                                        'id' => $plan->id,
+                                        'nombre' => $plan->nombre,
+                                        'descripcion' => $plan->descripcion,
+                                        'precio_mensual' => (float) $plan->precio_mensual,
+                                        'a_medida' => (bool) $plan->a_medida,
+                                        'cuotas' => $apis->mapWithKeys(fn ($a) => [
+                                            $a->id => $a->planes->firstWhere('id', $plan->id)?->pivot->limite_mensual ?? 0,
+                                        ]),
+                                    ]) }}; nuevo = false"
+                                    class="mt-2 text-xs font-normal text-blue-600 hover:underline">
+                                Editar
+                            </button>
                         </th>
+                    @endforeach
+                </tr>
+            </thead>
 
-                        @foreach($planesApi as $i => $plan)
-                            <th class="border-b-2 border-l border-gray-200 px-5 py-4 text-center">
-                                <p class="text-sm font-bold {{ $tonos[$i % count($tonos)] }}">{{ $plan->nombre }}</p>
-                                <p class="mt-1 text-lg font-bold text-gray-900">
-                                    {{ $plan->a_medida ? 'Personalizado' : 'S/ ' . rtrim(rtrim(number_format((float) $plan->precio_mensual, 2), '0'), '.') }}
-                                    @unless($plan->a_medida)
-                                        <span class="text-xs font-normal text-gray-500">/mes</span>
-                                    @endunless
-                                </p>
-                                <p class="text-xs font-normal text-gray-400">{{ $plan->descripcion }}</p>
+            <tbody class="divide-y divide-gray-100">
+                @foreach($apis as $api)
+                    <tr>
+                        <td class="px-5 py-4">
+                            <div class="flex items-center gap-2.5">
+                                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg
+                                             {{ $api->slug === 'ruc' ? 'bg-green-50 text-green-600' : 'bg-purple-50 text-purple-600' }}">
+                                    @if($api->slug === 'ruc')
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                        </svg>
+                                    @else
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                        </svg>
+                                    @endif
+                                </span>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-semibold text-gray-900">{{ $api->nombre }}</p>
+                                    <p class="truncate text-xs text-gray-500">{{ $api->descripcion ?: '—' }}</p>
+                                </div>
+                            </div>
+                        </td>
 
-                                <button type="button"
-                                        @click="plan = {{ Illuminate\Support\Js::from([
-                                            'id' => $plan->id,
-                                            'nombre' => $plan->nombre,
-                                            'descripcion' => $plan->descripcion,
-                                            'precio_mensual' => (float) $plan->precio_mensual,
-                                            'a_medida' => (bool) $plan->a_medida,
-                                        ]) }}; nuevo = false"
-                                        class="mt-2 text-xs font-normal text-blue-600 hover:underline">
-                                    Editar
-                                </button>
-                            </th>
+                        @foreach($planesApi as $plan)
+                            @php $tope = $api->planes->firstWhere('id', $plan->id)?->pivot->limite_mensual ?? 0; @endphp
+                            <td class="border-l border-gray-200 px-4 py-4 text-center">
+                                @if($tope > 0)
+                                    <p class="text-xl font-bold text-gray-900">{{ number_format($tope) }}</p>
+                                    <p class="text-xs text-gray-400">consultas/mes</p>
+                                @else
+                                    <p class="text-xl font-bold text-gray-200">—</p>
+                                    <p class="text-xs text-gray-300">no incluida</p>
+                                @endif
+                            </td>
                         @endforeach
                     </tr>
-                </thead>
+                @endforeach
+            </tbody>
+        </table>
+    </section>
 
-                <tbody class="divide-y divide-gray-100">
-                    @foreach($apis as $api)
-                        <tr>
-                            <td class="px-5 py-4">
-                                <div class="flex items-center gap-2.5">
-                                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg
-                                                 {{ $api->slug === 'ruc' ? 'bg-green-50 text-green-600' : 'bg-purple-50 text-purple-600' }}">
-                                        @if($api->slug === 'ruc')
-                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                                            </svg>
-                                        @else
-                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                            </svg>
-                                        @endif
-                                    </span>
-                                    <div class="min-w-0">
-                                        <p class="text-sm font-semibold text-gray-900">{{ $api->nombre }}</p>
-                                        <p class="truncate text-xs text-gray-500">{{ $api->descripcion ?: '—' }}</p>
-                                    </div>
-                                </div>
-                            </td>
-
-                            @foreach($planesApi as $plan)
-                                @php $tope = $api->planes->firstWhere('id', $plan->id)?->pivot->limite_mensual ?? 0; @endphp
-                                <td class="border-l border-gray-200 px-4 py-4 text-center">
-                                    <input type="number" min="0" max="10000000"
-                                           name="cuotas[{{ $api->id }}][{{ $plan->id }}]"
-                                           value="{{ old('cuotas.' . $api->id . '.' . $plan->id, $tope) }}"
-                                           class="w-full rounded-lg border border-transparent bg-transparent text-center text-xl font-bold
-                                                  {{ $tope > 0 ? 'text-gray-900' : 'text-gray-300' }}
-                                                  transition hover:border-gray-200 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100">
-                                    <p class="text-xs {{ $tope > 0 ? 'text-gray-400' : 'text-gray-300' }}">
-                                        {{ $tope > 0 ? 'consultas/mes' : 'no incluida' }}
-                                    </p>
-                                </td>
-                            @endforeach
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </section>
-
-        <button type="submit" class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700">
-            Guardar cuotas
-        </button>
-    </form>
-
-    {{-- Crear y editar en modal: la tabla ya es ancha, y meter ahi dentro un
-         formulario de cinco campos la volveria ilegible. --}}
+    {{-- Todo lo del plan en un sitio: nombre, precio y cuanto trae de cada
+         consulta. Asi no queda nada a medio guardar en la tabla. --}}
     <div x-show="plan || nuevo" x-cloak
          @keydown.escape.window="plan = null; nuevo = false"
          class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-6">
@@ -131,9 +131,6 @@
 
                 <div class="border-b border-gray-100 px-5 py-4">
                     <h3 class="text-base font-semibold text-gray-900" x-text="nuevo ? 'Nuevo plan' : 'Editar plan'"></h3>
-                    <p class="mt-0.5 text-xs text-gray-500">
-                        Las cuotas de cada consulta se ponen luego, en la tabla.
-                    </p>
                 </div>
 
                 <div class="space-y-4 px-5 py-4">
@@ -161,13 +158,27 @@
                                    :value="plan?.precio_mensual ?? 0" :disabled="aMedida"
                                    class="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400">
                         </div>
-
                         <label class="mt-2 flex items-center gap-2 text-sm text-gray-700">
                             <input type="checkbox" name="a_medida" value="1" x-model="aMedida"
                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                             Precio a convenir
-                            <span class="text-xs text-gray-500">— enseña «Personalizado» en vez de un importe</span>
                         </label>
+                    </div>
+
+                    <div class="border-t border-gray-100 pt-4">
+                        <p class="mb-2 text-sm font-medium text-gray-700">Qué incluye al mes</p>
+                        <div class="space-y-2">
+                            @foreach($apis as $api)
+                                <div class="flex items-center justify-between gap-3">
+                                    <label for="q_{{ $api->id }}" class="text-sm text-gray-700">{{ $api->nombre }}</label>
+                                    <input type="number" min="0" max="10000000"
+                                           id="q_{{ $api->id }}" name="cuotas[{{ $api->id }}]"
+                                           :value="plan?.cuotas?.[{{ $api->id }}] ?? 0"
+                                           class="w-32 rounded-lg border border-gray-300 px-3 py-2 text-right text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                            @endforeach
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">Un 0 deja esa consulta fuera del plan.</p>
                     </div>
                 </div>
 

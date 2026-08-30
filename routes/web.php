@@ -214,7 +214,6 @@ Route::prefix('super-admin')
 
         // Consultas de RUC y DNI: proveedor, cache y padron.
         Route::get('/consultas', [SuperAdminConsultaController::class, 'index'])->name('consultas');
-        Route::put('/consultas/cuotas', [SuperAdminConsultaController::class, 'cuotas'])->name('consultas.cuotas');
         Route::post('/consultas/planes', [SuperAdminConsultaController::class, 'guardarPlan'])->name('consultas.planes.guardar');
         Route::put('/consultas/planes/{plan}', [SuperAdminConsultaController::class, 'actualizarPlan'])->name('consultas.planes.actualizar');
         Route::delete('/consultas/planes/{plan}', [SuperAdminConsultaController::class, 'borrarPlan'])->name('consultas.planes.borrar');
