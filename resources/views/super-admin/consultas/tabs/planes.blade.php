@@ -116,9 +116,9 @@
          consulta. Asi no queda nada a medio guardar en la tabla. --}}
     <div x-show="plan || nuevo" x-cloak
          @keydown.escape.window="plan = null; nuevo = false"
-         class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-6">
+         class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
         <div @click.outside="plan = null; nuevo = false"
-             class="my-auto w-full max-w-md rounded-xl bg-white shadow-xl">
+             class="my-auto w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl">
 
             <form method="POST"
                   :action="nuevo
@@ -127,7 +127,7 @@
                 @csrf
                 <template x-if="!nuevo"><input type="hidden" name="_method" value="PUT"></template>
 
-                <div class="border-b border-gray-100 px-5 py-4">
+                <div class="border-b border-gray-200 px-5 py-4">
                     <h3 class="text-base font-semibold text-gray-900" x-text="nuevo ? 'Nuevo plan' : 'Editar plan'"></h3>
                 </div>
 
@@ -180,7 +180,7 @@
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between gap-2 border-t border-gray-100 px-5 py-4">
+                <div class="flex items-center justify-between gap-2 border-t border-gray-200 px-5 py-4">
                     <template x-if="!nuevo">
                         <button type="button"
                                 @click="if (confirm('Se elimina el plan. Si hay llaves dentro no se podrá. ¿Continuar?')) $refs.borrar.submit()"

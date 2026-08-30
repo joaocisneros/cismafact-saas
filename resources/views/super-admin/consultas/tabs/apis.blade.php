@@ -11,9 +11,9 @@
              quedar arriba del todo empujando la pagina. --}}
         <div x-data="{ abierto: true }" x-show="abierto" x-cloak
              @keydown.escape.window="abierto = false"
-             class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-6">
-            <div class="my-auto w-full max-w-lg rounded-xl bg-white shadow-xl">
-                <div class="border-b border-gray-100 px-5 py-4">
+             class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
+            <div class="my-auto w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-xl">
+                <div class="border-b border-gray-200 px-5 py-4">
                     <h3 class="text-base font-semibold text-gray-900">«{{ $nueva['nombre'] }}» creada</h3>
                     <p class="mt-0.5 text-xs text-gray-500">
                         Cópiala ahora: <strong class="text-gray-700">el secreto no se vuelve a mostrar.</strong>
@@ -36,7 +36,7 @@
                     @endforeach
                 </div>
 
-                <div class="flex justify-end border-t border-gray-100 px-5 py-4">
+                <div class="flex justify-end border-t border-gray-200 px-5 py-4">
                     <button type="button" @click="abierto = false"
                             class="whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
                         Ya la copié
@@ -170,9 +170,9 @@
          volveria ilegible. --}}
     <div x-show="llave || nueva" x-cloak
          @keydown.escape.window="llave = null; nueva = false"
-         class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-6">
+         class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
         <div @click.outside="llave = null; nueva = false"
-             class="my-auto w-full max-w-lg rounded-xl bg-white shadow-xl">
+             class="my-auto w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-xl">
 
             <form method="POST"
                   :action="nueva
@@ -183,7 +183,7 @@
                 @csrf
                 <template x-if="!nueva"><input type="hidden" name="_method" value="PUT"></template>
 
-                <div class="border-b border-gray-100 px-5 py-4">
+                <div class="border-b border-gray-200 px-5 py-4">
                     <h3 class="text-base font-semibold text-gray-900" x-text="nueva ? 'Nueva API Key' : 'Editar llave'"></h3>
                 </div>
 
@@ -297,7 +297,7 @@
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-2 border-t border-gray-100 px-5 py-4">
+                <div class="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
                     <button type="button" @click="llave = null; nueva = false"
                             class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                         Cancelar
@@ -314,11 +314,11 @@
          y se dice por que: solo lo tiene el cliente. --}}
     <div x-show="detalle" x-cloak
          @keydown.escape.window="detalle = null"
-         class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-6">
+         class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
         <div @click.outside="detalle = null"
-             class="my-auto w-full max-w-lg rounded-xl bg-white shadow-xl">
+             class="my-auto w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-xl">
 
-            <div class="flex items-start justify-between gap-3 border-b border-gray-100 px-5 py-4">
+            <div class="flex items-start justify-between gap-3 border-b border-gray-200 px-5 py-4">
                 <div class="min-w-0">
                     <h3 class="truncate text-base font-semibold text-gray-900" x-text="detalle?.nombre"></h3>
                     <p class="mt-0.5 truncate text-xs text-gray-500">
@@ -327,8 +327,12 @@
                         <span x-text="detalle?.plan ?? 'sin plan'"></span>
                     </p>
                 </div>
-                <button type="button" @click="detalle = null"
-                        class="shrink-0 text-2xl leading-none text-gray-400 transition hover:text-gray-600">&times;</button>
+                <button type="button" @click="detalle = null" aria-label="Cerrar"
+                        class="shrink-0 rounded-md p-2 text-gray-500 hover:bg-gray-100">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
             </div>
 
             <div class="space-y-4 px-5 py-4">
@@ -400,7 +404,7 @@
                 </dl>
             </div>
 
-            <div class="flex justify-end border-t border-gray-100 px-5 py-4">
+            <div class="flex justify-end border-t border-gray-200 px-5 py-4">
                 <button type="button" @click="detalle = null"
                         class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                     Cerrar
