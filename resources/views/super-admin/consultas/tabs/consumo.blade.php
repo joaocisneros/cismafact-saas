@@ -43,6 +43,7 @@
                     <th class="px-5 py-3">A nombre de</th>
                     <th class="w-px whitespace-nowrap px-5 py-3">Estado</th>
                     <th class="w-px whitespace-nowrap px-5 py-3">Costo</th>
+                    <th class="w-px whitespace-nowrap px-5 py-3">Origen</th>
                     <th class="w-px whitespace-nowrap px-5 py-3 text-right">Tardó</th>
                 </tr>
             </thead>
@@ -108,8 +109,28 @@
 
                         {{-- De donde salio el dato: es lo que dice si esa consulta
                              costo dinero o se resolvio en casa. --}}
-                        <td class="px-5 py-2.5">
-                            @include('super-admin.consultas.tabs._fuente', ['fuente' => $h->fuente, 'coste' => true])
+                        {{-- Lo que paga quien consulto. «Con costo» decia que
+                             algo costaba, pero no cuanto; el plan y su precio
+                             estaban a un join de distancia. --}}
+                        <td class="whitespace-nowrap px-5 py-2.5">
+                            @if($h->plan)
+                                <span class="font-medium text-gray-900">{{ $h->plan }}</span>
+                                <p class="text-xs text-gray-500">
+                                    @if($h->plan_a_medida)
+                                        A convenir
+                                    @elseif((float) $h->plan_precio > 0)
+                                        S/ {{ number_format($h->plan_precio, 2) }} <span class="text-gray-400">/mes</span>
+                                    @else
+                                        Sin costo
+                                    @endif
+                                </p>
+                            @else
+                                <span class="text-xs text-gray-300">—</span>
+                            @endif
+                        </td>
+
+                        <td class="whitespace-nowrap px-5 py-2.5">
+                            @include('super-admin.consultas.tabs._fuente', ['fuente' => $h->fuente, 'coste' => false])
                         </td>
 
                         <td class="whitespace-nowrap px-5 py-2.5 text-right text-gray-600">
@@ -130,7 +151,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="px-5 py-8 text-center text-gray-500">
+                        <td colspan="9" class="px-5 py-8 text-center text-gray-500">
                             {{ $solo_fallos ? 'Ninguna consulta ha fallado.' : 'Todavía no hay ninguna consulta.' }}
                         </td>
                     </tr>

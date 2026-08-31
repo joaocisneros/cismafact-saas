@@ -48,6 +48,9 @@ class ConsultaController extends Controller
                 ->where('consultas_consumo.origen', 'externo')
                 ->when($fallos, fn ($q) => $q->where('consultas_consumo.exito', false))
                 ->leftJoin('consulta_llaves', 'consulta_llaves.id', '=', 'consultas_consumo.llave_id')
+                // El plan de la llave, para poner en cada fila lo que paga quien
+                // consulto en vez de un «con costo» que no dice cuanto.
+                ->leftJoin('api_planes', 'api_planes.id', '=', 'consulta_llaves.api_plan_id')
                 ->leftJoin('companies', 'companies.id', '=', 'consultas_consumo.company_id')
                 ->leftJoin('apis', 'apis.id', '=', 'consultas_consumo.api_id')
                 ->leftJoin('consultas_documento', function ($j) {
@@ -71,6 +74,9 @@ class ConsultaController extends Controller
                     // Cuando la llave se borra, la empresa sigue ahi: sin esto
                     // la fila no identificaba a nadie.
                     'companies.razon_social as empresa',
+                    'api_planes.nombre as plan',
+                    'api_planes.precio_mensual as plan_precio',
+                    'api_planes.a_medida as plan_a_medida',
                 ]),
             'padron' => DB::table('padron_ruc')->count(),
             'apis' => Api::with(['planes' => fn ($q) => $q->orderBy('a_medida')->orderBy('precio_mensual')->orderBy('orden')])
