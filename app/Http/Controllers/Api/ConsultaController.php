@@ -99,7 +99,20 @@ class ConsultaController extends Controller
 
         // En sandbox se responde con un ejemplo y no se cuenta: es justo para
         // poder integrar sin gastar lo que se paga.
+        //
+        // El numero se comprueba igual que en produccion. Si aqui valiera
+        // cualquier cosa, quien integra no llegaria a ver nunca un 422 y se lo
+        // encontraria de golpe el dia que cambia las credenciales, que es justo
+        // lo que este entorno existe para evitar.
         if ($llave->entorno === 'sandbox') {
+            if ($motivo = $this->motivoNumeroInvalido($slug, $numero)) {
+                return response()->json([
+                    'success' => false,
+                    'data' => null,
+                    'message' => $motivo,
+                ], 422);
+            }
+
             return response()->json([
                 'success' => true,
                 'data' => $api->ejemplo($numero),
@@ -149,6 +162,27 @@ class ConsultaController extends Controller
     private function llave(Request $request): ConsultaLlave
     {
         return $request->attributes->get('llave_consulta');
+    }
+
+    /**
+     * Por que no vale el numero, o null si vale. Mismas reglas y mismos textos
+     * que en produccion, para que el sandbox no de un falso visto bueno.
+     */
+    private function motivoNumeroInvalido(string $slug, string $numero): ?string
+    {
+        $limpio = preg_replace('/\D/', '', $numero);
+
+        if ($slug === 'ruc') {
+            if (strlen($limpio) !== 11) {
+                return 'El RUC debe tener 11 dígitos.';
+            }
+
+            return $this->consultas->rucValido($limpio)
+                ? null
+                : 'El RUC no es válido: el dígito verificador no cuadra.';
+        }
+
+        return strlen($limpio) === 8 ? null : 'El DNI debe tener 8 dígitos.';
     }
 
     /** Lo gastado por esta llave este mes. Solo cuentan las que salieron bien. */

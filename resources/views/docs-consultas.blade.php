@@ -147,9 +147,28 @@ Accept: application/json</code></pre>
                             <tr><td class="px-4 py-2 font-mono text-xs">condicion</td><td class="px-4 py-2"><strong>HABIDO</strong> o NO HABIDO. No habido significa que SUNAT no lo encontró en su domicilio.</td></tr>
                             <tr><td class="px-4 py-2 font-mono text-xs">direccion</td><td class="px-4 py-2">Domicilio fiscal.</td></tr>
                             <tr><td class="px-4 py-2 font-mono text-xs">ubigeo</td><td class="px-4 py-2">Código de 6 dígitos de departamento, provincia y distrito.</td></tr>
-                            <tr><td class="px-4 py-2 font-mono text-xs">fuente</td><td class="px-4 py-2">De dónde salió el dato. Informativo: el contenido es el mismo.</td></tr>
+                            <tr><td class="px-4 py-2 font-mono text-xs">fuente</td><td class="px-4 py-2">De dónde salió el dato: <code class="rounded bg-gray-100 px-1 text-xs">proveedor</code>, <code class="rounded bg-gray-100 px-1 text-xs">padron</code>, <code class="rounded bg-gray-100 px-1 text-xs">consultado antes</code> o <code class="rounded bg-gray-100 px-1 text-xs">ninguna</code>. Con <code class="rounded bg-gray-100 px-1 text-xs">ninguna</code> vienen solo el número y el tipo, sin ficha.</td></tr>
                         </tbody>
                     </table>
+                </div>
+
+                {{-- Lo que mas rompe integraciones: dar por hecho que un 200
+                     siempre trae la ficha. Si el proveedor no responde, el
+                     numero se da por bueno igualmente y la ficha no viene. --}}
+                <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                    <p class="text-sm font-medium text-amber-900">Un <code class="rounded bg-amber-100 px-1 text-xs">200</code> no siempre trae la ficha</p>
+                    <p class="mt-1 text-sm leading-relaxed text-amber-800">
+                        Si el número es correcto pero no se pudo consultar en ese momento, la respuesta
+                        sigue siendo <code class="rounded bg-amber-100 px-1 text-xs">200</code> con
+                        <code class="rounded bg-amber-100 px-1 text-xs">success: true</code>, porque el número
+                        vale y no queremos bloquearte por un proveedor caído. Pero llega
+                        <code class="rounded bg-amber-100 px-1 text-xs">"fuente": "ninguna"</code>, un
+                        <code class="rounded bg-amber-100 px-1 text-xs">message</code> explicándolo, y
+                        <strong>sin</strong> <code class="rounded bg-amber-100 px-1 text-xs">nombre</code> ni
+                        <code class="rounded bg-amber-100 px-1 text-xs">direccion</code>.
+                        Comprueba que el campo existe antes de usarlo, en vez de fiarte solo de
+                        <code class="rounded bg-amber-100 px-1 text-xs">success</code>.
+                    </p>
                 </div>
             </section>
 
@@ -228,7 +247,7 @@ Accept: application/json</code></pre>
                             </tr>
                             <tr>
                                 <td class="px-4 py-2 font-mono text-xs">422</td>
-                                <td class="px-4 py-2">El número no es válido, o no existe en SUNAT o RENIEC.</td>
+                                <td class="px-4 py-2">El número no es válido: no tiene los dígitos que toca, o el dígito verificador no cuadra.</td>
                                 <td class="px-4 py-2">Nada: no gasta cuota. Enséñale el mensaje a tu usuario.</td>
                             </tr>
                             <tr>
