@@ -53,13 +53,14 @@
             <table class="min-w-full divide-y divide-gray-200 text-sm">
                 <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
                     <tr>
-                        <th class="px-4 py-3">Fecha y hora</th>
-                        <th class="px-4 py-3">Empresa</th>
-                        <th class="px-4 py-3">Servicio</th>
-                        <th class="px-4 py-3">Número</th>
+                        <th class="w-px whitespace-nowrap px-4 py-3">Fecha y hora</th>
+                        <th class="whitespace-nowrap px-4 py-3">Empresa</th>
+                        <th class="w-px whitespace-nowrap px-4 py-3 text-right">Consumo del mes</th>
+                        <th class="w-px whitespace-nowrap px-4 py-3">Servicio</th>
+                        <th class="w-px whitespace-nowrap px-4 py-3">Número</th>
                         <th class="px-4 py-3">Estado</th>
-                        <th class="px-4 py-3">¿Costó?</th>
-                        <th class="px-4 py-3 text-right">Tardó</th>
+                        <th class="w-px whitespace-nowrap px-4 py-3">Origen</th>
+                        <th class="w-px whitespace-nowrap px-4 py-3 text-right">Tardó</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -68,23 +69,40 @@
                             <td class="whitespace-nowrap px-4 py-2.5 text-gray-600">
                                 {{ \Illuminate\Support\Carbon::parse($h->created_at)->format('d/m/Y H:i:s') }}
                             </td>
-                            <td class="max-w-0 px-4 py-2.5">
-                                <p class="truncate text-gray-900" title="{{ $h->empresa ?? '—' }}">{{ $h->empresa ?? '—' }}</p>
+                            <td class="px-4 py-2.5">
+                                <span class="text-gray-900">{{ $h->empresa ?? '—' }}</span>
+                                @if($h->empresa)
+                                    @php
+                                        // Suspendida a mano cuenta como no activa: para
+                                        // lo que se mira aqui, las dos significan que no
+                                        // deberia estar operando.
+                                        $activa = $h->empresa_activa && ! $h->suspendida_manualmente;
+                                    @endphp
+                                    @unless($activa)
+                                        <span class="ml-1.5 rounded-full bg-red-50 px-1.5 py-0.5 text-xs font-medium text-red-700"
+                                              title="{{ $h->suspendida_manualmente ? 'Suspendida manualmente' : 'Dada de baja' }}">
+                                            Inactiva
+                                        </span>
+                                    @endunless
+                                @endif
                             </td>
-                            <td class="px-4 py-2.5 text-gray-600">{{ strtoupper($h->tipo) }}</td>
-                            <td class="px-4 py-2.5 font-mono text-xs text-gray-700">{{ $h->numero }}</td>
+                            <td class="whitespace-nowrap px-4 py-2.5 text-right text-gray-600">
+                                {{ number_format($consumo_por_empresa[$h->company_id] ?? 0) }}
+                            </td>
+                            <td class="whitespace-nowrap px-4 py-2.5 text-gray-600">{{ strtoupper($h->tipo) }}</td>
+                            <td class="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-gray-700">{{ $h->numero }}</td>
                             <td class="px-4 py-2.5">
                                 @if($h->exito)
                                     <span class="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">Éxito</span>
                                 @else
                                     <span class="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">Sin ficha</span>
                                     @if($h->motivo)
-                                        <p class="mt-0.5 max-w-xs truncate text-xs text-red-600" title="{{ $h->motivo }}">{{ $h->motivo }}</p>
+                                        <p class="mt-0.5 text-xs text-red-600">{{ $h->motivo }}</p>
                                     @endif
                                 @endif
                             </td>
                             <td class="px-4 py-2.5">
-                                @include('super-admin.consultas.tabs._fuente', ['fuente' => $h->fuente])
+                                @include('super-admin.consultas.tabs._fuente', ['fuente' => $h->fuente, 'coste' => false])
                             </td>
                             <td class="whitespace-nowrap px-4 py-2.5 text-right text-gray-600">
                                 {{ $h->ms !== null ? number_format($h->ms) . ' ms' : '—' }}
@@ -92,7 +110,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-5 py-8 text-center text-sm text-gray-500">
+                            <td colspan="8" class="px-5 py-8 text-center text-sm text-gray-500">
                                 {{ $solo_fallos ? 'Ninguna búsqueda ha fallado.' : 'Todavía no hay ninguna búsqueda desde el panel.' }}
                             </td>
                         </tr>

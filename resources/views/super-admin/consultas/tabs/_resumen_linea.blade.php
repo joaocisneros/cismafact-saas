@@ -12,6 +12,8 @@
     $ahorro = $r['total'] ? round($r['en_casa'] / $r['total'] * 100) : 0;
 @endphp
 
+@php $coste = $coste ?? false; @endphp
+
 <div class="flex flex-wrap items-center gap-x-5 gap-y-1 border-b border-gray-100 bg-gray-50/60 px-5 py-2.5 text-xs">
     <span class="text-gray-500">
         <span class="font-semibold text-gray-900">{{ number_format($r['total']) }}</span>
@@ -20,12 +22,12 @@
 
     <span class="text-gray-500">
         <span class="font-semibold {{ $r['proveedor'] ? 'text-amber-700' : 'text-gray-400' }}">{{ number_format($r['proveedor']) }}</span>
-        con costo
+        {{ $coste ? "con costo" : "del proveedor" }}
     </span>
 
     <span class="text-gray-500">
         <span class="font-semibold {{ $r['en_casa'] ? 'text-emerald-700' : 'text-gray-400' }}">{{ number_format($r['en_casa']) }}</span>
-        sin costo
+        {{ $coste ? "sin costo" : "de casa" }}
         @if($r['en_casa'])
             <span class="text-gray-400">({{ $ahorro }}%)</span>
         @endif

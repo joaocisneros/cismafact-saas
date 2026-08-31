@@ -30,19 +30,19 @@
         </div>
     </div>
 
-    @include('super-admin.consultas.tabs._resumen_linea', ['r' => $resumen_externo, 'que' => 'consultas'])
+    @include('super-admin.consultas.tabs._resumen_linea', ['r' => $resumen_externo, 'que' => 'consultas', 'coste' => true])
 
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200 text-sm">
             <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
                 <tr>
-                    <th class="px-5 py-3">Fecha y hora</th>
-                    <th class="px-5 py-3">API Key</th>
-                    <th class="px-5 py-3">Servicio</th>
-                    <th class="px-5 py-3">Número</th>
+                    <th class="w-px whitespace-nowrap px-5 py-3">Fecha y hora</th>
+                    <th class="whitespace-nowrap px-5 py-3">API Key</th>
+                    <th class="w-px whitespace-nowrap px-5 py-3">Servicio</th>
+                    <th class="w-px whitespace-nowrap px-5 py-3">Número</th>
                     <th class="px-5 py-3">Estado</th>
-                    <th class="px-5 py-3">¿Costó?</th>
-                    <th class="px-5 py-3 text-right">Tardó</th>
+                    <th class="w-px whitespace-nowrap px-5 py-3">¿Costó?</th>
+                    <th class="w-px whitespace-nowrap px-5 py-3 text-right">Tardó</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
@@ -64,9 +64,9 @@
                             @endif
                         </td>
 
-                        <td class="px-5 py-2.5 text-gray-600">{{ strtoupper($h->tipo) }}</td>
+                        <td class="whitespace-nowrap px-5 py-2.5 text-gray-600">{{ strtoupper($h->tipo) }}</td>
 
-                        <td class="px-5 py-2.5 font-mono text-xs text-gray-700">{{ $h->numero }}</td>
+                        <td class="whitespace-nowrap px-5 py-2.5 font-mono text-xs text-gray-700">{{ $h->numero }}</td>
 
                         <td class="px-5 py-2.5">
                             @if($h->exito)
@@ -74,7 +74,7 @@
                             @else
                                 <span class="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">Error</span>
                                 @if($h->motivo)
-                                    <p class="mt-0.5 max-w-xs truncate text-xs text-red-600" title="{{ $h->motivo }}">{{ $h->motivo }}</p>
+                                    <p class="mt-0.5 text-xs text-red-600">{{ $h->motivo }}</p>
                                 @endif
                             @endif
                         </td>
@@ -82,7 +82,7 @@
                         {{-- De donde salio el dato: es lo que dice si esa consulta
                              costo dinero o se resolvio en casa. --}}
                         <td class="px-5 py-2.5">
-                            @include('super-admin.consultas.tabs._fuente', ['fuente' => $h->fuente])
+                            @include('super-admin.consultas.tabs._fuente', ['fuente' => $h->fuente, 'coste' => true])
                         </td>
 
                         <td class="whitespace-nowrap px-5 py-2.5 text-right text-gray-600">

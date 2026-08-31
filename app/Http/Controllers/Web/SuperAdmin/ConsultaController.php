@@ -101,6 +101,7 @@ class ConsultaController extends Controller
                 ->limit(40)
                 ->get([
                     'consultas_consumo.created_at',
+                    'consultas_consumo.company_id',
                     'consultas_consumo.tipo',
                     'consultas_consumo.numero',
                     'consultas_consumo.fuente',
@@ -108,7 +109,19 @@ class ConsultaController extends Controller
                     'consultas_consumo.ms',
                     'consultas_consumo.motivo',
                     'companies.razon_social as empresa',
+                    // Una empresa dada de baja que sigue buscando es justo lo
+                    // que se quiere ver de un vistazo.
+                    'companies.activo as empresa_activa',
+                    'companies.suspendida_manualmente',
                 ]),
+
+            // Lo que lleva cada empresa este mes, para ponerlo en su fila sin
+            // volver a tener una tabla aparte solo para eso.
+            'consumo_por_empresa' => DB::table('consultas_consumo')
+                ->where('origen', 'interno')
+                ->where('created_at', '>=', now()->startOfMonth())
+                ->groupBy('company_id')
+                ->pluck(DB::raw('COUNT(*)'), 'company_id'),
         ]);
     }
 
