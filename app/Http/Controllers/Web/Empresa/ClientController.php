@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\Empresa;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Services\ConsultaDocumentoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -84,6 +85,55 @@ class ClientController extends Controller
 
         return redirect()->route('empresa.clients.index')
             ->with('success', 'Cliente eliminado correctamente.');
+    }
+
+    /**
+     * Los datos de un RUC o un DNI, para no teclearlos a mano.
+     *
+     * Solo se puede consultar DNI (1) y RUC (6): el carne de extranjeria y el
+     * documento de no domiciliado no estan en ningun padron que podamos mirar.
+     *
+     * Devuelve siempre 200 con `encontrado`: que no haya ficha no es un fallo
+     * del formulario, y tratarlo como error obligaria al usuario a cerrar un
+     * aviso rojo antes de poder escribir el nombre a mano.
+     */
+    public function consultar(string $tipo, string $numero, ConsultaDocumentoService $consultas)
+    {
+        if (! in_array($tipo, ['1', '6'], true)) {
+            return response()->json([
+                'encontrado' => false,
+                'mensaje' => 'Ese tipo de documento no se puede consultar. Escribe los datos a mano.',
+            ]);
+        }
+
+        $numero = preg_replace('/\D/', '', $numero);
+
+        $r = $tipo === '6' ? $consultas->ruc($numero) : $consultas->dni($numero);
+
+        if (! ($r['valido'] ?? false)) {
+            return response()->json([
+                'encontrado' => false,
+                'mensaje' => $r['motivo'] ?? 'El número no es válido.',
+            ]);
+        }
+
+        // Numero correcto pero sin ficha (proveedor caido o no lo encuentra):
+        // se avisa y se deja escribir a mano, que es mejor que no dejar seguir.
+        if (empty($r['nombre'])) {
+            return response()->json([
+                'encontrado' => false,
+                'mensaje' => $r['motivo'] ?? 'No se pudo traer la ficha. Escribe los datos a mano.',
+            ]);
+        }
+
+        return response()->json([
+            'encontrado' => true,
+            'razon_social' => $r['nombre'],
+            'direccion' => $r['direccion'] ?? null,
+            // Solo el RUC tiene estado y condicion; el DNI no.
+            'estado' => $r['estado'] ?? null,
+            'condicion' => $r['condicion'] ?? null,
+        ]);
     }
 
     /**

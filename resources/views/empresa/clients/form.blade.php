@@ -18,14 +18,17 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ $action }}" class="bg-white rounded-xl shadow-sm p-6 space-y-4">
+    <form method="POST" action="{{ $action }}" class="bg-white rounded-xl shadow-sm p-6 space-y-4"
+          x-data="@include('empresa.clients._autocompletar')">
         @csrf
         @if($client->exists) @method('PUT') @endif
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de documento *</label>
-                <select name="tipo_documento" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                <select name="tipo_documento" x-ref="tipo"
+                        @change="buscar($event.target.value, $refs.numero.value)"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
                     @foreach($tipos as $val => $label)
                         <option value="{{ $val }}" @selected(old('tipo_documento', $client->tipo_documento) === $val)>{{ $label }}</option>
                     @endforeach
@@ -34,14 +37,21 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Número de documento *</label>
                 <input type="text" name="numero_documento" value="{{ old('numero_documento', $client->numero_documento) }}"
+                       x-ref="numero" @input.debounce.400ms="buscar($refs.tipo.value, $event.target.value)"
                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                        placeholder="DNI: 8 dígitos / RUC: 11 dígitos">
+                    <template x-if="aviso">
+                        <p class="mt-1.5 text-xs"
+                           :class="{ 'text-green-700': avisoTipo === 'ok', 'text-amber-700': avisoTipo === 'ojo', 'text-red-600': avisoTipo === 'error' }"
+                           x-text="aviso"></p>
+                    </template>
+                    <p x-show="buscando" class="mt-1.5 text-xs text-gray-500">Consultando…</p>
             </div>
         </div>
 
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Razón social / Nombre completo *</label>
-            <input type="text" name="razon_social" value="{{ old('razon_social', $client->razon_social) }}"
+            <input type="text" name="razon_social" x-ref="razon" value="{{ old('razon_social', $client->razon_social) }}"
                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
         </div>
 
@@ -53,7 +63,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
-                <input type="text" name="direccion" value="{{ old('direccion', $client->direccion) }}"
+                <input type="text" name="direccion" x-ref="direccion" value="{{ old('direccion', $client->direccion) }}"
                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
         </div>

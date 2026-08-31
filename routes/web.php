@@ -369,6 +369,14 @@ Route::prefix('empresa')
         Route::resource('clients', \App\Http\Controllers\Web\Empresa\ClientController::class)
             ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 
+        // Rellenar el formulario de cliente con el RUC o el DNI. Con tope: cada
+        // consulta que no este en casa sale al proveedor y se paga, asi que un
+        // formulario abierto no puede convertirse en un grifo abierto.
+        Route::get('/clients-consultar/{tipo}/{numero}',
+            [\App\Http\Controllers\Web\Empresa\ClientController::class, 'consultar'])
+            ->middleware('throttle:20,1')
+            ->name('clients.consultar');
+
         // Reporte de ventas del periodo para entregar al contador.
         Route::get('/reportes/contador', [\App\Http\Controllers\Web\Empresa\ReporteContadorController::class, 'index'])
             ->name('reportes.contador');

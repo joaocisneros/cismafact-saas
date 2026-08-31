@@ -8,14 +8,16 @@
     $accion = $client->exists ? route('empresa.clients.update', $client) : route('empresa.clients.store');
 @endphp
 
-<form method="POST" action="{{ $accion }}" class="space-y-4 p-5">
+<form method="POST" action="{{ $accion }}" class="space-y-4 p-5"
+      x-data="@include('empresa.clients._autocompletar')">
     @csrf
     @if($client->exists) @method('PUT') @endif
 
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
             <label for="c_tipo_documento" class="mb-1 block text-sm font-medium text-gray-700">Tipo de documento *</label>
-            <select name="tipo_documento" id="c_tipo_documento"
+            <select name="tipo_documento" id="c_tipo_documento" x-ref="tipo"
+                    @change="buscar($event.target.value, $refs.numero.value)"
                     class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
                 @foreach($tipos as $val => $label)
                     <option value="{{ $val }}" @selected(old('tipo_documento', $client->tipo_documento) === $val)>{{ $label }}</option>
@@ -26,14 +28,22 @@
             <label for="c_numero_documento" class="mb-1 block text-sm font-medium text-gray-700">Número de documento *</label>
             <input type="text" name="numero_documento" id="c_numero_documento"
                    value="{{ old('numero_documento', $client->numero_documento) }}"
+                   x-ref="numero" @input.debounce.400ms="buscar($refs.tipo.value, $event.target.value)"
                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
                    placeholder="DNI: 8 dígitos / RUC: 11 dígitos">
+
+            <template x-if="aviso">
+                <p class="mt-1.5 text-xs"
+                   :class="{ 'text-green-700': avisoTipo === 'ok', 'text-amber-700': avisoTipo === 'ojo', 'text-red-600': avisoTipo === 'error' }"
+                   x-text="aviso"></p>
+            </template>
+            <p x-show="buscando" class="mt-1.5 text-xs text-gray-500">Consultando…</p>
         </div>
     </div>
 
     <div>
         <label for="c_razon_social" class="mb-1 block text-sm font-medium text-gray-700">Razón social / Nombre completo *</label>
-        <input type="text" name="razon_social" id="c_razon_social" value="{{ old('razon_social', $client->razon_social) }}"
+        <input type="text" name="razon_social" id="c_razon_social" x-ref="razon" value="{{ old('razon_social', $client->razon_social) }}"
                class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
     </div>
 
@@ -46,7 +56,7 @@
         </div>
         <div>
             <label for="c_direccion" class="mb-1 block text-sm font-medium text-gray-700">Dirección</label>
-            <input type="text" name="direccion" id="c_direccion" value="{{ old('direccion', $client->direccion) }}"
+            <input type="text" name="direccion" id="c_direccion" x-ref="direccion" value="{{ old('direccion', $client->direccion) }}"
                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
         </div>
     </div>
