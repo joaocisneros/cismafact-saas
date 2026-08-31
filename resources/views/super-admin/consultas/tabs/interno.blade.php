@@ -51,58 +51,51 @@
         </div>
 
         <div x-show="vista === 'empresas'">
-        @include('super-admin.consultas.tabs._resumen_linea', ['r' => $resumen_interno, 'que' => 'búsquedas'])
         <p class="border-b border-gray-100 px-5 py-2.5 text-xs text-gray-500">
             De más a menos. Quien más busca es quien más se apoya en el servicio.
         </p>
 
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 text-sm">
-                <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
-                    <tr>
-                        <th class="px-5 py-3">Empresa</th>
-                        <th class="px-5 py-3 text-right">Consultas</th>
-                        <th class="px-5 py-3 text-right">Exitosas</th>
-                        <th class="px-5 py-3 text-right">Con error</th>
-                        <th class="px-5 py-3">Última consulta</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    @forelse($por_empresa as $e)
-                        <tr>
-                            <td class="max-w-0 px-5 py-2.5">
-                                {{-- truncate: en media pantalla el nombre largo se
-                                     partia en tres lineas y descuadraba la fila. --}}
-                                <p class="truncate font-medium text-gray-900" title="{{ $e->empresa ?? 'Empresa eliminada' }}">
-                                    {{ $e->empresa ?? 'Empresa eliminada' }}
-                                </p>
-                                @if($e->ruc)
-                                    <p class="font-mono text-xs text-gray-400">{{ $e->ruc }}</p>
-                                @endif
-                            </td>
-                            <td class="px-5 py-2.5 text-right font-medium text-gray-900">{{ number_format($e->total) }}</td>
-                            <td class="px-5 py-2.5 text-right text-gray-600">{{ number_format($e->exitosas) }}</td>
-                            <td class="px-5 py-2.5 text-right">
-                                @if($e->fallidas)
-                                    <span class="rounded bg-red-50 px-1.5 py-0.5 text-xs font-medium text-red-700">{{ number_format($e->fallidas) }}</span>
-                                @else
-                                    <span class="text-xs text-gray-300">—</span>
-                                @endif
-                            </td>
-                            <td class="whitespace-nowrap px-5 py-2.5 text-xs text-gray-500">
-                                {{ \Illuminate\Support\Carbon::parse($e->ultima)->diffForHumans() }}
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="px-5 py-8 text-center text-sm text-gray-500">
-                                Este mes nadie ha buscado un RUC ni un DNI desde el panel.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+        {{-- Lista, no rejilla de numeros: con dos empresas y columnas casi
+             vacias la tabla no decia nada de un vistazo. La barra compara cada
+             una con la que mas busca, que es lo que se quiere ver aqui. --}}
+        @php $tope = $por_empresa->max('total') ?: 1; @endphp
+
+        <ul class="divide-y divide-gray-100">
+            @forelse($por_empresa as $e)
+                <li class="px-5 py-4">
+                    <div class="flex items-baseline justify-between gap-4">
+                        <p class="min-w-0 truncate text-sm font-medium text-gray-900"
+                           title="{{ $e->empresa ?? 'Empresa eliminada' }}">
+                            {{ $e->empresa ?? 'Empresa eliminada' }}
+                            @if($e->ruc)
+                                <span class="ml-1 font-mono text-xs font-normal text-gray-400">{{ $e->ruc }}</span>
+                            @endif
+                        </p>
+                        <p class="shrink-0 text-sm text-gray-500">
+                            <span class="font-semibold text-gray-900">{{ number_format($e->total) }}</span>
+                            {{ $e->total === 1 ? 'consulta' : 'consultas' }}
+                        </p>
+                    </div>
+
+                    <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-100">
+                        <div class="h-full rounded-full bg-blue-500"
+                             style="width: {{ max(2, round($e->total / $tope * 100)) }}%"></div>
+                    </div>
+
+                    <p class="mt-1.5 flex flex-wrap items-center gap-x-3 text-xs text-gray-500">
+                        <span>{{ number_format($e->exitosas) }} exitosas</span>
+                        @if($e->fallidas)
+                            <span class="text-red-600">{{ number_format($e->fallidas) }} con error</span>
+                        @endif
+                        <span class="text-gray-400">{{ \Illuminate\Support\Carbon::parse($e->ultima)->diffForHumans() }}</span>
+                    </p>
+                </li>
+            @empty
+                <li class="px-5 py-8 text-center text-sm text-gray-500">
+                    Este mes nadie ha buscado un RUC ni un DNI desde el panel.
+                </li>
+            @endforelse
+        </ul>
         </div>
 
         <div x-show="vista === 'busquedas'" x-cloak>
