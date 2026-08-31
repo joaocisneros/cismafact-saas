@@ -210,6 +210,10 @@ class ConsultaController extends Controller
             ->where('llave_id', $llave)
             ->where('api_id', $api)
             ->where('exito', true)
+            // Lo servido en sandbox se anota para poder verlo, pero no gasta:
+            // es lo que se le promete a quien integra («no gastan cuota») y
+            // contarlo aqui le enseñaba un consumo que no tenia.
+            ->where('fuente', '!=', 'modo prueba')
             ->where('created_at', '>=', now()->startOfMonth())
             ->count();
     }
