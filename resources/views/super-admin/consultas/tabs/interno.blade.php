@@ -131,7 +131,19 @@
                                 @include('super-admin.consultas.tabs._fuente', ['fuente' => $h->fuente, 'coste' => false])
                             </td>
                             <td class="whitespace-nowrap px-4 py-2.5 text-right text-gray-600">
-                                {{ $h->ms !== null ? number_format($h->ms) . ' ms' : '—' }}
+                                {{-- «0 ms» se leia como que no se habia medido. Es
+                                     real: se redondea a entero y esto tarda menos
+                                     de medio milisegundo. Cuando no se consulto
+                                     nada, no hay tiempo que dar. --}}
+                                @if($h->fuente === 'invalido')
+                                    <span class="text-gray-300">—</span>
+                                @elseif($h->ms === null)
+                                    —
+                                @elseif($h->ms == 0)
+                                    <span title="Menos de un milisegundo">&lt;1 ms</span>
+                                @else
+                                    {{ number_format($h->ms) }} ms
+                                @endif
                             </td>
                         </tr>
                     @empty
