@@ -36,7 +36,12 @@ class ConsumoInterno
             'numero' => $numero,
             // De donde salio el dato: separa lo que costo dinero de lo que se
             // resolvio en casa, que es la mitad de para lo que sirve esto.
-            'fuente' => $resultado['fuente'] ?? 'ninguna',
+            //
+            // «invalido» no es una fuente, es la falta de ella: el numero no
+            // valia, asi que no se pregunto a nadie. Sin esto se guardaba
+            // «ninguna», igual que cuando el numero si vale pero el proveedor
+            // no contesta, y en pantalla los dos salian como «sin ficha».
+            'fuente' => ($resultado['valido'] ?? false) ? ($resultado['fuente'] ?? 'ninguna') : 'invalido',
             'exito' => (bool) ($resultado['valido'] ?? false) && ! empty($resultado['nombre']),
             'ms' => min($ms, 65535),
             'motivo' => isset($resultado['motivo']) ? mb_substr($resultado['motivo'], 0, 120) : null,

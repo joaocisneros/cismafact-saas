@@ -68,16 +68,24 @@
 
                         <td class="whitespace-nowrap px-5 py-2.5 font-mono text-xs text-gray-700">{{ $h->numero }}</td>
 
-                        <td class="px-5 py-2.5">
-                            @if($h->exito)
-                                <span class="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">Éxito</span>
-                            @else
-                                <span class="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">Error</span>
-                                @if($h->motivo)
-                                    <p class="mt-0.5 text-xs text-red-600">{{ $h->motivo }}</p>
+                            <td class="px-5 py-2.5">
+                                @if($h->exito)
+                                    <span class="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">Éxito</span>
+                                @else
+                                    {{-- Dos fallos distintos que antes salian iguales:
+                                         el numero mal escrito ni se llego a consultar,
+                                         y «sin ficha» es que el numero valia pero no
+                                         se pudo traer nada. --}}
+                                    @if($h->fuente === 'invalido')
+                                        <span class="rounded-full bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-700">Número inválido</span>
+                                    @else
+                                        <span class="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">Sin datos</span>
+                                    @endif
+                                    @if($h->motivo)
+                                        <p class="mt-0.5 text-xs text-gray-500">{{ $h->motivo }}</p>
+                                    @endif
                                 @endif
-                            @endif
-                        </td>
+                            </td>
 
                         {{-- De donde salio el dato: es lo que dice si esa consulta
                              costo dinero o se resolvio en casa. --}}

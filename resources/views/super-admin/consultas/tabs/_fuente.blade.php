@@ -19,7 +19,12 @@
         'consultado antes' => [$coste ? 'Sin costo' : 'Ya guardada', 'Ya se había consultado antes', 'bg-emerald-50 text-emerald-700'],
     ];
 
-    [$texto, $detalle, $color] = $mapa[$fuente]
-        ?? ['—', 'El número no era válido, no se llegó a preguntar', 'bg-gray-100 text-gray-500'];
+    // «invalido»: el numero no valia, no se pregunto a nadie.
+    // «ninguna»: el numero valia, pero no se pudo traer la ficha.
+    $porDefecto = $fuente === 'invalido'
+        ? ['—', 'El número no era válido, no se llegó a preguntar', 'bg-gray-100 text-gray-500']
+        : ['—', 'Se preguntó, pero no se pudo traer la ficha', 'bg-gray-100 text-gray-500'];
+
+    [$texto, $detalle, $color] = $mapa[$fuente] ?? $porDefecto;
 @endphp
 <span class="rounded px-1.5 py-0.5 text-xs {{ $color }}" title="{{ $detalle }}">{{ $texto }}</span>

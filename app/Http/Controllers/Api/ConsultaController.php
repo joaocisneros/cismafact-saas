@@ -146,7 +146,7 @@ class ConsultaController extends Controller
             $api->id,
             $slug,
             $numero,
-            $r['fuente'] ?? 'ninguna',
+            $r['valido'] ? ($r['fuente'] ?? 'ninguna') : 'invalido',
             (bool) $r['valido'],
             (int) round((microtime(true) - $empezo) * 1000),
             $r['valido'] ? null : ($r['motivo'] ?? null),
