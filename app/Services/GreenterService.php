@@ -539,6 +539,12 @@ class GreenterService
                 ->setTotalImpuestos($detalle['total_impuestos'])
                 ->setMtoPrecioUnitario($detalle['mto_precio_unitario']);
 
+            // Codigo de producto SUNAT (UNSPSC). Va en CommodityClassification.
+            // Obligatorio desde el 01/01/2027; ver App\Support\NormativaSunat.
+            if (! empty($detalle['codigo_producto_sunat'])) {
+                $item->setCodProdSunat($detalle['codigo_producto_sunat']);
+            }
+
             // ISC (opcional)
             if (isset($detalle['isc']) && $detalle['isc'] > 0) {
                 $item->setIsc($detalle['isc'])
