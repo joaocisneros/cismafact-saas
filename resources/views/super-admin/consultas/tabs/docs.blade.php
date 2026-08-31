@@ -33,14 +33,18 @@
          llaves: @js($paraEntregar),
          enlaceDocs: @js(route('docs.consultas')),
          base: @js(url('/api/consultas')),
-         ejemploRuc: @js(url('/api/consultas/ruc') . '/20000000001'),
 
          llave() {
              return this.llaves.find(l => String(l.id) === String(this.llaveId)) ?? null;
          },
 
          /* El mensaje se arma con la llave elegida: nada que rellenar a mano y
-            ninguna forma de mandarle a un cliente la clave de otro. */
+            ninguna forma de mandarle a un cliente la clave de otro.
+
+            Sin curl de prueba a proposito: repetia la clave y el secreto
+            enteros por segunda vez y hacia el mensaje mucho mas largo. Los
+            ejemplos, en curl y en tres lenguajes mas, ya estan en la
+            documentacion que se enlaza justo encima. */
          mensaje() {
              const l = this.llave();
              if (! l) return '';
@@ -69,11 +73,8 @@
                  '',
                  (l.plan && ! prueba) ? 'Tu plan es ' + l.plan + '. Puedes ver lo que llevas gastado cuando quieras en ' + this.base + '/cuota' : null,
                  (l.plan && ! prueba) ? '' : null,
-                 'Documentación, con ejemplos en curl, PHP, Python y JavaScript:',
+                 'Documentación, con ejemplos listos en curl, PHP, Python y JavaScript:',
                  this.enlaceDocs,
-                 '',
-                 'Para probar que funciona:',
-                 'curl -H \'X-Api-Key: ' + l.clave + '\' -H \'X-Api-Secret: ' + secreto + '\' ' + this.ejemploRuc,
                  '',
                  'Cualquier duda con la integración, escríbenos.',
                  '',
@@ -114,8 +115,12 @@
         </div>
 
         {{-- Los datos a un lado y lo que se va a mandar al otro, para verlo
-             cambiar segun se rellena en vez de tener que bajar a mirarlo. --}}
-        <div class="grid gap-5 px-5 py-5 lg:grid-cols-5 lg:items-start">
+             cambiar segun se rellena en vez de tener que bajar a mirarlo.
+
+             La tarjeta tiene alto fijo a proposito: sin el, crecia al elegir
+             cliente y se encogia al quitarlo, y la pestaña entera daba un
+             salto. Si el mensaje no cabe, hace scroll dentro. --}}
+        <div class="grid gap-5 px-5 py-5 lg:h-[24rem] lg:grid-cols-5">
 
             <div class="lg:col-span-2">
                 <div>
@@ -162,11 +167,12 @@
                     </div>
 
                     <template x-if="llaveId">
-                        <pre class="flex-1 overflow-x-auto whitespace-pre-wrap p-4 text-xs leading-relaxed text-gray-700" x-text="mensaje()"></pre>
+                        <pre class="min-h-0 flex-1 overflow-auto whitespace-pre-wrap p-4 text-xs leading-relaxed text-gray-700"
+                             x-text="mensaje()"></pre>
                     </template>
 
                     <template x-if="! llaveId">
-                        <div class="flex flex-1 items-center justify-center px-4 py-12 text-center">
+                        <div class="flex min-h-0 flex-1 items-center justify-center px-4 text-center">
                             <p class="text-xs text-gray-400">Elige un cliente y aquí sale su mensaje.</p>
                         </div>
                     </template>
