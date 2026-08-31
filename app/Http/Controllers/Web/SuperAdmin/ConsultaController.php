@@ -87,8 +87,15 @@ class ConsultaController extends Controller
             // proveedor se paga igual.
             'resumen_interno' => $this->resumen('interno'),
             'por_empresa' => $this->consumoPorEmpresa(),
+            // Igual que en el externo: si pone cero, no hace falta ni entrar.
+            'fallos_internos_mes' => DB::table('consultas_consumo')
+                ->where('origen', 'interno')
+                ->where('exito', false)
+                ->where('created_at', '>=', now()->startOfMonth())
+                ->count(),
             'historial_interno' => DB::table('consultas_consumo')
                 ->where('consultas_consumo.origen', 'interno')
+                ->when($fallos, fn ($q) => $q->where('consultas_consumo.exito', false))
                 ->leftJoin('companies', 'companies.id', '=', 'consultas_consumo.company_id')
                 ->orderByDesc('consultas_consumo.id')
                 ->limit(40)
