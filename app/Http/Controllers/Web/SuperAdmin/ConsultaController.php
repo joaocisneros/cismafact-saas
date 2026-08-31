@@ -48,6 +48,7 @@ class ConsultaController extends Controller
                 ->where('consultas_consumo.origen', 'externo')
                 ->when($fallos, fn ($q) => $q->where('consultas_consumo.exito', false))
                 ->leftJoin('consulta_llaves', 'consulta_llaves.id', '=', 'consultas_consumo.llave_id')
+                ->leftJoin('companies', 'companies.id', '=', 'consultas_consumo.company_id')
                 ->leftJoin('apis', 'apis.id', '=', 'consultas_consumo.api_id')
                 ->leftJoin('consultas_documento', function ($j) {
                     $j->on('consultas_documento.tipo', '=', 'consultas_consumo.tipo')
@@ -67,6 +68,9 @@ class ConsultaController extends Controller
                     'consulta_llaves.entorno',
                     'apis.nombre as servicio',
                     'consultas_documento.datos as ficha',
+                    // Cuando la llave se borra, la empresa sigue ahi: sin esto
+                    // la fila no identificaba a nadie.
+                    'companies.razon_social as empresa',
                 ]),
             'padron' => DB::table('padron_ruc')->count(),
             'apis' => Api::with(['planes' => fn ($q) => $q->orderBy('a_medida')->orderBy('precio_mensual')->orderBy('orden')])

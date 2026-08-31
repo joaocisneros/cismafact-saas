@@ -37,7 +37,7 @@
             <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
                 <tr>
                     <th class="w-px whitespace-nowrap px-5 py-3">Fecha y hora</th>
-                    <th class="whitespace-nowrap px-5 py-3">API Key</th>
+                    <th class="whitespace-nowrap px-5 py-3">Quién consultó</th>
                     <th class="w-px whitespace-nowrap px-5 py-3">Servicio</th>
                     <th class="w-px whitespace-nowrap px-5 py-3">Número</th>
                     <th class="px-5 py-3">A nombre de</th>
@@ -53,14 +53,25 @@
                             {{ \Illuminate\Support\Carbon::parse($h->created_at)->format('d/m/Y H:i:s') }}
                         </td>
 
+                        {{-- Quien consulto. La llave puede haberse borrado y lo
+                             consultado sigue contando, asi que cuando falta se
+                             cae a la empresa, que sobrevive: si no, la fila no
+                             identifica a nadie. --}}
                         <td class="px-5 py-2.5">
                             @if($h->llave)
-                                <span class="font-medium text-gray-900">{{ $h->llave }}</span>
-                                @if($h->entorno === 'sandbox')
-                                    <span class="ml-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-xs font-medium text-blue-700">Sandbox</span>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="font-medium text-gray-900">{{ $h->llave }}</span>
+                                    @if($h->entorno === 'sandbox')
+                                        <span class="rounded-full bg-blue-50 px-1.5 py-0.5 text-xs font-medium text-blue-700">Sandbox</span>
+                                    @endif
+                                </div>
+                                @if($h->empresa)
+                                    <p class="text-xs text-gray-400">{{ $h->empresa }}</p>
                                 @endif
+                            @elseif($h->empresa)
+                                <span class="text-gray-900">{{ $h->empresa }}</span>
+                                <p class="text-xs italic text-gray-400">su llave ya no existe</p>
                             @else
-                                {{-- La llave ya no existe, pero lo consultado sigue contando. --}}
                                 <span class="text-xs italic text-gray-400">llave eliminada</span>
                             @endif
                         </td>
