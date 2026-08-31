@@ -127,7 +127,7 @@
                 <div>
                     <label for="llave-entrega" class="block text-sm font-medium text-gray-900">¿A qué cliente?</label>
                     <select id="llave-entrega" x-model="llaveId"
-                            class="mt-2 w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            class="mt-2 w-full rounded-lg border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         <option value="">Elige una llave…</option>
                         @foreach($paraEntregar as $l)
                             <option value="{{ $l['id'] }}">
@@ -148,7 +148,7 @@
                     </label>
                     <input id="secreto-entrega" type="text" x-model="secreto" autocomplete="off"
                            placeholder="Pégalo aquí"
-                           class="mt-2 w-full rounded-lg border-gray-300 px-3 py-2.5 font-mono text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                           class="mt-2 w-full rounded-lg border-gray-300 px-3 py-2 font-mono text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     <p class="mt-2 flex items-start gap-1.5 text-xs leading-relaxed text-gray-500">
                         <svg class="mt-px h-3.5 w-3.5 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -178,10 +178,15 @@
                         </div>
                     </template>
 
-                    {{-- Las acciones, pegadas al mensaje que envian: estaban al
-                         pie de la tarjeta, lejos del texto al que se refieren. --}}
-                    <div x-show="llaveId" x-cloak
-                         class="flex flex-wrap items-center gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3">
+                    {{-- Las acciones, pegadas al mensaje que envian.
+
+                         La barra esta siempre, aunque no haya cliente elegido:
+                         cuando se ocultaba, la tarjeta perdia su alto de golpe
+                         y subia y bajaba al elegir en el desplegable. Sin llave
+                         los botones se ven apagados y no responden. --}}
+                    <div class="flex flex-wrap items-center gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3"
+                         :class="llaveId || 'pointer-events-none opacity-40'"
+                         :aria-hidden="llaveId ? 'false' : 'true'">
                         <a :href="whatsapp()" target="_blank" rel="noopener"
                            class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-green-700">
                             <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -206,7 +211,7 @@
                             <span x-text="copiado === 'mensaje' ? 'Copiado' : 'Copiar'"></span>
                         </button>
 
-                        <p x-show="! secreto.trim()" class="ml-auto text-xs text-amber-700">
+                        <p x-show="llaveId && ! secreto.trim()" class="ml-auto text-xs text-amber-700">
                             Falta pegar el API Secret.
                         </p>
                     </div>
