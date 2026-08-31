@@ -1281,7 +1281,14 @@ class GreenterService
             $detail->setTipoDoc($detalle['tipo_documento'])
                    ->setSerie($detalle['serie'])
                    ->setCorrelativo($detalle['correlativo'])
-                   ->setDesMotivoBaja($detalle['motivo_especifico']);
+                   // Igual que DocumentService: si el detalle no trae motivo
+                   // propio, vale el de la comunicacion. Sin esto, un detalle
+                   // sin el campo rompia el envio con un error de PHP.
+                   ->setDesMotivoBaja(
+                       $detalle['motivo_especifico']
+                       ?? $detalle['motivo_baja']
+                       ?? $voidedData['motivo_baja']
+                   );
             
             $details[] = $detail;
         }
