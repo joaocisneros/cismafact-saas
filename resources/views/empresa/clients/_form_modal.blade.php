@@ -44,7 +44,7 @@
     <div>
         <label for="c_razon_social" class="mb-1 block text-sm font-medium text-gray-700">Razón social / Nombre completo *</label>
         <input type="text" name="razon_social" id="c_razon_social" x-ref="razon" value="{{ old('razon_social', $client->razon_social) }}"
-               class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+               class="uppercase placeholder:normal-case w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
     </div>
 
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -52,12 +52,12 @@
             <label for="c_nombre_comercial" class="mb-1 block text-sm font-medium text-gray-700">Nombre comercial</label>
             <input type="text" name="nombre_comercial" id="c_nombre_comercial"
                    value="{{ old('nombre_comercial', $client->nombre_comercial) }}"
-                   class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+                   class="uppercase placeholder:normal-case w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
         </div>
         <div>
             <label for="c_direccion" class="mb-1 block text-sm font-medium text-gray-700">Dirección</label>
             <input type="text" name="direccion" id="c_direccion" x-ref="direccion" value="{{ old('direccion', $client->direccion) }}"
-                   class="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+                   class="uppercase placeholder:normal-case w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
         </div>
     </div>
 

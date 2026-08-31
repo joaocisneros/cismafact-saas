@@ -52,19 +52,19 @@
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Razón social / Nombre completo *</label>
             <input type="text" name="razon_social" x-ref="razon" value="{{ old('razon_social', $client->razon_social) }}"
-                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                   class="uppercase placeholder:normal-case w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Nombre comercial</label>
                 <input type="text" name="nombre_comercial" value="{{ old('nombre_comercial', $client->nombre_comercial) }}"
-                       class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                       class="uppercase placeholder:normal-case w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
                 <input type="text" name="direccion" x-ref="direccion" value="{{ old('direccion', $client->direccion) }}"
-                       class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                       class="uppercase placeholder:normal-case w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
         </div>
 
