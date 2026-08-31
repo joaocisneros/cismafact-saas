@@ -160,7 +160,7 @@
 
             <div class="lg:col-span-3">
                 <div class="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200">
-                    <div class="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-4 py-2">
+                    <div class="flex h-9 shrink-0 items-center justify-between border-b border-gray-100 bg-gray-50 px-4">
                         <span class="text-xs font-medium text-gray-600">Así le llegará</span>
                         <template x-if="llave() && llave().entorno === 'sandbox'">
                             <span class="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">Llave de prueba</span>
@@ -168,12 +168,12 @@
                     </div>
 
                     <template x-if="llaveId">
-                        <pre class="h-[19rem] overflow-auto whitespace-pre-wrap p-4 text-xs leading-relaxed text-gray-700"
+                        <pre class="h-[19rem] shrink-0 overflow-auto whitespace-pre-wrap p-4 text-xs leading-relaxed text-gray-700"
                              x-text="mensaje()"></pre>
                     </template>
 
                     <template x-if="! llaveId">
-                        <div class="flex h-[19rem] items-center justify-center px-4 text-center">
+                        <div class="flex h-[19rem] shrink-0 items-center justify-center px-4 text-center">
                             <p class="text-xs text-gray-400">Elige un cliente y aquí sale su mensaje.</p>
                         </div>
                     </template>
@@ -184,7 +184,7 @@
                          cuando se ocultaba, la tarjeta perdia su alto de golpe
                          y subia y bajaba al elegir en el desplegable. Sin llave
                          los botones se ven apagados y no responden. --}}
-                    <div class="flex flex-wrap items-center gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3"
+                    <div class="flex h-14 shrink-0 items-center gap-2 overflow-hidden border-t border-gray-200 bg-gray-50 px-4"
                          :class="llaveId || 'pointer-events-none opacity-40'"
                          :aria-hidden="llaveId ? 'false' : 'true'">
                         <a :href="whatsapp()" target="_blank" rel="noopener"
