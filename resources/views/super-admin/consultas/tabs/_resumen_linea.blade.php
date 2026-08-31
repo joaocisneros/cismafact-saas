@@ -5,7 +5,9 @@
      «Consultas este mes» con cifras distintas. El dato sigue estando, pero sin
      competir con el resumen de arriba.
 
-     Espera $r (el resumen del origen) y $que (como llamar a lo que se cuenta). --}}
+     Espera $r (el resumen del origen) y $que (como llamar a lo que se cuenta).
+     $lider es opcional: la empresa que mas busca, que antes ocupaba una tabla
+     entera para decir un nombre y un numero. --}}
 @php
     $ahorro = $r['total'] ? round($r['en_casa'] / $r['total'] * 100) : 0;
 @endphp
@@ -36,5 +38,13 @@
 
     @if($r['ms_medio'])
         <span class="text-gray-400">{{ number_format($r['ms_medio']) }} ms de media</span>
+    @endif
+
+    @if(! empty($lider) && $lider->total)
+        <span class="text-gray-500">
+            la que más busca:
+            <span class="font-medium text-gray-900">{{ $lider->empresa ?? 'sin empresa' }}</span>
+            <span class="text-gray-400">({{ number_format($lider->total) }})</span>
+        </span>
     @endif
 </div>
