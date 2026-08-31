@@ -134,7 +134,13 @@ class ConsultaController extends Controller
         ];
     }
 
-    /** Quien tira del servicio, de mas a menos. Dice a quien se le queda corto el plan. */
+    /**
+     * Quien usa el servicio, de mas a menos.
+     *
+     * El reparto entre lo que costo y lo que salio de casa NO va por empresa:
+     * esa cuenta ya esta en la linea de resumen, del mes entero, y aqui solo
+     * añadia dos columnas que casi siempre iban a cero.
+     */
     private function consumoPorEmpresa()
     {
         return DB::table('consultas_consumo')
@@ -147,8 +153,7 @@ class ConsultaController extends Controller
                 'companies.razon_social as empresa',
                 'companies.ruc',
                 DB::raw('COUNT(*) as total'),
-                DB::raw("SUM(CASE WHEN fuente = 'proveedor' THEN 1 ELSE 0 END) as proveedor"),
-                DB::raw("SUM(CASE WHEN fuente IN ('padron','consultado antes') THEN 1 ELSE 0 END) as en_casa"),
+                DB::raw('SUM(CASE WHEN exito = 1 THEN 1 ELSE 0 END) as exitosas'),
                 DB::raw('SUM(CASE WHEN exito = 0 THEN 1 ELSE 0 END) as fallidas'),
                 DB::raw('MAX(consultas_consumo.created_at) as ultima'),
             ]);

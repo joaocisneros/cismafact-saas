@@ -8,9 +8,9 @@
      Espera $fuente. --}}
 @php
     $mapa = [
-        'proveedor' => ['Se pagó', 'Salió al proveedor', 'bg-amber-50 text-amber-700'],
-        'padron' => ['Gratis', 'Estaba en el padrón', 'bg-emerald-50 text-emerald-700'],
-        'consultado antes' => ['Gratis', 'Ya se había consultado', 'bg-emerald-50 text-emerald-700'],
+        'proveedor' => ['Con costo', 'Salió al proveedor', 'bg-amber-50 text-amber-700'],
+        'padron' => ['Sin costo', 'Estaba en el padrón', 'bg-emerald-50 text-emerald-700'],
+        'consultado antes' => ['Sin costo', 'Ya se había consultado', 'bg-emerald-50 text-emerald-700'],
     ];
     [$texto, $detalle, $color] = $mapa[$fuente] ?? ['No se consultó', 'El número no era válido, no se llegó a preguntar', 'bg-gray-100 text-gray-500'];
 @endphp

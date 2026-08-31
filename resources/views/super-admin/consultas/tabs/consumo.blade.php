@@ -40,7 +40,7 @@
                     <th class="px-5 py-3">API Key</th>
                     <th class="px-5 py-3">Servicio</th>
                     <th class="px-5 py-3">Número</th>
-                    <th class="px-5 py-3">Resultado</th>
+                    <th class="px-5 py-3">Estado</th>
                     <th class="px-5 py-3">¿Costó?</th>
                     <th class="px-5 py-3 text-right">Tardó</th>
                 </tr>

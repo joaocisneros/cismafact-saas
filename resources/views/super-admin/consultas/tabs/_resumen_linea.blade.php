@@ -18,12 +18,12 @@
 
     <span class="text-gray-500">
         <span class="font-semibold {{ $r['proveedor'] ? 'text-amber-700' : 'text-gray-400' }}">{{ number_format($r['proveedor']) }}</span>
-        costaron
+        con costo
     </span>
 
     <span class="text-gray-500">
         <span class="font-semibold {{ $r['en_casa'] ? 'text-emerald-700' : 'text-gray-400' }}">{{ number_format($r['en_casa']) }}</span>
-        gratis
+        sin costo
         @if($r['en_casa'])
             <span class="text-gray-400">({{ $ahorro }}%)</span>
         @endif
@@ -31,7 +31,7 @@
 
     <span class="text-gray-500">
         <span class="font-semibold {{ $r['fallidas'] ? 'text-red-700' : 'text-gray-400' }}">{{ number_format($r['fallidas']) }}</span>
-        fallidas
+        con error
     </span>
 
     @if($r['ms_medio'])

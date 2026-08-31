@@ -53,7 +53,7 @@
         <div x-show="vista === 'empresas'">
         @include('super-admin.consultas.tabs._resumen_linea', ['r' => $resumen_interno, 'que' => 'búsquedas'])
         <p class="border-b border-gray-100 px-5 py-2.5 text-xs text-gray-500">
-            De más a menos. Quien salga mucho al proveedor es a quien se le está quedando corto el plan.
+            De más a menos. Quien más busca es quien más se apoya en el servicio.
         </p>
 
         <div class="overflow-x-auto">
@@ -62,10 +62,9 @@
                     <tr>
                         <th class="px-5 py-3">Empresa</th>
                         <th class="px-5 py-3 text-right">Consultas</th>
-                        <th class="px-5 py-3 text-right">Costaron</th>
-                        <th class="px-5 py-3 text-right">Gratis</th>
-                        <th class="px-5 py-3 text-right">Fallidas</th>
-                        <th class="px-5 py-3">Última</th>
+                        <th class="px-5 py-3 text-right">Exitosas</th>
+                        <th class="px-5 py-3 text-right">Con error</th>
+                        <th class="px-5 py-3">Última consulta</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -82,20 +81,7 @@
                                 @endif
                             </td>
                             <td class="px-5 py-2.5 text-right font-medium text-gray-900">{{ number_format($e->total) }}</td>
-                            <td class="px-5 py-2.5 text-right">
-                                @if($e->proveedor)
-                                    <span class="rounded bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-700">{{ number_format($e->proveedor) }}</span>
-                                @else
-                                    <span class="text-xs text-gray-300">—</span>
-                                @endif
-                            </td>
-                            <td class="px-5 py-2.5 text-right">
-                                @if($e->en_casa)
-                                    <span class="rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700">{{ number_format($e->en_casa) }}</span>
-                                @else
-                                    <span class="text-xs text-gray-300">—</span>
-                                @endif
-                            </td>
+                            <td class="px-5 py-2.5 text-right text-gray-600">{{ number_format($e->exitosas) }}</td>
                             <td class="px-5 py-2.5 text-right">
                                 @if($e->fallidas)
                                     <span class="rounded bg-red-50 px-1.5 py-0.5 text-xs font-medium text-red-700">{{ number_format($e->fallidas) }}</span>
@@ -109,7 +95,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-5 py-8 text-center text-sm text-gray-500">
+                            <td colspan="5" class="px-5 py-8 text-center text-sm text-gray-500">
                                 Este mes nadie ha buscado un RUC ni un DNI desde el panel.
                             </td>
                         </tr>
@@ -127,31 +113,27 @@
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 text-sm">
                 <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
-                    {{-- Cinco columnas, no siete: al ir a media pantalla, el
-                         servicio cabe pegado al numero y lo que tardo va en el
-                         titulo de la fecha, que casi nunca se mira. --}}
                     <tr>
-                        <th class="px-4 py-3">Cuándo</th>
+                        <th class="px-4 py-3">Fecha y hora</th>
                         <th class="px-4 py-3">Empresa</th>
-                        <th class="px-4 py-3">Consultó</th>
-                        <th class="px-4 py-3">Resultado</th>
+                        <th class="px-4 py-3">Servicio</th>
+                        <th class="px-4 py-3">Número</th>
+                        <th class="px-4 py-3">Estado</th>
                         <th class="px-4 py-3">¿Costó?</th>
+                        <th class="px-4 py-3 text-right">Tardó</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse($historial_interno as $h)
                         <tr class="{{ $h->exito ? '' : 'bg-red-50/40' }}">
-                            <td class="whitespace-nowrap px-4 py-2.5 text-xs text-gray-600"
-                                title="{{ \Illuminate\Support\Carbon::parse($h->created_at)->format('d/m/Y H:i:s') }}{{ $h->ms !== null ? ' · tardó ' . number_format($h->ms) . ' ms' : '' }}">
-                                {{ \Illuminate\Support\Carbon::parse($h->created_at)->format('d/m H:i') }}
+                            <td class="whitespace-nowrap px-4 py-2.5 text-gray-600">
+                                {{ \Illuminate\Support\Carbon::parse($h->created_at)->format('d/m/Y H:i:s') }}
                             </td>
                             <td class="max-w-0 px-4 py-2.5">
                                 <p class="truncate text-gray-900" title="{{ $h->empresa ?? '—' }}">{{ $h->empresa ?? '—' }}</p>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-2.5">
-                                <span class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600">{{ strtoupper($h->tipo) }}</span>
-                                <span class="ml-1 font-mono text-xs text-gray-700">{{ $h->numero }}</span>
-                            </td>
+                            <td class="px-4 py-2.5 text-gray-600">{{ strtoupper($h->tipo) }}</td>
+                            <td class="px-4 py-2.5 font-mono text-xs text-gray-700">{{ $h->numero }}</td>
                             <td class="px-4 py-2.5">
                                 @if($h->exito)
                                     <span class="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">Éxito</span>
@@ -165,10 +147,13 @@
                             <td class="px-4 py-2.5">
                                 @include('super-admin.consultas.tabs._fuente', ['fuente' => $h->fuente])
                             </td>
+                            <td class="whitespace-nowrap px-4 py-2.5 text-right text-gray-600">
+                                {{ $h->ms !== null ? number_format($h->ms) . ' ms' : '—' }}
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-5 py-8 text-center text-sm text-gray-500">
+                            <td colspan="7" class="px-5 py-8 text-center text-sm text-gray-500">
                                 {{ $solo_fallos ? 'Ninguna búsqueda ha fallado.' : 'Todavía no hay ninguna búsqueda desde el panel.' }}
                             </td>
                         </tr>
