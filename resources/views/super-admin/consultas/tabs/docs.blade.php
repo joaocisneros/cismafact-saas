@@ -117,10 +117,11 @@
         {{-- Los datos a un lado y lo que se va a mandar al otro, para verlo
              cambiar segun se rellena en vez de tener que bajar a mirarlo.
 
-             La tarjeta tiene alto fijo a proposito: sin el, crecia al elegir
-             cliente y se encogia al quitarlo, y la pestaña entera daba un
-             salto. Si el mensaje no cabe, hace scroll dentro. --}}
-        <div class="grid gap-5 px-5 py-5 lg:h-[24rem] lg:grid-cols-5">
+             El alto fijo va en el area del mensaje, no en la tarjeta: asi mide
+             igual haya cliente elegido o no, y la cabecera y los botones
+             quedan siempre fuera del recorte. Antes el alto estaba en la
+             tarjeta entera y el mensaje largo se comia los botones. --}}
+        <div class="grid gap-5 px-5 py-5 lg:grid-cols-5">
 
             <div class="lg:col-span-2">
                 <div>
@@ -167,12 +168,12 @@
                     </div>
 
                     <template x-if="llaveId">
-                        <pre class="min-h-0 flex-1 overflow-auto whitespace-pre-wrap p-4 text-xs leading-relaxed text-gray-700"
+                        <pre class="h-[19rem] overflow-auto whitespace-pre-wrap p-4 text-xs leading-relaxed text-gray-700"
                              x-text="mensaje()"></pre>
                     </template>
 
                     <template x-if="! llaveId">
-                        <div class="flex min-h-0 flex-1 items-center justify-center px-4 text-center">
+                        <div class="flex h-[19rem] items-center justify-center px-4 text-center">
                             <p class="text-xs text-gray-400">Elige un cliente y aquí sale su mensaje.</p>
                         </div>
                     </template>
