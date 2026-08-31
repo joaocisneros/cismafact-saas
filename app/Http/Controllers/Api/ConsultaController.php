@@ -105,6 +105,7 @@ class ConsultaController extends Controller
         // encontraria de golpe el dia que cambia las credenciales, que es justo
         // lo que este entorno existe para evitar.
         if ($llave->entorno === 'sandbox') {
+            $empezoPrueba = microtime(true);
             $motivo = $this->motivoNumeroInvalido($slug, $numero);
 
             // Se anota igual que las de produccion. No gastar cuota es una
@@ -118,7 +119,7 @@ class ConsultaController extends Controller
                 $numero,
                 $motivo ? 'invalido' : 'modo prueba',
                 ! $motivo,
-                0,
+                (int) round((microtime(true) - $empezoPrueba) * 1000),
                 $motivo,
             );
 

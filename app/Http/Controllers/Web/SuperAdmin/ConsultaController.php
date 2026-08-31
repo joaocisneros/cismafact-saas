@@ -161,6 +161,10 @@ class ConsultaController extends Controller
             'total' => $base()->count(),
             'proveedor' => $base()->where('fuente', 'proveedor')->count(),
             'en_casa' => $base()->whereIn('fuente', ['padron', 'consultado antes'])->count(),
+            // Las de sandbox no salen a ningun lado ni tocan datos reales, pero
+            // se sirvieron igual: sin contarlas, las cifras de la linea no
+            // sumaban el total que tenian al lado.
+            'de_prueba' => $base()->where('fuente', 'modo prueba')->count(),
             'fallidas' => $base()->where('exito', false)->count(),
             'ms_medio' => (int) round((float) $base()->where('exito', true)->avg('ms')),
         ];

@@ -33,6 +33,13 @@
         @endif
     </span>
 
+    @if(($r['de_prueba'] ?? 0) > 0)
+        <span class="text-gray-500">
+            <span class="font-semibold text-blue-700">{{ number_format($r['de_prueba']) }}</span>
+            de prueba
+        </span>
+    @endif
+
     <span class="text-gray-500">
         <span class="font-semibold {{ $r['fallidas'] ? 'text-red-700' : 'text-gray-400' }}">{{ number_format($r['fallidas']) }}</span>
         con error
