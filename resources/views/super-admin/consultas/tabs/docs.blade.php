@@ -125,9 +125,9 @@
 
             <div class="lg:col-span-2">
                 <div>
-                    <label for="llave-entrega" class="block text-xs font-medium text-gray-700">¿A qué cliente?</label>
+                    <label for="llave-entrega" class="block text-sm font-medium text-gray-900">¿A qué cliente?</label>
                     <select id="llave-entrega" x-model="llaveId"
-                            class="mt-1.5 w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            class="mt-2 w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         <option value="">Elige una llave…</option>
                         @foreach($paraEntregar as $l)
                             <option value="{{ $l['id'] }}">
@@ -136,20 +136,20 @@
                         @endforeach
                     </select>
                     @if($paraEntregar->isEmpty())
-                        <p class="mt-1 text-xs text-gray-500">
+                        <p class="mt-2 text-xs text-gray-500">
                             Todavía no hay ninguna llave. Se crean en <span class="font-medium">Mis APIs</span>.
                         </p>
                     @endif
                 </div>
 
-                <div class="mt-5 border-t border-gray-100 pt-5">
-                    <label for="secreto-entrega" class="block text-xs font-medium text-gray-700">
+                <div class="mt-6 border-t border-gray-100 pt-6">
+                    <label for="secreto-entrega" class="block text-sm font-medium text-gray-900">
                         API Secret <span class="font-normal text-gray-400">(opcional)</span>
                     </label>
                     <input id="secreto-entrega" type="text" x-model="secreto" autocomplete="off"
                            placeholder="Pégalo aquí"
-                           class="mt-1.5 w-full rounded-lg border-gray-300 font-mono text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <p class="mt-1.5 flex items-start gap-1.5 text-xs leading-relaxed text-gray-500">
+                           class="mt-2 w-full rounded-lg border-gray-300 px-3 py-2.5 font-mono text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <p class="mt-2 flex items-start gap-1.5 text-xs leading-relaxed text-gray-500">
                         <svg class="mt-px h-3.5 w-3.5 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
