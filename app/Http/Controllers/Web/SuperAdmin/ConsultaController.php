@@ -49,6 +49,10 @@ class ConsultaController extends Controller
                 ->when($fallos, fn ($q) => $q->where('consultas_consumo.exito', false))
                 ->leftJoin('consulta_llaves', 'consulta_llaves.id', '=', 'consultas_consumo.llave_id')
                 ->leftJoin('apis', 'apis.id', '=', 'consultas_consumo.api_id')
+                ->leftJoin('consultas_documento', function ($j) {
+                    $j->on('consultas_documento.tipo', '=', 'consultas_consumo.tipo')
+                      ->on('consultas_documento.numero', '=', 'consultas_consumo.numero');
+                })
                 ->orderByDesc('consultas_consumo.id')
                 ->limit(60)
                 ->get([
@@ -62,6 +66,7 @@ class ConsultaController extends Controller
                     'consulta_llaves.nombre as llave',
                     'consulta_llaves.entorno',
                     'apis.nombre as servicio',
+                    'consultas_documento.datos as ficha',
                 ]),
             'padron' => DB::table('padron_ruc')->count(),
             'apis' => Api::with(['planes' => fn ($q) => $q->orderBy('a_medida')->orderBy('precio_mensual')->orderBy('orden')])
@@ -97,6 +102,12 @@ class ConsultaController extends Controller
                 ->where('consultas_consumo.origen', 'interno')
                 ->when($fallos, fn ($q) => $q->where('consultas_consumo.exito', false))
                 ->leftJoin('companies', 'companies.id', '=', 'consultas_consumo.company_id')
+                // La ficha vive en la tabla de documentos consultados: aqui solo
+                // se guarda que se pidio, no lo que se trajo.
+                ->leftJoin('consultas_documento', function ($j) {
+                    $j->on('consultas_documento.tipo', '=', 'consultas_consumo.tipo')
+                      ->on('consultas_documento.numero', '=', 'consultas_consumo.numero');
+                })
                 ->orderByDesc('consultas_consumo.id')
                 ->limit(40)
                 ->get([
@@ -113,6 +124,10 @@ class ConsultaController extends Controller
                     // que se quiere ver de un vistazo.
                     'companies.activo as empresa_activa',
                     'companies.suspendida_manualmente',
+                    // A quien corresponde el numero. Sin esto la fila decia que
+                    // se busco un RUC y salio bien, pero no de quien era: habia
+                    // que copiar el numero y buscarlo aparte.
+                    'consultas_documento.datos as ficha',
                 ]),
 
             // Lo que lleva cada empresa este mes, para ponerlo en su fila sin

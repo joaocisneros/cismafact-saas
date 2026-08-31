@@ -40,7 +40,8 @@
                     <th class="whitespace-nowrap px-5 py-3">API Key</th>
                     <th class="w-px whitespace-nowrap px-5 py-3">Servicio</th>
                     <th class="w-px whitespace-nowrap px-5 py-3">Número</th>
-                    <th class="px-5 py-3">Estado</th>
+                    <th class="px-5 py-3">A nombre de</th>
+                    <th class="w-px whitespace-nowrap px-5 py-3">Estado</th>
                     <th class="w-px whitespace-nowrap px-5 py-3">¿Costó?</th>
                     <th class="w-px whitespace-nowrap px-5 py-3 text-right">Tardó</th>
                 </tr>
@@ -68,7 +69,14 @@
 
                         <td class="whitespace-nowrap px-5 py-2.5 font-mono text-xs text-gray-700">{{ $h->numero }}</td>
 
-                            <td class="px-5 py-2.5">
+                        {{-- De quien es el numero: sin esto la fila decia que la
+                             busqueda salio bien, pero no a quien encontro. --}}
+                        <td class="px-5 py-2.5 text-gray-700">
+                            @php $ficha = $h->ficha ? json_decode($h->ficha, true) : null; @endphp
+                            {{ $ficha['nombre'] ?? '—' }}
+                        </td>
+
+                            <td class="whitespace-nowrap px-5 py-2.5">
                                 @if($h->exito)
                                     <span class="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">Éxito</span>
                                 @else
@@ -99,7 +107,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-5 py-8 text-center text-gray-500">
+                        <td colspan="8" class="px-5 py-8 text-center text-gray-500">
                             {{ $solo_fallos ? 'Ninguna consulta ha fallado.' : 'Todavía no hay ninguna consulta.' }}
                         </td>
                     </tr>
