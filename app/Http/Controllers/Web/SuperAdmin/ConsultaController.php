@@ -335,9 +335,17 @@ class ConsultaController extends Controller
             ->get()
             ->count();
 
+        // Cuentan TODAS, tambien las fallidas. Antes solo contaban las que
+        // salieron bien, pero el desglose de debajo («15 RUC · 9 DNI») venia de
+        // otra cuenta que las incluia: la tarjeta ponia 18 encima de dos
+        // numeros que sumaban 24.
         return [
-            'mes' => DB::table('consultas_consumo')->where('exito', true)->where('created_at', '>=', $mes)->count(),
-            'hoy' => DB::table('consultas_consumo')->where('exito', true)->where('created_at', '>=', now()->startOfDay())->count(),
+            'mes' => DB::table('consultas_consumo')->where('created_at', '>=', $mes)->count(),
+            'hoy' => DB::table('consultas_consumo')->where('created_at', '>=', now()->startOfDay())->count(),
+            // Partido por origen: es lo que desglosan las dos pestañas de
+            // consumo, y asi se ve de donde sale cada cifra sin sumar a mano.
+            'mes_externo' => DB::table('consultas_consumo')->where('origen', 'externo')->where('created_at', '>=', $mes)->count(),
+            'mes_interno' => DB::table('consultas_consumo')->where('origen', 'interno')->where('created_at', '>=', $mes)->count(),
             'empresas' => DB::table('consultas_consumo')
                 ->where('created_at', '>=', $mes)
                 ->distinct()

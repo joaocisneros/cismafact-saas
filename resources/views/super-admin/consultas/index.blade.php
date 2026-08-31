@@ -39,7 +39,7 @@
          Van con el componente del Dashboard, no unas parecidas a mano. --}}
     <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <x-stat-card title="Consultas este mes" :value="number_format($cabecera['mes'])"
-                     :subtitle="number_format($mes['ruc']) . ' RUC · ' . number_format($mes['dni']) . ' DNI'"
+                     :subtitle="number_format($cabecera['mes_externo']) . ' de clientes · ' . number_format($cabecera['mes_interno']) . ' desde el panel'"
                      color="blue">
             <x-slot:icon>
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

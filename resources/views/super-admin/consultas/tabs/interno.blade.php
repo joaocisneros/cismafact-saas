@@ -5,47 +5,11 @@
      cuesta —cada consulta que sale al proveedor se paga— y dice que empresa se
      esta quedando corta de plan.
 
-     El orden va de lo general a lo concreto: primero cuanto y cuanto costo,
-     luego quien, y al final consulta por consulta. --}}
-@php
-    $r = $resumen_interno;
-    // Lo unico que cuesta dinero es lo que salio al proveedor: el resto se
-    // resolvio con el padron o con algo ya consultado antes.
-    $ahorro = $r['total'] ? round($r['en_casa'] / $r['total'] * 100) : 0;
-@endphp
+     Las cifras del mes van en una linea dentro de la tarjeta, no en tarjetas
+     aparte: la cabecera de la pantalla ya trae las suyas y dos filas seguidas
+     de tarjetas se pisaban. --}}
 
 <div class="space-y-5">
-
-    {{-- 1. El mes de un vistazo --}}
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div class="rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
-            <p class="text-xs font-medium text-gray-500">Consultas este mes</p>
-            <p class="mt-1 text-2xl font-semibold text-gray-900">{{ number_format($r['total']) }}</p>
-            <p class="mt-0.5 text-xs text-gray-400">Desde el panel, sin cobrar a nadie</p>
-        </div>
-
-        <div class="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
-            <p class="text-xs font-medium text-amber-800">Costaron dinero</p>
-            <p class="mt-1 text-2xl font-semibold text-amber-900">{{ number_format($r['proveedor']) }}</p>
-            <p class="mt-0.5 text-xs text-amber-700">Hubo que salir al proveedor</p>
-        </div>
-
-        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 shadow-sm">
-            <p class="text-xs font-medium text-emerald-800">Salieron gratis</p>
-            <p class="mt-1 text-2xl font-semibold text-emerald-900">{{ number_format($r['en_casa']) }}</p>
-            <p class="mt-0.5 text-xs text-emerald-700">{{ $ahorro }}% del total, ya las teníamos</p>
-        </div>
-
-        <div class="rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
-            <p class="text-xs font-medium text-gray-500">Fallidas</p>
-            <p class="mt-1 text-2xl font-semibold {{ $r['fallidas'] ? 'text-red-700' : 'text-gray-900' }}">
-                {{ number_format($r['fallidas']) }}
-            </p>
-            <p class="mt-0.5 text-xs text-gray-400">
-                {{ $r['ms_medio'] ? number_format($r['ms_medio']) . ' ms de media' : 'Un número mal escrito no cuesta' }}
-            </p>
-        </div>
-    </div>
 
     {{-- Las dos vistas del mismo dato, en una sola tarjeta con dos botones.
 
@@ -87,6 +51,7 @@
         </div>
 
         <div x-show="vista === 'empresas'">
+        @include('super-admin.consultas.tabs._resumen_linea', ['r' => $resumen_interno, 'que' => 'búsquedas'])
         <p class="border-b border-gray-100 px-5 py-2.5 text-xs text-gray-500">
             De más a menos. Quien salga mucho al proveedor es a quien se le está quedando corto el plan.
         </p>
