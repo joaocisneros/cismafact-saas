@@ -42,7 +42,7 @@
                     <th class="w-px whitespace-nowrap px-5 py-3">Número</th>
                     <th class="px-5 py-3">A nombre de</th>
                     <th class="w-px whitespace-nowrap px-5 py-3">Estado</th>
-                    <th class="w-px whitespace-nowrap px-5 py-3">¿Costó?</th>
+                    <th class="w-px whitespace-nowrap px-5 py-3">Costo</th>
                     <th class="w-px whitespace-nowrap px-5 py-3 text-right">Tardó</th>
                 </tr>
             </thead>
