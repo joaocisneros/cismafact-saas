@@ -363,6 +363,9 @@ class ConsultaController extends Controller
                   ->on('api_plan_limite.api_id', '=', 'consultas_consumo.api_id');
             })
             ->where('consultas_consumo.created_at', '>=', $mes)
+            // Lo de prueba no puede disparar el aviso: no tiene tope que agotar
+            // y ensuciaria el unico numero que obliga a hacer algo.
+            ->where('consulta_llaves.entorno', 'produccion')
             ->where('api_plan_limite.limite_mensual', '>', 0)
             // El select explicito no es adorno: con GROUP BY, MySQL rechaza el
             // "select *" que pone Laravel por defecto (only_full_group_by).

@@ -105,7 +105,24 @@ class ConsultaController extends Controller
         // encontraria de golpe el dia que cambia las credenciales, que es justo
         // lo que este entorno existe para evitar.
         if ($llave->entorno === 'sandbox') {
-            if ($motivo = $this->motivoNumeroInvalido($slug, $numero)) {
+            $motivo = $this->motivoNumeroInvalido($slug, $numero);
+
+            // Se anota igual que las de produccion. No gastar cuota es una
+            // cosa y no dejar rastro es otra: sin esto, un desarrollador podia
+            // estar tirando de su llave de prueba semanas enteras y en el panel
+            // no se veia ni una sola consulta suya.
+            $this->anotar(
+                $llave,
+                $api->id,
+                $slug,
+                $numero,
+                $motivo ? 'invalido' : 'modo prueba',
+                ! $motivo,
+                0,
+                $motivo,
+            );
+
+            if ($motivo) {
                 return response()->json([
                     'success' => false,
                     'data' => null,
