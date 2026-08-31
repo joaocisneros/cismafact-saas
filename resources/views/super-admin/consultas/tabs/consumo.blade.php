@@ -3,7 +3,47 @@
      Aqui NO va cuanto gasta cada llave: eso esta en «Mis APIs», pegado a su
      llave y con su tope al lado, que es donde uno mira para saber si a alguien
      le queda cuota. Estaba en los dos sitios y era la misma cuenta dos veces. --}}
-<section class="rounded-xl border border-gray-200 bg-white shadow-sm">
+@php
+    $r = $resumen_externo;
+    // Lo unico que cuesta dinero es lo que salio al proveedor.
+    $ahorro = $r['total'] ? round($r['en_casa'] / $r['total'] * 100) : 0;
+@endphp
+
+<div class="space-y-5">
+
+{{-- El mes de un vistazo, igual que en la pestaña de dentro: son las mismas
+     cuatro cifras y se comparan de un lado a otro sin traducir nada. --}}
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+        <p class="text-xs font-medium text-gray-500">Consultas este mes</p>
+        <p class="mt-1 text-2xl font-semibold text-gray-900">{{ number_format($r['total']) }}</p>
+        <p class="mt-0.5 text-xs text-gray-400">De clientes con llave</p>
+    </div>
+
+    <div class="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
+        <p class="text-xs font-medium text-amber-800">Costaron dinero</p>
+        <p class="mt-1 text-2xl font-semibold text-amber-900">{{ number_format($r['proveedor']) }}</p>
+        <p class="mt-0.5 text-xs text-amber-700">Hubo que salir al proveedor</p>
+    </div>
+
+    <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 shadow-sm">
+        <p class="text-xs font-medium text-emerald-800">Salieron gratis</p>
+        <p class="mt-1 text-2xl font-semibold text-emerald-900">{{ number_format($r['en_casa']) }}</p>
+        <p class="mt-0.5 text-xs text-emerald-700">{{ $ahorro }}% del total, ya las teníamos</p>
+    </div>
+
+    <div class="rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+        <p class="text-xs font-medium text-gray-500">Fallidas</p>
+        <p class="mt-1 text-2xl font-semibold {{ $r['fallidas'] ? 'text-red-700' : 'text-gray-900' }}">
+            {{ number_format($r['fallidas']) }}
+        </p>
+        <p class="mt-0.5 text-xs text-gray-400">
+            {{ $r['ms_medio'] ? number_format($r['ms_medio']) . ' ms de media' : 'Un número mal escrito no gasta cuota' }}
+        </p>
+    </div>
+</div>
+
+<section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
 
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-5 py-4">
         <div>
@@ -37,7 +77,7 @@
                     <th class="px-5 py-3">Servicio</th>
                     <th class="px-5 py-3">Número</th>
                     <th class="px-5 py-3">Resultado</th>
-                    <th class="px-5 py-3">De dónde salió</th>
+                    <th class="px-5 py-3">¿Costó?</th>
                     <th class="px-5 py-3 text-right">Tardó</th>
                 </tr>
             </thead>
@@ -78,13 +118,7 @@
                         {{-- De donde salio el dato: es lo que dice si esa consulta
                              costo dinero o se resolvio en casa. --}}
                         <td class="px-5 py-2.5">
-                            <span class="rounded px-1.5 py-0.5 text-xs
-                                @if($h->fuente === 'proveedor') bg-amber-50 text-amber-700
-                                @elseif($h->fuente === 'padron') bg-emerald-50 text-emerald-700
-                                @elseif($h->fuente === 'consultado antes') bg-gray-100 text-gray-600
-                                @else bg-gray-50 text-gray-400 @endif">
-                                {{ $h->fuente }}
-                            </span>
+                            @include('super-admin.consultas.tabs._fuente', ['fuente' => $h->fuente])
                         </td>
 
                         <td class="whitespace-nowrap px-5 py-2.5 text-right text-gray-600">
@@ -102,3 +136,4 @@
         </table>
     </div>
 </section>
+</div>

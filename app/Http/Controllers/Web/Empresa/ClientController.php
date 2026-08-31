@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Empresa;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Services\ConsultaDocumentoService;
+use App\Support\ConsumoInterno;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -107,8 +108,20 @@ class ClientController extends Controller
         }
 
         $numero = preg_replace('/\D/', '', $numero);
+        $slug = $tipo === '6' ? 'ruc' : 'dni';
 
-        $r = $tipo === '6' ? $consultas->ruc($numero) : $consultas->dni($numero);
+        $empezo = microtime(true);
+        $r = $slug === 'ruc' ? $consultas->ruc($numero) : $consultas->dni($numero);
+
+        // Se anota siempre, salga bien o mal. Esto no le descuenta cuota a
+        // nadie, pero lo que sale al proveedor se paga y conviene verlo.
+        ConsumoInterno::anotar(
+            Auth::user()->company_id,
+            $slug,
+            $numero,
+            $r,
+            (int) round((microtime(true) - $empezo) * 1000),
+        );
 
         if (! ($r['valido'] ?? false)) {
             return response()->json([

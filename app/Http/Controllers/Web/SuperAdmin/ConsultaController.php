@@ -38,10 +38,14 @@ class ConsultaController extends Controller
             // Cuantos han fallado este mes. Va en el boton del filtro: si pone
             // cero, no hace falta ni entrar a mirar.
             'fallos_mes' => DB::table('consultas_consumo')
+                ->where('origen', 'externo')
                 ->where('exito', false)
                 ->where('created_at', '>=', now()->startOfMonth())
                 ->count(),
+            // Resumen del mes: lo que se cobra, y de eso cuanto costo de verdad.
+            'resumen_externo' => $this->resumen('externo'),
             'historial' => DB::table('consultas_consumo')
+                ->where('consultas_consumo.origen', 'externo')
                 ->when($fallos, fn ($q) => $q->where('consultas_consumo.exito', false))
                 ->leftJoin('consulta_llaves', 'consulta_llaves.id', '=', 'consultas_consumo.llave_id')
                 ->leftJoin('apis', 'apis.id', '=', 'consultas_consumo.api_id')
@@ -77,7 +81,70 @@ class ConsultaController extends Controller
                 ->latest('id')
                 ->get(),
             'empresas' => \App\Models\Company::orderBy('razon_social')->get(['id', 'razon_social', 'ruc']),
+
+            // Consumo interno: lo que gastan las empresas de casa buscando un
+            // RUC o un DNI desde el panel. No se cobra, pero lo que sale al
+            // proveedor se paga igual.
+            'resumen_interno' => $this->resumen('interno'),
+            'por_empresa' => $this->consumoPorEmpresa(),
+            'historial_interno' => DB::table('consultas_consumo')
+                ->where('consultas_consumo.origen', 'interno')
+                ->leftJoin('companies', 'companies.id', '=', 'consultas_consumo.company_id')
+                ->orderByDesc('consultas_consumo.id')
+                ->limit(40)
+                ->get([
+                    'consultas_consumo.created_at',
+                    'consultas_consumo.tipo',
+                    'consultas_consumo.numero',
+                    'consultas_consumo.fuente',
+                    'consultas_consumo.exito',
+                    'consultas_consumo.ms',
+                    'consultas_consumo.motivo',
+                    'companies.razon_social as empresa',
+                ]),
         ]);
+    }
+
+    /**
+     * Las cuatro cifras del mes para un origen.
+     *
+     * «proveedor» se separa del resto porque es la unica fuente que cuesta
+     * dinero: lo demas se resolvio en casa, con el padron o con algo ya
+     * consultado antes.
+     */
+    private function resumen(string $origen): array
+    {
+        $base = fn () => DB::table('consultas_consumo')
+            ->where('origen', $origen)
+            ->where('created_at', '>=', now()->startOfMonth());
+
+        return [
+            'total' => $base()->count(),
+            'proveedor' => $base()->where('fuente', 'proveedor')->count(),
+            'en_casa' => $base()->whereIn('fuente', ['padron', 'consultado antes'])->count(),
+            'fallidas' => $base()->where('exito', false)->count(),
+            'ms_medio' => (int) round((float) $base()->where('exito', true)->avg('ms')),
+        ];
+    }
+
+    /** Quien tira del servicio, de mas a menos. Dice a quien se le queda corto el plan. */
+    private function consumoPorEmpresa()
+    {
+        return DB::table('consultas_consumo')
+            ->where('consultas_consumo.origen', 'interno')
+            ->where('consultas_consumo.created_at', '>=', now()->startOfMonth())
+            ->leftJoin('companies', 'companies.id', '=', 'consultas_consumo.company_id')
+            ->groupBy('consultas_consumo.company_id', 'companies.razon_social', 'companies.ruc')
+            ->orderByDesc('total')
+            ->get([
+                'companies.razon_social as empresa',
+                'companies.ruc',
+                DB::raw('COUNT(*) as total'),
+                DB::raw("SUM(CASE WHEN fuente = 'proveedor' THEN 1 ELSE 0 END) as proveedor"),
+                DB::raw("SUM(CASE WHEN fuente IN ('padron','consultado antes') THEN 1 ELSE 0 END) as en_casa"),
+                DB::raw('SUM(CASE WHEN exito = 0 THEN 1 ELSE 0 END) as fallidas'),
+                DB::raw('MAX(consultas_consumo.created_at) as ultima'),
+            ]);
     }
 
     /**
