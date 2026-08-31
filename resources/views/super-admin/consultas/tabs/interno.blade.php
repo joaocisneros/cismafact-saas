@@ -55,7 +55,6 @@
                     <tr>
                         <th class="w-px whitespace-nowrap px-4 py-3">Fecha y hora</th>
                         <th class="whitespace-nowrap px-4 py-3">Empresa</th>
-                        <th class="w-px whitespace-nowrap px-4 py-3 text-right">Consumo del mes</th>
                         <th class="w-px whitespace-nowrap px-4 py-3">Servicio</th>
                         <th class="w-px whitespace-nowrap px-4 py-3">Número</th>
                         <th class="px-4 py-3">Estado</th>
@@ -69,25 +68,33 @@
                             <td class="whitespace-nowrap px-4 py-2.5 text-gray-600">
                                 {{ \Illuminate\Support\Carbon::parse($h->created_at)->format('d/m/Y H:i:s') }}
                             </td>
+                            {{-- El consumo del mes va debajo del nombre, no en
+                                 columna propia: es un dato de la empresa, no de
+                                 esta consulta, y en medio partia la fila justo
+                                 entre quien busco y que busco. --}}
                             <td class="px-4 py-2.5">
-                                <span class="text-gray-900">{{ $h->empresa ?? '—' }}</span>
-                                @if($h->empresa)
-                                    @php
-                                        // Suspendida a mano cuenta como no activa: para
-                                        // lo que se mira aqui, las dos significan que no
-                                        // deberia estar operando.
-                                        $activa = $h->empresa_activa && ! $h->suspendida_manualmente;
-                                    @endphp
-                                    @unless($activa)
-                                        <span class="ml-1.5 rounded-full bg-red-50 px-1.5 py-0.5 text-xs font-medium text-red-700"
-                                              title="{{ $h->suspendida_manualmente ? 'Suspendida manualmente' : 'Dada de baja' }}">
-                                            Inactiva
-                                        </span>
-                                    @endunless
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-gray-900">{{ $h->empresa ?? '—' }}</span>
+                                    @if($h->empresa)
+                                        @php
+                                            // Suspendida a mano cuenta como no activa: para
+                                            // lo que se mira aqui, las dos significan que no
+                                            // deberia estar operando.
+                                            $activa = $h->empresa_activa && ! $h->suspendida_manualmente;
+                                        @endphp
+                                        @unless($activa)
+                                            <span class="rounded-full bg-red-50 px-1.5 py-0.5 text-xs font-medium text-red-700"
+                                                  title="{{ $h->suspendida_manualmente ? 'Suspendida manualmente' : 'Dada de baja' }}">
+                                                Inactiva
+                                            </span>
+                                        @endunless
+                                    @endif
+                                </div>
+                                @if($h->company_id)
+                                    <p class="text-xs text-gray-400">
+                                        {{ number_format($consumo_por_empresa[$h->company_id] ?? 0) }} este mes
+                                    </p>
                                 @endif
-                            </td>
-                            <td class="whitespace-nowrap px-4 py-2.5 text-right text-gray-600">
-                                {{ number_format($consumo_por_empresa[$h->company_id] ?? 0) }}
                             </td>
                             <td class="whitespace-nowrap px-4 py-2.5 text-gray-600">{{ strtoupper($h->tipo) }}</td>
                             <td class="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-gray-700">{{ $h->numero }}</td>
@@ -110,7 +117,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-5 py-8 text-center text-sm text-gray-500">
+                            <td colspan="7" class="px-5 py-8 text-center text-sm text-gray-500">
                                 {{ $solo_fallos ? 'Ninguna búsqueda ha fallado.' : 'Todavía no hay ninguna búsqueda desde el panel.' }}
                             </td>
                         </tr>
