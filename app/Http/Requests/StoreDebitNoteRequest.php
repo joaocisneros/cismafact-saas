@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Http\Requests\Concerns\NormalizesDemoPayload;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Models\Branch;
+use App\Support\NormativaSunat;
 
 class StoreDebitNoteRequest extends FormRequest
 {
@@ -39,7 +40,7 @@ class StoreDebitNoteRequest extends FormRequest
             // Documento afectado
             'tipo_doc_afectado' => 'required|string|in:01,03',
             'num_doc_afectado' => 'required|string|max:20',
-            'cod_motivo' => 'required|string|in:01,02,03,10,11,13',   // 13 = penalidades (SUNAT, 01/08/2026)
+            'cod_motivo' => 'required|string|in:' . implode(',', NormativaSunat::motivosNotaDebito()),   // el 13 (penalidades) solo desde el 01/01/2027
             'des_motivo' => 'required|string|max:250',
             
             // Cliente
@@ -65,7 +66,7 @@ class StoreDebitNoteRequest extends FormRequest
             'detalles.*.precio_unitario_incluye_igv' => 'nullable|numeric|min:0',
             'detalles.*.porcentaje_igv' => 'nullable|numeric|min:0',
             'detalles.*.tip_afe_igv' => 'nullable|string|in:10,11,12,13,14,15,16,17,20,21,30,31,32,33,34,35,36,40',
-            'detalles.*.codigo_producto_sunat' => 'nullable|digits:8',   // SUNAT: 8 digitos numericos desde el 01/08/2026
+            'detalles.*.codigo_producto_sunat' => NormativaSunat::reglaCodigoProducto(),   // 8 digitos desde el 01/01/2027 (la RS 000143-2026 aplazo la 000048-2026)
 
             // Leyendas
             'leyendas' => 'nullable|array',
@@ -89,9 +90,10 @@ class StoreDebitNoteRequest extends FormRequest
                 $validator->errors()->add('branch_id', 'La sucursal no pertenece a la empresa seleccionada.');
             }
 
-            // Las penalidades (motivo 13, desde el 01/08/2026) son operacion
-            // inafecta al IGV. Inafecto es el grupo 30-36 del catalogo 07.
-            if ($this->input('cod_motivo') === '13') {
+            // Las penalidades (motivo 13) son operacion inafecta al IGV:
+            // inafecto es el grupo 30-36 del catalogo 07. Solo aplica cuando la
+            // RS 000048-2026 este vigente; antes SUNAT ni siquiera acepta el 13.
+            if ($this->input('cod_motivo') === '13' && NormativaSunat::penalidadesInafectas()) {
                 foreach ((array) $this->input('detalles', []) as $i => $detalle) {
                     $afectacion = (string) ($detalle['tip_afe_igv'] ?? '10');
 
@@ -126,6 +128,8 @@ class StoreDebitNoteRequest extends FormRequest
             'num_doc_afectado.required' => 'El número de documento afectado es requerido.',
             'detalles.*.codigo_producto_sunat.digits' => 'El codigo de producto de SUNAT debe tener 8 digitos numericos.',
             'cod_motivo.required' => 'El código de motivo es requerido.',
+            'cod_motivo.in' => 'El motivo no es válido. El 13 (penalidades) recién lo acepta SUNAT desde el '
+                . '01/01/2027, cuando entra en vigor la RS 000048-2026.',
             'des_motivo.required' => 'La descripción del motivo es requerida.',
             
             'client.tipo_documento.required' => 'El tipo de documento del cliente es requerido.',

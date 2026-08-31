@@ -12,7 +12,7 @@ class NotaDebitoController extends BaseNotaController
     protected function modelClass(): string { return DebitNote::class; }
     protected function viewPrefix(): string { return 'empresa.notas-debito'; }
     protected function routePrefix(): string { return 'notas-debito'; }
-    protected function motivos(): array { return StoreNotaDebitoRequest::MOTIVOS; }
+    protected function motivos(): array { return StoreNotaDebitoRequest::motivos(); }
 
     protected function createDocument(array $data)
     {

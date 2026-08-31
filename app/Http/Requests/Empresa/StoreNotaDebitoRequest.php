@@ -2,17 +2,28 @@
 
 namespace App\Http\Requests\Empresa;
 
+use App\Support\NormativaSunat;
+
 class StoreNotaDebitoRequest extends StoreNotaRequest
 {
     // Catálogo 10 - Tipo de nota de débito
-    public const MOTIVOS = [
+    private const TODOS_LOS_MOTIVOS = [
         '01' => 'Intereses por mora',
         '02' => 'Aumento en el valor',
         '03' => 'Otros conceptos',
-        // Desde el 01/08/2026 las penalidades van aparte, y son inafectas al
-        // IGV: si se mandan gravadas, SUNAT rechaza la nota.
+        // Las penalidades van aparte y son inafectas al IGV, pero el 13 lo crea
+        // la RS 000048-2026: hasta que entre en vigor SUNAT no lo reconoce.
         '13' => 'Penalidades',
     ];
+
+    /** Motivos que SUNAT acepta hoy; el 13 aparece al entrar en vigor la RS 000048-2026. */
+    public static function motivos(): array
+    {
+        return array_intersect_key(
+            self::TODOS_LOS_MOTIVOS,
+            array_flip(NormativaSunat::motivosNotaDebito())
+        );
+    }
 
     protected function serieRegex(): string
     {
@@ -22,14 +33,14 @@ class StoreNotaDebitoRequest extends StoreNotaRequest
 
     protected function motivosValidos(): array
     {
-        return array_keys(self::MOTIVOS);
+        return array_keys(self::motivos());
     }
 
     /** Igual que en la API: el motivo 13 no admite lineas gravadas. */
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            if ($this->input('cod_motivo') !== '13') {
+            if ($this->input('cod_motivo') !== '13' || ! NormativaSunat::penalidadesInafectas()) {
                 return;
             }
 
