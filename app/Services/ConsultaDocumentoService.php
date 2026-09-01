@@ -68,7 +68,9 @@ class ConsultaDocumentoService
         // para dejar emitir sin bloquear al usuario por un proveedor caido.
         return [
             'valido' => true,
-            'motivo' => 'El RUC es válido, pero no se pudo traer la ficha.',
+            'motivo' => $this->porQueNoSeTrajo === 'no existe'
+                ? 'Ese RUC no está registrado en SUNAT.'
+                : 'El RUC es correcto, pero no se pudo consultar: ' . ($this->porQueNoSeTrajo ?? 'sin respuesta') . '.',
             'numero' => $numero,
             'tipo' => 'ruc',
             'fuente' => 'ninguna',
@@ -109,7 +111,9 @@ class ConsultaDocumentoService
 
         return [
             'valido' => true,
-            'motivo' => 'El DNI tiene el formato correcto, pero no se pudo traer el nombre.',
+            'motivo' => $this->porQueNoSeTrajo === 'no existe'
+                ? 'Ese DNI no figura en RENIEC.'
+                : 'El DNI es correcto, pero no se pudo consultar: ' . ($this->porQueNoSeTrajo ?? 'sin respuesta') . '.',
             'numero' => $numero,
             'tipo' => 'dni',
             'fuente' => 'ninguna',
@@ -197,12 +201,26 @@ class ConsultaDocumentoService
     /**
      * @return array<string,mixed>|null Null si no hay proveedor o no responde.
      */
+    /**
+     * Por que no se trajo la ficha la ultima vez.
+     *
+     * Sin esto, «no se pudo traer» tapaba tres cosas distintas: que no exista
+     * el numero, que el proveedor no contestara, o que no haya proveedor
+     * puesto. La primera no se arregla reintentando y las otras dos si, asi
+     * que quien lo lee necesita saber cual fue.
+     */
+    private ?string $porQueNoSeTrajo = null;
+
     private function alProveedor(string $tipo, string $numero): ?array
     {
+        $this->porQueNoSeTrajo = null;
+
         $base = trim((string) $this->ajuste('consultas_url'));
         $token = trim((string) $this->ajuste('consultas_token'));
 
         if ($base === '') {
+            $this->porQueNoSeTrajo = 'no hay proveedor configurado';
+
             return null;
         }
 
@@ -216,11 +234,19 @@ class ConsultaDocumentoService
             $r = $peticion->get($this->direccion($base, $tipo, $numero));
 
             if (! $r->successful()) {
+                // 404 es «este numero no existe», no «esto ha fallado»: el
+                // proveedor contesto, y contesto que no lo tiene.
+                $this->porQueNoSeTrajo = $r->status() === 404
+                    ? 'no existe'
+                    : 'el proveedor respondió con un error';
+
                 return null;
             }
 
             return $this->normalizar($tipo, $r->json() ?? []);
         } catch (\Throwable $e) {
+            $this->porQueNoSeTrajo = 'el proveedor no respondió';
+
             Log::warning('Consulta de documento: el proveedor no respondió', [
                 'tipo' => $tipo,
                 'numero' => $numero,
