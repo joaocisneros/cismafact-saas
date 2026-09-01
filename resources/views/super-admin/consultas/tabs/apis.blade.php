@@ -302,10 +302,10 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
 
                     {{-- El documento primero: de el sale el nombre. Ademas es
                          el dato que hace falta para facturarle. --}}
-                    {{-- En dos columnas: son campos cortos y uno sale del otro,
-                         asi que puestos uno debajo de otro el modal se alargaba
-                         hasta necesitar scroll para llegar al boton. --}}
-                    <div class="grid gap-3 sm:grid-cols-2">
+                    {{-- En la misma fila porque uno sale del otro, pero no a
+                         medias: el documento son once cifras y el nombre puede
+                         tener noventa, asi que se lleva el doble de sitio. --}}
+                    <div class="grid gap-3 sm:grid-cols-3">
                     <div>
                         <label for="l_doc" class="mb-1 block text-sm font-medium text-gray-900">
                             RUC o DNI
@@ -316,15 +316,17 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                                placeholder="11 dígitos para RUC, 8 para DNI"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
 
-                        <template x-if="aviso">
+                        {{-- Solo cuando hay algo que decir: el nombre ya se ve
+                             en su campo, repetirlo debajo en verde sobraba. --}}
+                        <template x-if="aviso && avisoTipo !== 'ok'">
                             <p class="mt-1.5 text-xs"
-                               :class="{ 'text-green-700': avisoTipo === 'ok', 'text-amber-700': avisoTipo === 'ojo', 'text-red-600': avisoTipo === 'error' }"
+                               :class="{ 'text-amber-700': avisoTipo === 'ojo', 'text-red-600': avisoTipo === 'error' }"
                                x-text="aviso"></p>
                         </template>
                         <p x-show="buscando" class="mt-1.5 text-xs text-gray-500">Consultando…</p>
                     </div>
 
-                    <div>
+                    <div class="sm:col-span-2">
                         <label for="l_titular" class="mb-1 block text-sm font-medium text-gray-900">
                             Nombre o razón social
                         </label>
