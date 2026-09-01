@@ -110,14 +110,14 @@
                                  asi que acumulaba todo el sobrante en un hueco
                                  en blanco y las otras cinco quedaban apiladas
                                  contra el borde derecho. --}}
-                            <th class="w-1/5 px-5 py-3">Empresa</th>
+                            <th class="w-1/4 px-5 py-3">Empresa</th>
                             <th class="w-1/12 whitespace-nowrap px-5 py-3">Servicios</th>
                             <th class="w-1/12 whitespace-nowrap px-5 py-3">Plan</th>
                             {{-- Cuanto lleva y cuanto tiene. El plan no vale
                                  aqui: todas las de prueba llevan el mismo y lo
                                  que manda es el tope de cada una. --}}
-                            <th class="w-1/6 whitespace-nowrap px-5 py-3 text-right">Consultas</th>
-                            <th class="w-1/12 whitespace-nowrap px-5 py-3">Último uso</th>
+                            <th class="w-1/12 whitespace-nowrap px-5 py-3 text-right">Consultas</th>
+                            <th class="w-1/6 whitespace-nowrap px-5 py-3">Último uso</th>
                             <th class="w-1/6 whitespace-nowrap px-5 py-3">Vigencia</th>
                             <th class="w-1/6 whitespace-nowrap px-5 py-3 text-right">Acciones</th>
                         </tr>
@@ -162,9 +162,9 @@
                                     <span class="font-medium text-gray-900">{{ number_format($delMes) }}</span>
                                     @if($tope)
                                         <span class="text-gray-400">/ {{ number_format($tope) }}</span>
-                                        <p class="text-xs {{ $delMes >= $tope ? 'text-red-600' : 'text-gray-400' }}">
-                                            {{ $delMes >= $tope ? 'sin cuota' : 'de cada servicio' }}
-                                        </p>
+                                        @if($delMes >= $tope)
+                                            <p class="text-xs text-red-600">sin cuota</p>
+                                        @endif
                                     @else
                                         <p class="text-xs text-gray-400">sin tope</p>
                                     @endif
