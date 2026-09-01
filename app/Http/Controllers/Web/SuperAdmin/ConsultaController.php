@@ -324,7 +324,7 @@ class ConsultaController extends Controller
             'slug.unique' => 'Ya hay una consulta con ese identificador.',
         ]);
 
-        $api = Api::create($datos + ['activa' => true, 'modo_prueba' => false]);
+        $api = Api::create($datos + ['activa' => true]);
 
         // Nace en todos los planes con 0: existe pero no la incluye ninguno,
         // y se decide plan por plan en la pestaña de al lado. Mas prudente que
@@ -346,18 +346,21 @@ class ConsultaController extends Controller
         return back()->with('success', 'Consulta actualizada.');
     }
 
-    /** Encender/apagar, o entrar y salir del modo pruebas. */
+    /**
+     * Encender o apagar una consulta.
+     *
+     * Ya no admite «modo_prueba»: ese interruptor prometia devolver datos de
+     * ejemplo y no lo leia nadie, asi que apagarlo o encenderlo no cambiaba
+     * ninguna respuesta. Un mando que no mueve nada es peor que no tenerlo,
+     * porque se confia en el.
+     */
     public function alternarApi(Request $request, Api $api)
     {
-        $campo = $request->validate([
-            'campo' => 'required|in:activa,modo_prueba',
-        ])['campo'];
+        $request->validate(['campo' => 'required|in:activa']);
 
-        $api->update([$campo => ! $api->$campo]);
+        $api->update(['activa' => ! $api->activa]);
 
-        $aviso = $campo === 'activa'
-            ? ($api->activa ? 'encendida' : 'apagada: responde 503 y no gasta cuota')
-            : ($api->modo_prueba ? 'en modo pruebas: devuelve datos de ejemplo' : 'fuera del modo pruebas');
+        $aviso = $api->activa ? 'encendida' : 'apagada: responde 503 y no gasta cuota';
 
         return back()->with('success', "«{$api->nombre}» {$aviso}.");
     }

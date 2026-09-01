@@ -102,59 +102,6 @@ class ConsultaController extends Controller
             return $this->error("Tu plan no incluye la consulta de {$slug}.", 403);
         }
 
-        // En sandbox se responde con un ejemplo y no se cuenta: es justo para
-        // poder integrar sin gastar lo que se paga.
-        //
-        // El numero se comprueba igual que en produccion. Si aqui valiera
-        // cualquier cosa, quien integra no llegaria a ver nunca un 422 y se lo
-        // encontraria de golpe el dia que cambia las credenciales, que es justo
-        // lo que este entorno existe para evitar.
-        if ($llave->devuelveEjemplo()) {
-            $empezoPrueba = microtime(true);
-            $motivo = $this->motivoNumeroInvalido($slug, $numero);
-
-            // Se anota igual que las de produccion. No gastar cuota es una
-            // cosa y no dejar rastro es otra: sin esto, un desarrollador podia
-            // estar tirando de su llave de prueba semanas enteras y en el panel
-            // no se veia ni una sola consulta suya.
-            $this->anotar(
-                $llave,
-                $api->id,
-                $slug,
-                $numero,
-                $motivo ? 'invalido' : 'modo prueba',
-                ! $motivo,
-                (int) round((microtime(true) - $empezoPrueba) * 1000),
-                $motivo,
-            );
-
-            if ($motivo) {
-                return response()->json([
-                    'success' => false,
-                    'data' => null,
-                    'message' => $motivo,
-                ], 422);
-            }
-
-            return response()->json([
-                'success' => true,
-                'data' => $api->ejemplo($numero),
-                'message' => 'Entorno de pruebas: los datos son de ejemplo y no gastan cuota.',
-            ]);
-        }
-
-        $usadas = $this->usadas($llave->id, $api->id);
-
-        if ($usadas >= $tope) {
-            return response()->json([
-                'success' => false,
-                'message' => "Has agotado las {$tope} consultas de {$slug} de tu plan este mes.",
-                'usadas' => $usadas,
-                'limite_mensual' => $tope,
-                'renueva' => now()->startOfMonth()->addMonth()->toDateString(),
-            ], 429);
-        }
-
         $empezo = microtime(true);
 
         $r = $slug === 'ruc'

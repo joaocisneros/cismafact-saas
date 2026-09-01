@@ -57,18 +57,6 @@ class ConsultaLlave extends Model
         return $this->empresa?->razon_social ?? $this->titular ?? 'Sin titular';
     }
 
-    /**
-     * Si esta llave responde con datos de ejemplo en vez de consultar de verdad.
-     *
-     * Solo las de prueba, y solo las que no se marcaron como reales: una de
-     * prueba con datos reales existe para enseñarle el servicio a un cliente,
-     * y ahi el dato inventado no vale de nada.
-     */
-    public function devuelveEjemplo(): bool
-    {
-        return $this->entorno === 'sandbox' && ! $this->datos_reales;
-    }
-
     /** El tope de esta llave: el suyo si lo tiene, si no el de su plan. */
     public function topeDe(\App\Models\Api $api): int
     {

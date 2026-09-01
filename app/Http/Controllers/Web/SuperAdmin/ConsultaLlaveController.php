@@ -302,7 +302,6 @@ class ConsultaLlaveController extends Controller
             'servicios' => 'required|array|min:1',
             'servicios.*' => 'exists:apis,slug',
             'expira_en' => 'nullable|date|after:today',
-            'datos_reales' => 'nullable|boolean',
             'tope_pruebas' => 'nullable|integer|min:1|max:5000',
         ], [
             'nombre.unique' => 'Ya hay una llave con ese nombre. Ponle otro para poder distinguirlas.',
@@ -316,7 +315,6 @@ class ConsultaLlaveController extends Controller
         // el cliente vea que el servicio sirve, y con datos inventados no le
         // enseña nada. Lo que la separa de las de pago es el tope.
         if (($datos['entorno'] ?? null) === 'sandbox') {
-            $datos['datos_reales'] = true;
             $datos['tope_pruebas'] = (int) ($datos['tope_pruebas'] ?? 0) ?: 20;
 
             // Sandbox no cobra: sale siempre con el plan gratis, venga lo que
@@ -333,7 +331,6 @@ class ConsultaLlaveController extends Controller
             $datos['api_plan_id'] = $gratis->id;
         } else {
             // En produccion manda el plan contratado.
-            $datos['datos_reales'] = true;
             $datos['tope_pruebas'] = null;
 
             // Y tiene que costar algo: el gratis es el de sandbox. El

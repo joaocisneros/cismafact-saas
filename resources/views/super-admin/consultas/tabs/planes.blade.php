@@ -22,7 +22,8 @@
             <h2 class="text-sm font-semibold text-gray-900">Qué incluye cada plan</h2>
             <p class="mt-0.5 text-xs text-gray-500">
                 Un plan incluye las dos consultas, cada una con su tope. Para que alguien solo use una,
-                marca solo esa en su API Key.
+                marca solo esa en su API Key. El gratis es el de las llaves de sandbox, y ahí el tope
+                se pone en cada llave.
             </p>
         </div>
         <button type="button" @click="nuevo = true; plan = null"
@@ -97,9 +98,22 @@
                         </td>
 
                         @foreach($planesApi as $plan)
-                            @php $tope = $api->planes->firstWhere('id', $plan->id)?->pivot->limite_mensual ?? 0; @endphp
+                            @php
+                                $tope = $api->planes->firstWhere('id', $plan->id)?->pivot->limite_mensual ?? 0;
+                                // El gratis es el de las llaves de sandbox, y esas llevan
+                                // su propio tope: el del plan no llega a aplicarse nunca.
+                                $mandaLaLlave = $plan->esGratis();
+                            @endphp
                             <td class="border-l border-gray-200 px-4 py-5 text-center">
-                                @if($tope > 0)
+                                @if($mandaLaLlave)
+                                    {{-- Aqui salia el numero del plan como si rigiera. En
+                                         la tabla se leia «300» mientras las cinco llaves
+                                         que lo tienen van con 20, y ese 300 no lo ha
+                                         usado ninguna: el tope se pone al crear la llave
+                                         y ese gana siempre. --}}
+                                    <span class="text-sm text-gray-500">lo pone cada llave</span>
+                                    <p class="mt-0.5 text-xs text-gray-400">20 por defecto</p>
+                                @elseif($tope > 0)
                                     <span class="text-xl font-bold text-gray-900">{{ number_format($tope) }}</span>
                                 @else
                                     <span class="text-sm text-gray-300">no incluida</span>
