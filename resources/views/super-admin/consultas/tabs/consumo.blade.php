@@ -61,8 +61,14 @@
                             @if($h->llave)
                                 <div class="flex items-center gap-1.5">
                                     <span class="font-medium text-gray-900">{{ $h->llave }}</span>
+                                    {{-- Las dos llevan distintivo. Antes solo las de
+                                         prueba, y una de produccion se quedaba sin
+                                         nada: no se sabia si es que era real o si
+                                         faltaba el dato. --}}
                                     @if($h->entorno === 'sandbox')
                                         <span class="rounded-full bg-blue-50 px-1.5 py-0.5 text-xs font-medium text-blue-700">Sandbox</span>
+                                    @elseif($h->entorno === 'produccion')
+                                        <span class="rounded-full bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700">Producción</span>
                                     @endif
                                 </div>
                                 {{-- El plan va aqui, no en columna propia: es de
