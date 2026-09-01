@@ -110,13 +110,14 @@
                                  asi que acumulaba todo el sobrante en un hueco
                                  en blanco y las otras cinco quedaban apiladas
                                  contra el borde derecho. --}}
-                            <th class="w-1/4 px-5 py-3">Empresa</th>
+                            <th class="w-1/5 px-5 py-3">Empresa</th>
                             <th class="w-1/12 whitespace-nowrap px-5 py-3">Servicios</th>
+                            <th class="w-1/12 whitespace-nowrap px-5 py-3">Plan</th>
                             {{-- Cuanto lleva y cuanto tiene. El plan no vale
                                  aqui: todas las de prueba llevan el mismo y lo
                                  que manda es el tope de cada una. --}}
                             <th class="w-1/6 whitespace-nowrap px-5 py-3 text-right">Consultas</th>
-                            <th class="w-1/6 whitespace-nowrap px-5 py-3">Último uso</th>
+                            <th class="w-1/12 whitespace-nowrap px-5 py-3">Último uso</th>
                             <th class="w-1/6 whitespace-nowrap px-5 py-3">Vigencia</th>
                             <th class="w-1/6 whitespace-nowrap px-5 py-3 text-right">Acciones</th>
                         </tr>
@@ -138,6 +139,14 @@
 
                                 <td class="whitespace-nowrap px-5 py-3 text-gray-600">
                                     {{ collect($l->servicios)->map(fn ($s) => strtoupper($s))->join(' y ') }}
+                                </td>
+
+                                <td class="whitespace-nowrap px-5 py-3">
+                                    @if($l->plan)
+                                        <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">{{ $l->plan->nombre }}</span>
+                                    @else
+                                        <span class="text-xs text-gray-300">—</span>
+                                    @endif
                                 </td>
 
                                 <td class="whitespace-nowrap px-5 py-3 text-right">
