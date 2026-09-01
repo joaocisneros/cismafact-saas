@@ -18,6 +18,8 @@
         'padron' => [$coste ? 'Sin costo' : 'Padrón', 'Estaba en el padrón', 'bg-emerald-50 text-emerald-700'],
         'consultado antes' => [$coste ? 'Sin costo' : 'Ya guardada', 'Ya se había consultado antes', 'bg-emerald-50 text-emerald-700'],
         // Ni costo ni salio de casa: es un dato inventado para pruebas.
+        // Ni se llego a consultar: la llamada se paro en la puerta.
+        'rechazada' => ['No entró', 'La llamada se rechazó antes de consultar', 'bg-red-50 text-red-700'],
         'modo prueba' => ['Prueba sandbox', 'Llave de sandbox: el dato es de ejemplo, no es real', 'bg-blue-50 text-blue-700'],
     ];
 

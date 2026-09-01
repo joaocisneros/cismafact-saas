@@ -89,7 +89,7 @@ class ConsultaLlaveController extends Controller
     }
 
     /**
-     * Genera credenciales nuevas para una llave que ya existe.
+     * Genera un secreto nuevo para una llave que ya existe.
      *
      * El secreto se enseña una sola vez y despues queda cifrado: si el cliente
      * lo pierde no hay de donde sacarlo, y sin esto la unica salida era borrar
@@ -101,10 +101,17 @@ class ConsultaLlaveController extends Controller
      */
     public function regenerar(ConsultaLlave $llave)
     {
+        // Solo el secreto. La clave es el identificador —lo que dice de quien
+        // es la llamada, como un usuario— y el secreto lo que autentica, asi
+        // que cambiar el segundo basta para dejar el acceso viejo sin valor.
+        //
+        // Conservarla tiene dos ventajas: el cliente cambia una sola cosa, y
+        // los intentos que siga haciendo con el secreto viejo se pueden anotar,
+        // porque su clave sigue existiendo y dice de quien son. Cambiandola
+        // tambien, esos intentos no se distinguian de un palo de ciego.
         $credenciales = ConsultaLlave::nuevasCredenciales();
 
         $llave->update([
-            'clave' => $credenciales['clave'],
             'secreto' => $credenciales['secreto'],
             'secreto_pista' => substr($credenciales['secreto'], -6),
         ]);
@@ -114,7 +121,7 @@ class ConsultaLlaveController extends Controller
         return back()->with('llave_creada', [
             'id' => $llave->id,
             'nombre' => $llave->nombre,
-            'clave' => $credenciales['clave'],
+            'clave' => $llave->clave,
             'secreto' => $credenciales['secreto'],
             'regenerada' => true,
         ]);
