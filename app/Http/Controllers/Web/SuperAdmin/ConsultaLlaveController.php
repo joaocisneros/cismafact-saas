@@ -140,7 +140,13 @@ class ConsultaLlaveController extends Controller
         }
 
         $datos = $request->validate([
-            'nombre' => 'required|string|max:80',
+            // Unico: el nombre es lo unico por lo que se distingue una llave en
+            // la lista, y dos iguales dejan sin saber cual bloquear o borrar.
+            // El automatico ya se numera; esto cubre el escrito a mano.
+            'nombre' => [
+                'required', 'string', 'max:80',
+                Rule::unique('consulta_llaves', 'nombre')->ignore($llave?->id),
+            ],
             'titular_tipo' => 'required|in:empresa,externo',
             'company_id' => 'required_if:titular_tipo,empresa|nullable|exists:companies,id',
             'titular' => 'required_if:titular_tipo,externo|nullable|string|max:120',
@@ -152,6 +158,7 @@ class ConsultaLlaveController extends Controller
             'servicios.*' => 'exists:apis,slug',
             'expira_en' => 'nullable|date|after:today',
         ], [
+            'nombre.unique' => 'Ya hay una llave con ese nombre. Ponle otro para poder distinguirlas.',
             'company_id.required_if' => 'Elige la empresa a la que pertenece.',
             'titular.required_if' => 'Escribe a nombre de quién va la llave.',
             'servicios.required' => 'Marca al menos una consulta: RUC, DNI o las dos.',

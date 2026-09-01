@@ -257,12 +257,14 @@
                     <input type="hidden" name="titular_tipo" value="externo">
 
                     <div>
+                        {{-- «Empresa», que es como se llama la columna de la
+                             lista: el mismo dato dicho igual en los dos sitios. --}}
                         <label for="s_titular" class="mb-1.5 block text-sm font-medium text-gray-900">
-                            ¿Para quién es?
+                            Empresa
                         </label>
                         <input type="text" name="titular" id="s_titular" maxlength="120" required
                                :value="llave?.titular ?? ''"
-                               placeholder="Ej.: Juan Pérez (ERP Contable)"
+                               placeholder="Ej.: Contables SAC (o el programador)"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
 
