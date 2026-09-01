@@ -109,8 +109,10 @@
                                     <p class="truncate font-medium text-gray-900" title="{{ $l->nombreDelTitular() }}">
                                         {{ $l->nombreDelTitular() }}
                                     </p>
-                                    <p class="truncate text-xs text-gray-500" title="{{ $l->nombre }}">{{ $l->nombre }}</p>
-                                    <p class="truncate font-mono text-xs text-gray-400">{{ Str::limit($l->clave, 22) }}</p>
+                                    <p class="truncate text-xs text-gray-500" title="{{ $l->nombre }}">
+                                        {{ $l->entorno === 'sandbox' ? 'Sandbox' : 'Producción' }}
+                                        <span class="font-mono text-gray-400">· {{ Str::limit($l->clave, 22) }}</span>
+                                    </p>
                                 </td>
 
                                 <td class="px-5 py-3 text-gray-600">
