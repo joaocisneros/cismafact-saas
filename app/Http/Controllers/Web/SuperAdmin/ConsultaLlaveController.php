@@ -100,9 +100,37 @@ class ConsultaLlaveController extends Controller
             : "Se eliminaron {$cuantas} llaves de prueba vencidas.");
     }
 
+    /**
+     * Nombre para una llave de prueba, sacado de a quien se le da.
+     *
+     * Si ya tiene una, se numera: un mismo cliente pide otra cuando prueba
+     * desde dos sitios, y dos llaves llamadas igual no se pueden distinguir.
+     */
+    private function nombreDePrueba(Request $request): string
+    {
+        $titular = $request->input('titular_tipo') === 'empresa'
+            ? (\App\Models\Company::find($request->input('company_id'))?->razon_social ?? 'Empresa')
+            : ($request->input('titular') ?: 'Sin titular');
+
+        $base = 'Pruebas · ' . $titular;
+
+        $cuantas = ConsultaLlave::where('entorno', 'sandbox')
+            ->where('nombre', 'like', $base . '%')
+            ->count();
+
+        return $cuantas === 0 ? $base : $base . ' (' . ($cuantas + 1) . ')';
+    }
+
     /** @return array<string,mixed> */
     private function validar(Request $request, ?ConsultaLlave $llave = null): array
     {
+        // En sandbox el nombre no se pide: una llave de prueba se reparte
+        // deprisa y pararse a inventarle un nombre sobra. Se arma con el
+        // titular, que es como se la busca en la lista.
+        if ($request->input('entorno') === 'sandbox' && ! $request->filled('nombre')) {
+            $request->merge(['nombre' => $this->nombreDePrueba($request)]);
+        }
+
         $datos = $request->validate([
             'nombre' => 'required|string|max:80',
             'titular_tipo' => 'required|in:empresa,externo',

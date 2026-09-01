@@ -105,8 +105,7 @@
                              colgado de «Da acceso a», que es de los servicios.
                              Cada dato pasa a su columna. --}}
                         <tr>
-                            <th class="px-5 py-3">Llave</th>
-                            <th class="px-5 py-3">Titular</th>
+                            <th class="px-5 py-3">Empresa</th>
                             <th class="w-px whitespace-nowrap px-5 py-3">Servicios</th>
                             <th class="w-px whitespace-nowrap px-5 py-3 text-right">Consultas</th>
                             <th class="w-px whitespace-nowrap px-5 py-3">Último uso</th>
@@ -117,16 +116,16 @@
                     <tbody class="divide-y divide-gray-100">
                         @foreach($sandbox as $l)
                             <tr class="{{ $l->activa && ! $l->vencida() ? '' : 'bg-gray-50/60' }}">
+                                {{-- Manda de quien es. El nombre de la llave va
+                                     debajo: hace falta para distinguir cuando un
+                                     mismo titular tiene mas de una, pero no es lo
+                                     que se busca al mirar la lista. --}}
                                 <td class="px-5 py-3">
-                                    <p class="font-medium text-gray-900">{{ $l->nombre }}</p>
-                                    <p class="truncate font-mono text-xs text-gray-400">{{ Str::limit($l->clave, 26) }}</p>
-                                </td>
-
-                                <td class="px-5 py-3">
-                                    <span class="text-gray-900">{{ $l->nombreDelTitular() }}</span>
-                                    @if($l->company_id)
-                                        <p class="text-xs text-gray-400">Empresa del sistema</p>
-                                    @endif
+                                    <p class="font-medium text-gray-900">{{ $l->nombreDelTitular() }}</p>
+                                    <p class="truncate text-xs text-gray-500">
+                                        {{ $l->nombre }}
+                                        <span class="font-mono text-gray-400">· {{ Str::limit($l->clave, 20) }}</span>
+                                    </p>
                                 </td>
 
                                 <td class="whitespace-nowrap px-5 py-3 text-gray-600">
@@ -234,23 +233,23 @@
                     <p class="mt-0.5 text-xs text-gray-500">Devuelve datos de ejemplo. No gasta cuota ni sale a internet.</p>
                 </div>
 
-                <div class="space-y-4 px-5 py-4">
-                    <div>
-                        <label for="s_nombre" class="mb-1 block text-sm font-medium text-gray-900">
-                            Nombre de la llave
-                        </label>
-                        <p class="mb-1.5 text-xs text-gray-500">Para reconocerla en la lista. Solo lo ves tú.</p>
-                        <input type="text" name="nombre" id="s_nombre" required maxlength="80"
-                               :value="llave?.nombre ?? ''"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                               placeholder="Pruebas - ERP de Contables SAC">
-                    </div>
+                {{-- Una llave de prueba se reparte deprisa: se elige a quien y
+                     se manda. Lo demas trae puesto lo de siempre —las dos
+                     consultas y un mes— y solo se abre si hay que cambiarlo.
+                     Antes eran cuatro campos para algo que se hace en un minuto
+                     entre dos correos. --}}
+                <div class="space-y-4 px-5 py-4" x-data="{
+                         tipo: 'empresa',
+                         ajustes: false,
+                         dias(n) {
+                             const d = new Date();
+                             d.setDate(d.getDate() + n);
+                             this.$refs.expira.value = d.toISOString().slice(0, 10);
+                         },
+                     }"
+                     x-effect="tipo = llave ? (llave.company_id ? 'empresa' : 'externo') : 'empresa'">
 
-                    {{-- Antes solo admitia texto libre. Pero una llave de prueba
-                         tambien se le da a una empresa que ya esta en el sistema,
-                         y escribir su nombre a mano la deja sin relacionar: en el
-                         consumo aparecia como si fuera de un tercero. --}}
-                    <div x-data="{ tipo: 'empresa' }" x-effect="tipo = llave ? (llave.company_id ? 'empresa' : 'externo') : 'empresa'">
+                    <div>
                         <p class="mb-1.5 block text-sm font-medium text-gray-900">¿Para quién es?</p>
 
                         <div class="mb-2 flex items-center gap-1 rounded-lg bg-gray-100 p-0.5 text-xs font-medium">
@@ -288,55 +287,77 @@
                         </div>
                     </div>
 
-                    <div>
-                        <p class="mb-1 block text-sm font-medium text-gray-900">A qué consultas da acceso</p>
-                        <div class="flex flex-wrap gap-4">
-                            @foreach($apis as $api)
-                                <label class="flex items-center gap-2 text-sm text-gray-700">
-                                    <input type="checkbox" name="servicios[]" value="{{ $api->slug }}"
-                                           :checked="nueva || (llave?.servicios ?? []).includes('{{ $api->slug }}')"
-                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    {{ $api->nombre }}
-                                </label>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    {{-- Se piensa en dias («que le dure un mes»), no en una fecha
-                         del calendario. Los botones la calculan; el campo queda
-                         igual por si se quiere una concreta. --}}
-                    <div x-data="{
-                             dias(n) {
-                                 const d = new Date();
-                                 d.setDate(d.getDate() + n);
-                                 this.$refs.expira.value = d.toISOString().slice(0, 10);
-                             },
-                         }">
-                        <label for="s_expira" class="mb-1 block text-sm font-medium text-gray-900">
-                            ¿Hasta cuándo le vale?
-                        </label>
-                        <p class="mb-1.5 text-xs text-gray-500">
-                            Al llegar el día deja de funcionar sola. Se puede cambiar después.
+                    {{-- Lo que trae puesto, dicho en una linea para no tener que
+                         abrir nada solo para saberlo. --}}
+                    <div class="rounded-lg bg-gray-50 px-3 py-2.5">
+                        <p class="text-xs text-gray-600">
+                            Se creará con acceso a <strong class="text-gray-900">RUC y DNI</strong>,
+                            válida <strong class="text-gray-900">un mes</strong>.
                         </p>
+                        <button type="button" @click="ajustes = ! ajustes"
+                                class="mt-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+                                x-text="ajustes ? 'Dejarlo así' : 'Cambiar esto'"></button>
+                    </div>
 
-                        <div class="mb-2 flex flex-wrap gap-1.5">
-                            @foreach([15 => '15 días', 30 => '1 mes', 90 => '3 meses'] as $n => $etiqueta)
-                                <button type="button" @click="dias({{ $n }})"
-                                        class="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50">
-                                    {{ $etiqueta }}
-                                </button>
-                            @endforeach
-                            <button type="button" @click="$refs.expira.value = ''"
-                                    class="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-500 transition hover:bg-gray-50">
-                                Sin caducidad
-                            </button>
+                    <div x-show="ajustes" x-cloak class="space-y-4 border-t border-gray-100 pt-4">
+                        <div>
+                            <label for="s_nombre" class="mb-1 block text-sm font-medium text-gray-900">
+                                Nombre de la llave <span class="font-normal text-gray-400">— se pone solo</span>
+                            </label>
+                            <input type="text" name="nombre" id="s_nombre" maxlength="80"
+                                   :value="llave?.nombre ?? ''"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="Pruebas · nombre del titular">
                         </div>
 
-                        <input type="date" name="expira_en" id="s_expira" x-ref="expira"
-                               :value="llave?.expira_en ?? ''"
-                               min="{{ now()->addDay()->format('Y-m-d') }}"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <div>
+                            <p class="mb-1 block text-sm font-medium text-gray-900">A qué consultas da acceso</p>
+                            <div class="flex flex-wrap gap-4">
+                                @foreach($apis as $api)
+                                    <label class="flex items-center gap-2 text-sm text-gray-700">
+                                        <input type="checkbox" name="servicios[]" value="{{ $api->slug }}"
+                                               :checked="nueva || (llave?.servicios ?? []).includes('{{ $api->slug }}')"
+                                               class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                        {{ $api->nombre }}
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="s_expira" class="mb-1 block text-sm font-medium text-gray-900">
+                                ¿Hasta cuándo le vale?
+                            </label>
+                            <div class="mb-2 flex flex-wrap gap-1.5">
+                                @foreach([15 => '15 días', 30 => '1 mes', 90 => '3 meses'] as $n => $etiqueta)
+                                    <button type="button" @click="dias({{ $n }})"
+                                            class="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50">
+                                        {{ $etiqueta }}
+                                    </button>
+                                @endforeach
+                                <button type="button" @click="$refs.expira.value = ''"
+                                        class="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-500 transition hover:bg-gray-50">
+                                    Sin caducidad
+                                </button>
+                            </div>
+                            <input type="date" name="expira_en" id="s_expira" x-ref="expira"
+                                   :value="llave?.expira_en ?? '{{ now()->addMonth()->format('Y-m-d') }}'"
+                                   min="{{ now()->addDay()->format('Y-m-d') }}"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
                     </div>
+
+                    {{-- Sin abrir los ajustes, el formulario tiene que mandar
+                         igualmente lo que trae puesto. --}}
+                    <template x-if="! ajustes">
+                        <div>
+                            @foreach($apis as $api)
+                                <input type="hidden" name="servicios[]" value="{{ $api->slug }}">
+                            @endforeach
+                            <input type="hidden" name="expira_en"
+                                   :value="llave?.expira_en ?? '{{ now()->addMonth()->format('Y-m-d') }}'">
+                        </div>
+                    </template>
                 </div>
 
                 <div class="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
