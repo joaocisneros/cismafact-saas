@@ -132,7 +132,7 @@
          @keydown.escape.window="plan = null; nuevo = false"
          class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
         <div @click.outside="plan = null; nuevo = false"
-             class="my-auto w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl">
+             class="my-auto w-full max-w-xl overflow-hidden rounded-lg bg-white shadow-xl">
 
             <form method="POST"
                   :action="nuevo
@@ -145,52 +145,87 @@
                     <h3 class="text-base font-semibold text-gray-900" x-text="nuevo ? 'Nuevo plan' : 'Editar plan'"></h3>
                 </div>
 
-                <div class="space-y-4 px-5 py-4">
-                    <div>
-                        <label for="p_nombre" class="mb-1 block text-sm font-medium text-gray-700">Nombre</label>
-                        <input type="text" name="nombre" id="p_nombre" required maxlength="60"
-                               :value="plan?.nombre ?? ''"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                               placeholder="Solo RUC">
+                {{-- En dos columnas y mas ancho.
+
+                     Los seis campos iban uno debajo de otro en un modal
+                     estrecho, y el formulario acababa mas alto que la pantalla:
+                     para ver lo que incluye el plan habia que bajar, y para
+                     comparar con el precio, subir otra vez. Van emparejados los
+                     que se miran juntos. --}}
+                <div class="space-y-4 px-5 py-4"
+                     x-data="{ aMedida: false, precio: 0 }"
+                     x-effect="aMedida = plan?.a_medida ?? false; precio = Number(plan?.precio_mensual ?? 0)">
+                    <div class="grid gap-3 sm:grid-cols-3">
+                        <div class="sm:col-span-2">
+                            <label for="p_nombre" class="mb-1 block text-sm font-medium text-gray-700">Nombre</label>
+                            <input type="text" name="nombre" id="p_nombre" required maxlength="60"
+                                   :value="plan?.nombre ?? ''"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="Solo RUC">
+                        </div>
+
+                        <div>
+                            <label for="p_precio" class="mb-1 block text-sm font-medium text-gray-700">Precio al mes</label>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-sm text-gray-500">S/</span>
+                                <input type="number" name="precio_mensual" id="p_precio" required min="0" max="99999" step="0.01"
+                                       x-model.number="precio" :disabled="aMedida"
+                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400">
+                            </div>
+                            <label class="mt-1.5 flex items-center gap-2 text-xs text-gray-600">
+                                <input type="checkbox" name="a_medida" value="1" x-model="aMedida"
+                                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                A convenir
+                            </label>
+                        </div>
                     </div>
 
                     <div>
-                        <label for="p_desc" class="mb-1 block text-sm font-medium text-gray-700">Descripción</label>
+                        <label for="p_desc" class="mb-1 block text-sm font-medium text-gray-700">
+                            Descripción <span class="font-normal text-gray-400">— opcional</span>
+                        </label>
                         <input type="text" name="descripcion" id="p_desc" maxlength="120"
                                :value="plan?.descripcion ?? ''"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                                placeholder="Para quien solo consulta empresas">
                     </div>
 
-                    <div x-data="{ aMedida: false }" x-effect="aMedida = plan?.a_medida ?? false">
-                        <label for="p_precio" class="mb-1 block text-sm font-medium text-gray-700">Precio al mes</label>
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm text-gray-500">S/</span>
-                            <input type="number" name="precio_mensual" id="p_precio" required min="0" max="99999" step="0.01"
-                                   :value="plan?.precio_mensual ?? 0" :disabled="aMedida"
-                                   class="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400">
-                        </div>
-                        <label class="mt-2 flex items-center gap-2 text-sm text-gray-700">
-                            <input type="checkbox" name="a_medida" value="1" x-model="aMedida"
-                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                            Precio a convenir
-                        </label>
-                    </div>
+                    {{-- En un plan gratis estos numeros no rigen.
 
-                    <div class="border-t border-gray-100 pt-4">
-                        <p class="mb-2 text-sm font-medium text-gray-700">Qué incluye al mes</p>
-                        <div class="space-y-2">
+                         El gratis es el de las llaves de sandbox, y cada llave
+                         lleva su propio tope, que gana al del plan. Aqui se
+                         pedian igual: el free se editaba con 300 y 50 dentro,
+                         se guardaban, y no cambiaban ni una consulta de ninguna
+                         llave. Pedir un dato que no se usa es peor que no
+                         pedirlo, porque el que lo escribe cree que sirvio. --}}
+                    <div class="border-t border-gray-100 pt-4" x-show="precio > 0 || aMedida" x-cloak>
+                        <p class="mb-2 text-sm font-medium text-gray-700">
+                            Qué incluye al mes
+                            <span class="font-normal text-gray-400">— un 0 deja esa consulta fuera</span>
+                        </p>
+                        <div class="grid gap-3 sm:grid-cols-2">
                             @foreach($apis as $api)
-                                <div class="flex items-center justify-between gap-3">
-                                    <label for="q_{{ $api->id }}" class="text-sm text-gray-700">{{ $api->nombre }}</label>
+                                <div>
+                                    <label for="q_{{ $api->id }}" class="mb-1 block text-xs text-gray-600">{{ $api->nombre }}</label>
+                                    {{-- Deshabilitados no se envian: asi un plan sin
+                                         precio no guarda cuotas que no van a regir. --}}
                                     <input type="number" min="0" max="10000000"
                                            id="q_{{ $api->id }}" name="cuotas[{{ $api->id }}]"
                                            :value="plan?.cuotas?.[{{ $api->id }}] ?? 0"
-                                           class="w-32 rounded-lg border border-gray-300 px-3 py-2 text-right text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                                           :disabled="precio <= 0 && ! aMedida"
+                                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-right text-sm outline-none focus:ring-2 focus:ring-blue-500">
                                 </div>
                             @endforeach
                         </div>
-                        <p class="mt-2 text-xs text-gray-500">Un 0 deja esa consulta fuera del plan.</p>
+                    </div>
+
+                    <div class="border-t border-gray-100 pt-4" x-show="precio <= 0 && ! aMedida" x-cloak>
+                        <p class="text-sm font-medium text-gray-700">Qué incluye al mes</p>
+                        <p class="mt-1 text-xs text-gray-500">
+                            Un plan sin precio es el de las llaves de sandbox, y ahí el tope se pone
+                            al crear cada llave —20 por defecto—, así que lo que se escriba aquí no
+                            llegaría a aplicarse. Ponle precio si quieres fijar cuotas.
+                        </p>
                     </div>
                 </div>
 
