@@ -175,13 +175,16 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
 
     {{-- Crear y editar en modal: son siete campos y meterlos en la fila la
          volveria ilegible. --}}
+    {{-- El modal solo se oculta, no se destruye: al cerrarlo y volver a abrir,
+         los campos conservaban lo ultimo que se escribio. Se limpian al salir,
+         para que «Nueva llave» empiece siempre en blanco. --}}
     <div x-show="llave || nueva" x-cloak
          @keydown.escape.window="llave = null; nueva = false"
          class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
         <div @click.outside="llave = null; nueva = false"
              class="my-auto w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-xl">
 
-            <form method="POST"
+            <form method="POST" x-ref="formulario"
                   :action="nueva
                       ? '{{ route('super-admin.consultas.llaves.guardar') }}'
                       : '{{ url('super-admin/consultas/llaves') }}/' + (llave?.id ?? '')"
@@ -196,6 +199,14 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                       buscando: false,
                       aviso: '',
                       avisoTipo: '',
+
+                      limpiar() {
+                          this.aviso = '';
+                          this.avisoTipo = '';
+                          this.buscando = false;
+                          this.marcados = @js($apis->pluck('slug'));
+                          this.$refs.formulario?.reset();
+                      },
 
                       /* El nombre sale del documento, como en el alta de un
                          cliente: se teclea una vez y no dos, y la razon social
@@ -237,7 +248,17 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                           }
                       },
                   }"
-                  x-effect="if (llave) { marcados = llave.servicios ?? []; }">
+                  x-effect="
+                      if (llave) {
+                          marcados = llave.servicios ?? [];
+                      } else if (! nueva) {
+                          /* El modal se oculta pero no se destruye, asi que sus
+                             campos guardaban lo ultimo escrito: al abrir «Nueva
+                             llave» despues de haber editado una, salian sus
+                             datos. Se vacia al cerrarse. */
+                          limpiar();
+                      }
+                  ">
                 @csrf
                 <template x-if="!nueva"><input type="hidden" name="_method" value="PUT"></template>
 

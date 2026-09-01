@@ -274,7 +274,7 @@ El historial no se puede recuperar.
         <div @click.outside="nueva = false; llave = null" class="my-auto w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl">
             {{-- El mismo modal crea y edita: son los mismos campos, y tener dos
                  formularios iguales acaba con uno de los dos desactualizado. --}}
-            <form method="POST"
+            <form method="POST" x-ref="formulario"
                   :action="nueva
                       ? '{{ route('super-admin.consultas.llaves.guardar') }}'
                       : '{{ url('super-admin/consultas/llaves') }}/' + (llave?.id ?? '')">
@@ -305,7 +305,17 @@ El historial no se puede recuperar.
                                  : this.marcados.filter(s => s !== slug);
                          },
                      }"
-                     x-effect="if (llave) { marcados = llave.servicios ?? []; }">
+                     x-effect="
+                         if (llave) {
+                             marcados = llave.servicios ?? [];
+                         } else if (! nueva) {
+                             /* El modal se oculta pero no se destruye, asi que
+                                sus campos guardaban lo ultimo escrito. Se vacia
+                                al cerrarse. */
+                             marcados = @js($apis->pluck('slug'));
+                             $refs.formulario?.reset();
+                         }
+                     ">
 
                     <input type="hidden" name="titular_tipo" value="externo">
 
