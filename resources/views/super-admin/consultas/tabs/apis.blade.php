@@ -382,15 +382,37 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                         </select>
                     </div>
 
-                    <div>
+                    {{-- Se piensa en cuanto dura el contrato, no en el dia del
+                         calendario en que cae: los botones lo calculan y el
+                         campo se queda para una fecha concreta. --}}
+                    <div x-data="{
+                             enMeses(n) {
+                                 const d = new Date();
+                                 d.setMonth(d.getMonth() + n);
+                                 this.$refs.expira.value = d.toISOString().slice(0, 10);
+                             },
+                         }">
                         <label for="l_expira" class="mb-1 block text-sm font-medium text-gray-900">
                             Vence el <span class="font-normal text-gray-400">— opcional</span>
                         </label>
-                        <input type="date" name="expira_en" id="l_expira"
+
+                        <div class="mb-1.5 flex flex-wrap gap-1.5">
+                            @foreach([1 => '1 mes', 6 => '6 meses', 12 => '1 año'] as $n => $etiqueta)
+                                <button type="button" @click="enMeses({{ $n }})"
+                                        class="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50">
+                                    {{ $etiqueta }}
+                                </button>
+                            @endforeach
+                            <button type="button" @click="$refs.expira.value = ''"
+                                    class="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-500 transition hover:bg-gray-50">
+                                Sin caducidad
+                            </button>
+                        </div>
+
+                        <input type="date" name="expira_en" id="l_expira" x-ref="expira"
                                :value="llave?.expira_en ?? ''"
                                min="{{ now()->addDay()->format('Y-m-d') }}"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                        <p class="mt-1 text-xs text-gray-500">Vacío = sin caducidad.</p>
                     </div>
                     </div>
                 </div>
