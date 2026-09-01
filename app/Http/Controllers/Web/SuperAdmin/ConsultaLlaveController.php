@@ -225,6 +225,16 @@ class ConsultaLlaveController extends Controller
         // y cual no, sin tener que mirar otra columna.
         $prefijo = $request->input('entorno') === 'sandbox' ? 'Sandbox' : 'Producción';
 
+        // El nombre cabe en 80 caracteres, asi que se recorta el titular y no
+        // el resultado: hay razones sociales de noventa —fideicomisos y
+        // proyectos las tienen— y al armar el nombre se pasaban de largo. Se
+        // dejan seis libres para el « (99)» de las repetidas.
+        $sitio = 80 - mb_strlen($prefijo . ' · ') - 6;
+
+        if (mb_strlen($titular) > $sitio) {
+            $titular = rtrim(mb_substr($titular, 0, $sitio - 1)) . '…';
+        }
+
         $base = $prefijo . ' · ' . $titular;
 
         // El primer numero libre, no «cuantas hay mas una». Contando, al borrar
