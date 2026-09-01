@@ -71,12 +71,14 @@
                                         <span class="shrink-0 rounded-full bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700">Producción</span>
                                     @endif
                                 </div>
-                                {{-- El plan va aqui, no en columna propia: es de
-                                     la llave, no de la consulta, y al lado de
-                                     «Origen» parecian decir lo mismo. --}}
-                                <p class="truncate text-xs text-gray-400">
-                                    @if($h->empresa){{ $h->empresa }} · @endif{{ $h->plan ?? 'sin plan' }}@if($h->plan_a_medida) · a convenir @elseif((float) $h->plan_precio > 0) · S/ {{ number_format($h->plan_precio, 2) }}/mes @endif
-                                </p>
+                                {{-- Solo la empresa, que es lo que identifica de
+                                     quien es la llave. El plan salia debajo de
+                                     cada fila repitiendo lo mismo: es del
+                                     cliente, no de la consulta, y se mira en
+                                     «Mis APIs» o en «Sandbox». --}}
+                                @if($h->empresa)
+                                    <p class="truncate text-xs text-gray-400">{{ $h->empresa }}</p>
+                                @endif
                             @elseif($h->empresa)
                                 <span class="text-gray-900">{{ $h->empresa }}</span>
                                 <p class="text-xs italic text-gray-400">su llave ya no existe</p>
