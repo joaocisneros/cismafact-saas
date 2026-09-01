@@ -21,7 +21,7 @@ class ConsultaLlave extends Model
     protected $fillable = [
         'nombre', 'company_id', 'titular', 'titular_documento', 'titular_email',
         'api_plan_id', 'entorno', 'servicios', 'clave', 'secreto', 'secreto_pista',
-        'activa', 'expira_en', 'ultimo_uso_en',
+        'activa', 'expira_en', 'ultimo_uso_en', 'datos_reales', 'tope_pruebas',
     ];
 
     protected $casts = [
@@ -30,6 +30,7 @@ class ConsultaLlave extends Model
         'expira_en' => 'date',
         'ultimo_uso_en' => 'datetime',
         'secreto' => 'encrypted',
+        'datos_reales' => 'boolean',
     ];
 
     protected $hidden = ['secreto'];
@@ -53,6 +54,24 @@ class ConsultaLlave extends Model
     public function nombreDelTitular(): string
     {
         return $this->empresa?->razon_social ?? $this->titular ?? 'Sin titular';
+    }
+
+    /**
+     * Si esta llave responde con datos de ejemplo en vez de consultar de verdad.
+     *
+     * Solo las de prueba, y solo las que no se marcaron como reales: una de
+     * prueba con datos reales existe para enseñarle el servicio a un cliente,
+     * y ahi el dato inventado no vale de nada.
+     */
+    public function devuelveEjemplo(): bool
+    {
+        return $this->entorno === 'sandbox' && ! $this->datos_reales;
+    }
+
+    /** El tope de esta llave: el suyo si lo tiene, si no el de su plan. */
+    public function topeDe(\App\Models\Api $api): int
+    {
+        return $this->tope_pruebas ?: $api->limiteDelPlan($this->api_plan_id);
     }
 
     public function vencida(): bool

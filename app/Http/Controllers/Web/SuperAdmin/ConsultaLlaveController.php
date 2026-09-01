@@ -215,6 +215,8 @@ class ConsultaLlaveController extends Controller
             'servicios' => 'required|array|min:1',
             'servicios.*' => 'exists:apis,slug',
             'expira_en' => 'nullable|date|after:today',
+            'datos_reales' => 'nullable|boolean',
+            'tope_pruebas' => 'nullable|integer|min:1|max:5000',
         ], [
             'nombre.unique' => 'Ya hay una llave con ese nombre. Ponle otro para poder distinguirlas.',
             'company_id.required_if' => 'Elige la empresa a la que pertenece.',
@@ -222,6 +224,18 @@ class ConsultaLlaveController extends Controller
             'servicios.required' => 'Marca al menos una consulta: RUC, DNI o las dos.',
             'expira_en.after' => 'La fecha de caducidad tiene que ser posterior a hoy.',
         ]);
+
+        // Sandbox consulta de verdad: es la llave gratis que se manda para que
+        // el cliente vea que el servicio sirve, y con datos inventados no le
+        // enseña nada. Lo que la separa de las de pago es el tope.
+        if (($datos['entorno'] ?? null) === 'sandbox') {
+            $datos['datos_reales'] = true;
+            $datos['tope_pruebas'] = (int) ($datos['tope_pruebas'] ?? 0) ?: 20;
+        } else {
+            // En produccion manda el plan contratado.
+            $datos['datos_reales'] = true;
+            $datos['tope_pruebas'] = null;
+        }
 
         // Solo uno de los dos titulares queda guardado. Sin esto, cambiar de
         // empresa a externo dejaria el company_id viejo colgando y la llave

@@ -36,7 +36,7 @@
                     <div class="overflow-hidden rounded-lg border border-indigo-200 bg-indigo-50/40">
                         <div class="flex items-center justify-between border-b border-indigo-200 bg-indigo-50 px-4 py-2.5">
                             <span class="text-xs font-semibold uppercase tracking-wide text-indigo-700">Credenciales</span>
-                            <span class="rounded bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">Datos de ejemplo</span>
+                            <span class="rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Datos reales</span>
                         </div>
                         <div class="divide-y divide-indigo-100">
                             @foreach(['URL base' => url('/api/consultas'), 'X-Api-Key' => $creada['clave'], 'X-Api-Secret' => $creada['secreto']] as $etiqueta => $valor)
@@ -66,7 +66,7 @@
             <div>
                 <h2 class="text-sm font-semibold text-gray-900">Llaves de prueba</h2>
                 <p class="mt-0.5 text-xs text-gray-500">
-                    {{ $sandbox->count() }} en total. Devuelven datos de ejemplo, no salen a internet y no gastan cuota.
+                    {{ $sandbox->count() }} en total. Consultan datos reales, con un tope corto para que el cliente vea que el servicio sirve.
                 </p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
@@ -228,7 +228,7 @@ El actual deja de funcionar en cuanto se guarde, así que hay que pasarle el nue
         <div class="border-t border-gray-200 px-5 py-3 text-xs text-gray-500">
             Dirección que necesita el programador:
             <code class="ml-1 rounded bg-gray-100 px-2 py-0.5 font-mono text-gray-700">{{ url('/api/consultas') }}</code>
-            · En sandbox la respuesta es siempre de ejemplo, así que sirve para probar la integración sin gastar nada.
+            · Consultan de verdad, con tope: sirven para que el cliente compruebe el servicio antes de contratar.
         </div>
     </div>
 
@@ -250,7 +250,7 @@ El actual deja de funcionar en cuanto se guarde, así que hay que pasarle el nue
 
                 <div class="border-b border-gray-200 px-5 py-4">
                     <h3 class="text-base font-semibold text-gray-900" x-text="nueva ? 'Nueva llave de prueba' : 'Editar llave de prueba'"></h3>
-                    <p class="mt-0.5 text-xs text-gray-500">Devuelve datos de ejemplo. No gasta cuota ni sale a internet.</p>
+                    <p class="mt-0.5 text-xs text-gray-500">Consulta datos reales, con el tope que le pongas.</p>
                 </div>
 
                 {{-- Una llave de prueba se reparte deprisa: se elige a quien y
@@ -311,6 +311,21 @@ El actual deja de funcionar en cuanto se guarde, así que hay que pasarle el nue
                                     </span>
                                 </label>
                             @endforeach
+                        </div>
+                    </div>
+
+                    {{-- El tope es lo que separa esta llave de una de pago:
+                         consulta de verdad, pero poco. Sin el, una llave gratis
+                         seria un plan de pago regalado. --}}
+                    <div>
+                        <label for="s_tope" class="mb-1.5 block text-sm font-medium text-gray-900">
+                            Cuántas consultas le das
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <input type="number" name="tope_pruebas" id="s_tope" min="1" max="5000"
+                                   :value="llave?.tope_pruebas ?? 20"
+                                   class="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                            <span class="text-sm text-gray-500">al mes, por cada servicio</span>
                         </div>
                     </div>
 
@@ -387,7 +402,7 @@ El actual deja de funcionar en cuanto se guarde, así que hay que pasarle el nue
                 <div class="overflow-hidden rounded-lg border border-indigo-200 bg-indigo-50/40">
                     <div class="flex items-center justify-between border-b border-indigo-200 bg-indigo-50 px-4 py-2.5">
                         <span class="text-xs font-semibold uppercase tracking-wide text-indigo-700">Credenciales</span>
-                        <span class="rounded bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">Datos de ejemplo</span>
+                        <span class="rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Datos reales</span>
                     </div>
                     <div class="divide-y divide-indigo-100">
                         <div class="flex items-center gap-3 px-4 py-2">

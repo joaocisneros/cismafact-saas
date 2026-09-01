@@ -53,7 +53,10 @@ class ConsultaController extends Controller
                 'servicio' => $api->slug,
                 'nombre' => $api->nombre,
                 'disponible' => $api->activa,
-                'limite_mensual' => $tope = $api->limiteDelPlan($llave->api_plan_id),
+                // El tope de la llave, no el del plan: una de prueba lleva el
+                // suyo, y decirle el del plan le prometia consultas que no
+                // tiene. Se cortaba en el suyo pero la cuota decia otra cosa.
+                'limite_mensual' => $tope = $llave->topeDe($api),
                 'usadas' => $usadas = $this->usadas($llave->id, $api->id),
                 'restantes' => max(0, $tope - $usadas),
             ]);
@@ -91,7 +94,9 @@ class ConsultaController extends Controller
             return $this->error("La consulta de {$slug} está temporalmente fuera de servicio.", 503);
         }
 
-        $tope = $api->limiteDelPlan($llave->api_plan_id);
+        // Una llave de prueba lleva su propio tope, mas corto que el del plan
+        // mas barato: existe para enseñar el servicio, no para usarlo.
+        $tope = $llave->topeDe($api);
 
         if ($tope === 0) {
             return $this->error("Tu plan no incluye la consulta de {$slug}.", 403);
@@ -104,7 +109,7 @@ class ConsultaController extends Controller
         // cualquier cosa, quien integra no llegaria a ver nunca un 422 y se lo
         // encontraria de golpe el dia que cambia las credenciales, que es justo
         // lo que este entorno existe para evitar.
-        if ($llave->entorno === 'sandbox') {
+        if ($llave->devuelveEjemplo()) {
             $empezoPrueba = microtime(true);
             $motivo = $this->motivoNumeroInvalido($slug, $numero);
 
