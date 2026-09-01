@@ -111,12 +111,11 @@
                                  en blanco y las otras cinco quedaban apiladas
                                  contra el borde derecho. --}}
                             <th class="w-1/4 px-5 py-3">Empresa</th>
-                            <th class="w-1/12 whitespace-nowrap px-5 py-3">Servicios</th>
                             <th class="w-1/12 whitespace-nowrap px-5 py-3">Plan</th>
                             {{-- Cuanto lleva y cuanto tiene. El plan no vale
                                  aqui: todas las de prueba llevan el mismo y lo
                                  que manda es el tope de cada una. --}}
-                            <th class="w-1/12 whitespace-nowrap px-5 py-3 text-right">Consultas</th>
+                            <th class="w-1/6 whitespace-nowrap px-5 py-3">Consumo del mes</th>
                             <th class="w-1/6 whitespace-nowrap px-5 py-3">Último uso</th>
                             <th class="w-1/6 whitespace-nowrap px-5 py-3">Vigencia</th>
                             <th class="w-1/6 whitespace-nowrap px-5 py-3 text-right">Acciones</th>
@@ -137,9 +136,6 @@
                                     </p>
                                 </td>
 
-                                <td class="whitespace-nowrap px-5 py-3 text-gray-600">
-                                    {{ collect($l->servicios)->map(fn ($s) => strtoupper($s))->join(' y ') }}
-                                </td>
 
                                 <td class="whitespace-nowrap px-5 py-3">
                                     @if($l->plan)
@@ -149,25 +145,42 @@
                                     @endif
                                 </td>
 
-                                <td class="whitespace-nowrap px-5 py-3 text-right">
-                                    @php
-                                        // Lo gastado este mes, que es lo que cuenta contra
-                                        // el tope: el total historico no dice si le queda.
-                                        $delMes = $l->consumo()
-                                            ->where('exito', true)
-                                            ->where('created_at', '>=', now()->startOfMonth())
-                                            ->count();
-                                        $tope = $l->tope_pruebas;
-                                    @endphp
-                                    <span class="font-medium text-gray-900">{{ number_format($delMes) }}</span>
-                                    @if($tope)
-                                        <span class="text-gray-400">/ {{ number_format($tope) }}</span>
-                                        @if($delMes >= $tope)
-                                            <p class="text-xs text-red-600">sin cuota</p>
-                                        @endif
-                                    @else
-                                        <p class="text-xs text-gray-400">sin tope</p>
-                                    @endif
+                                {{-- Una linea por servicio, que es como se gasta.
+
+                                     El tope es de cada consulta, no de las dos
+                                     juntas: con tope 20 se pueden hacer 20 de RUC
+                                     y otras 20 de DNI. Sumandolas la fila decia
+                                     «sin cuota» a las 20 —diez y diez— cuando a
+                                     cada una le quedaba la mitad. --}}
+                                <td class="px-5 py-3">
+                                    <div class="space-y-1.5">
+                                        @foreach($apis->whereIn('slug', (array) $l->servicios) as $api)
+                                            @php
+                                                $usadasApi = (int) ($consumoPorApi[$l->id][$api->id] ?? 0);
+                                                $topeApi = $l->tope_pruebas;
+                                                $pctApi = $topeApi > 0 ? min(100, round($usadasApi / $topeApi * 100)) : 0;
+                                            @endphp
+                                            <div>
+                                                <p class="flex items-baseline justify-between gap-2 text-xs">
+                                                    <span class="font-medium uppercase text-gray-500">{{ $api->slug }}</span>
+                                                    <span>
+                                                        <span class="font-medium text-gray-900">{{ number_format($usadasApi) }}</span>
+                                                        @if($topeApi)
+                                                            <span class="text-gray-400">/ {{ number_format($topeApi) }}</span>
+                                                        @else
+                                                            <span class="text-gray-400">· sin tope</span>
+                                                        @endif
+                                                    </span>
+                                                </p>
+                                                @if($topeApi)
+                                                    <div class="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-gray-100">
+                                                        <div class="h-full rounded-full {{ $pctApi >= 100 ? 'bg-red-500' : ($pctApi >= 80 ? 'bg-amber-500' : 'bg-green-500') }}"
+                                                             style="width: {{ $pctApi }}%"></div>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </td>
 
                                 <td class="whitespace-nowrap px-5 py-3 text-gray-600">

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -72,6 +73,26 @@ class ConsultaLlave extends Model
     public function topeDe(\App\Models\Api $api): int
     {
         return $this->tope_pruebas ?: $api->limiteDelPlan($this->api_plan_id);
+    }
+
+    /**
+     * El consumo que de verdad gasta cuota, este mes.
+     *
+     * Lo usan la API para cortar y las tablas para pintar el gasto. Estaba
+     * escrito por separado en cada sitio y no decian lo mismo: las tablas
+     * contaban tambien las fallidas y lo servido en modo prueba, que no
+     * descuentan, asi que enseñaban un consumo mayor del que la API cobraba.
+     *
+     * Falta acotarlo por llave y por api, que eso cambia segun quien pregunte.
+     */
+    public static function consumoQueGastaCuota(): \Illuminate\Database\Query\Builder
+    {
+        return DB::table('consultas_consumo')
+            ->where('exito', true)
+            // Lo de sandbox se anota para poder verlo, pero no gasta: es lo
+            // que se le promete a quien integra.
+            ->where('fuente', '!=', 'modo prueba')
+            ->where('created_at', '>=', now()->startOfMonth());
     }
 
     public function vencida(): bool

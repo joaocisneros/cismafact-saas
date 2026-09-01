@@ -80,8 +80,7 @@
                 <table class="min-w-full table-fixed divide-y divide-gray-200 text-sm">
                     <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                         <tr>
-                            <th class="w-1/4 px-5 py-3">Titular</th>
-                            <th class="w-1/12 px-5 py-3">Servicios</th>
+                            <th class="w-1/3 px-5 py-3">Titular</th>
                             <th class="w-1/12 px-5 py-3">Plan</th>
                             <th class="w-1/6 px-5 py-3">Consumo del mes</th>
                             <th class="w-1/6 px-5 py-3">Vigencia</th>
@@ -115,9 +114,6 @@
                                     </p>
                                 </td>
 
-                                <td class="px-5 py-3 text-gray-600">
-                                    {{ collect($l->servicios)->map(fn ($s) => strtoupper($s))->join(' y ') }}
-                                </td>
 
                                 <td class="px-5 py-3">
                                     @if($l->plan)

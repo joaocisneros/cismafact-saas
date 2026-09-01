@@ -93,10 +93,9 @@ class ConsultaController extends Controller
              * Agrupado de una vez y no llave por llave: son dos numeros por
              * fila y en consulta suelta serian dos por llave.
              */
-            'consumoPorApi' => DB::table('consultas_consumo')
+            'consumoPorApi' => \App\Models\ConsultaLlave::consumoQueGastaCuota()
                 ->selectRaw('llave_id, api_id, count(*) as total')
                 ->whereNotNull('llave_id')
-                ->where('created_at', '>=', now()->startOfMonth())
                 ->groupBy('llave_id', 'api_id')
                 ->get()
                 ->groupBy('llave_id')
