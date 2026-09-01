@@ -131,6 +131,14 @@ class ConsultaLlaveController extends Controller
             $request->merge(['nombre' => $this->nombreDePrueba($request)]);
         }
 
+        // La caducidad se piensa en dias («que le dure un mes»), no en una
+        // fecha del calendario que hay que ir a contar.
+        if ($request->filled('expira_dias')) {
+            $request->merge([
+                'expira_en' => now()->addDays((int) $request->input('expira_dias'))->toDateString(),
+            ]);
+        }
+
         $datos = $request->validate([
             'nombre' => 'required|string|max:80',
             'titular_tipo' => 'required|in:empresa,externo',
