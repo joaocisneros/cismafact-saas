@@ -197,7 +197,7 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
          @keydown.escape.window="llave = null; nueva = false"
          class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
         <div @click.outside="llave = null; nueva = false"
-             class="my-auto w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl">
+             class="my-auto w-full max-w-xl overflow-hidden rounded-lg bg-white shadow-xl">
 
             <form method="POST" x-ref="formulario"
                   :action="nueva
@@ -302,6 +302,10 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
 
                     {{-- El documento primero: de el sale el nombre. Ademas es
                          el dato que hace falta para facturarle. --}}
+                    {{-- En dos columnas: son campos cortos y uno sale del otro,
+                         asi que puestos uno debajo de otro el modal se alargaba
+                         hasta necesitar scroll para llegar al boton. --}}
+                    <div class="grid gap-3 sm:grid-cols-2">
                     <div>
                         <label for="l_doc" class="mb-1 block text-sm font-medium text-gray-900">
                             RUC o DNI
@@ -326,8 +330,9 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                         </label>
                         <input type="text" name="titular" id="l_titular" maxlength="120" required
                                x-ref="titular" :value="llave?.titular ?? ''"
-                               placeholder="Se rellena al escribir el documento"
+                               placeholder="Sale del documento"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase placeholder:normal-case outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
                     </div>
 
                     <div>
@@ -353,6 +358,7 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
 
                     {{-- El plan si se pregunta, y es lo que separa esta pestaña
                          de Sandbox: aqui se cobra, y de el salen las cuotas. --}}
+                    <div class="grid gap-3 sm:grid-cols-2">
                     <div>
                         <label for="l_plan" class="mb-1 block text-sm font-medium text-gray-900">Plan contratado</label>
                         {{-- Sin los planes gratis: aqui se da de alta a quien
@@ -381,7 +387,8 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                                :value="llave?.expira_en ?? ''"
                                min="{{ now()->addDay()->format('Y-m-d') }}"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                        <p class="mt-1 text-xs text-gray-500">Vacío = sin caducidad. Al llegar el día deja de funcionar.</p>
+                        <p class="mt-1 text-xs text-gray-500">Vacío = sin caducidad.</p>
+                    </div>
                     </div>
                 </div>
 

@@ -271,7 +271,7 @@ El historial no se puede recuperar.
          a que da acceso. Preguntar lo demas seria papeleo para nada. --}}
     <div x-show="nueva || llave" x-cloak @keydown.escape.window="nueva = false; llave = null"
          class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
-        <div @click.outside="nueva = false; llave = null" class="my-auto w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl">
+        <div @click.outside="nueva = false; llave = null" class="my-auto w-full max-w-xl overflow-hidden rounded-lg bg-white shadow-xl">
             {{-- El mismo modal crea y edita: son los mismos campos, y tener dos
                  formularios iguales acaba con uno de los dos desactualizado. --}}
             <form method="POST" x-ref="formulario"
@@ -359,6 +359,9 @@ El historial no se puede recuperar.
                     {{-- El tope es lo que separa esta llave de una de pago:
                          consulta de verdad, pero poco. Sin el, una llave gratis
                          seria un plan de pago regalado. --}}
+                    {{-- En dos columnas: son dos numeros cortos y uno debajo de
+                         otro alargaban el modal sin necesidad. --}}
+                    <div class="grid gap-3 sm:grid-cols-2">
                     <div>
                         <label for="s_tope" class="mb-1 block text-sm font-medium text-gray-900">
                             Cuántas consultas le das
@@ -383,8 +386,10 @@ El historial no se puede recuperar.
                         <div class="flex items-center gap-2">
                             <input type="number" name="expira_dias" id="s_dias" min="1" max="365" value="30"
                                    class="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                            <span class="text-sm text-gray-500">días — vacío para que no caduque</span>
+                            <span class="text-sm text-gray-500">días</span>
                         </div>
+                        <p class="mt-1 text-xs text-gray-500">Vacío = sin caducidad.</p>
+                    </div>
                     </div>
 
                     {{-- Sin campo de nombre: se arma con el titular al crear y
