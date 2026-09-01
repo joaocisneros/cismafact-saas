@@ -110,9 +110,12 @@
                                  asi que acumulaba todo el sobrante en un hueco
                                  en blanco y las otras cinco quedaban apiladas
                                  contra el borde derecho. --}}
-                            <th class="w-1/3 px-5 py-3">Empresa</th>
+                            <th class="w-1/4 px-5 py-3">Empresa</th>
                             <th class="w-1/12 whitespace-nowrap px-5 py-3">Servicios</th>
-                            <th class="w-1/12 whitespace-nowrap px-5 py-3 text-right">Consultas</th>
+                            {{-- Cuanto lleva y cuanto tiene. El plan no vale
+                                 aqui: todas las de prueba llevan el mismo y lo
+                                 que manda es el tope de cada una. --}}
+                            <th class="w-1/6 whitespace-nowrap px-5 py-3 text-right">Consultas</th>
                             <th class="w-1/6 whitespace-nowrap px-5 py-3">Último uso</th>
                             <th class="w-1/6 whitespace-nowrap px-5 py-3">Vigencia</th>
                             <th class="w-1/6 whitespace-nowrap px-5 py-3 text-right">Acciones</th>
@@ -137,7 +140,26 @@
                                     {{ collect($l->servicios)->map(fn ($s) => strtoupper($s))->join(' y ') }}
                                 </td>
 
-                                <td class="whitespace-nowrap px-5 py-3 text-right font-medium text-gray-900">{{ number_format($l->consumo_count) }}</td>
+                                <td class="whitespace-nowrap px-5 py-3 text-right">
+                                    @php
+                                        // Lo gastado este mes, que es lo que cuenta contra
+                                        // el tope: el total historico no dice si le queda.
+                                        $delMes = $l->consumo()
+                                            ->where('exito', true)
+                                            ->where('created_at', '>=', now()->startOfMonth())
+                                            ->count();
+                                        $tope = $l->tope_pruebas;
+                                    @endphp
+                                    <span class="font-medium text-gray-900">{{ number_format($delMes) }}</span>
+                                    @if($tope)
+                                        <span class="text-gray-400">/ {{ number_format($tope) }}</span>
+                                        <p class="text-xs {{ $delMes >= $tope ? 'text-red-600' : 'text-gray-400' }}">
+                                            {{ $delMes >= $tope ? 'sin cuota' : 'de cada servicio' }}
+                                        </p>
+                                    @else
+                                        <p class="text-xs text-gray-400">sin tope</p>
+                                    @endif
+                                </td>
 
                                 <td class="whitespace-nowrap px-5 py-3 text-gray-600">
                                     {{ $l->ultimo_uso_en?->diffForHumans() ?? 'nunca' }}
