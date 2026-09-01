@@ -52,10 +52,28 @@
                     {{ $sandbox->count() }} en total. Devuelven datos de ejemplo, no salen a internet y no gastan cuota.
                 </p>
             </div>
-            <button type="button" @click="nueva = true"
-                    class="whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
-                Nueva llave de prueba
-            </button>
+            <div class="flex flex-wrap items-center gap-2">
+                {{-- Solo sale si hay algo que limpiar: un boton de borrar
+                     siempre a la vista, sin nada que borrar, es un susto de
+                     mas cada vez que se entra. --}}
+                @php $vencidas = $sandbox->filter->vencida(); @endphp
+                @if($vencidas->isNotEmpty())
+                    <form method="POST" action="{{ route('super-admin.consultas.llaves.limpiar-vencidas') }}"
+                          onsubmit="return confirm('Se eliminarán {{ $vencidas->count() }} llave(s) de prueba ya vencida(s). Las consultas que hicieron se conservan en el historial. ¿Seguir?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                                class="whitespace-nowrap rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50">
+                            Eliminar vencidas ({{ $vencidas->count() }})
+                        </button>
+                    </form>
+                @endif
+
+                <button type="button" @click="nueva = true"
+                        class="whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
+                    Nueva llave de prueba
+                </button>
+            </div>
         </div>
 
         @if($sandbox->isEmpty())

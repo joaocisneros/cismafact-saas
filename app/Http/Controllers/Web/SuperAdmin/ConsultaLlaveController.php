@@ -69,6 +69,37 @@ class ConsultaLlaveController extends Controller
         return back()->with('success', "«{$nombre}» eliminada. El consumo que hubo se conserva.");
     }
 
+    /**
+     * Borra de una vez las llaves de sandbox ya vencidas.
+     *
+     * Se reparten muchas para que la gente pruebe, y caducan solas. Borrarlas
+     * de una en una acaba siendo tan pesado que no se hace, y la lista se llena
+     * de llaves muertas entre las que hay que buscar las vivas.
+     *
+     * Solo sandbox y solo vencidas: una de produccion, aunque haya caducado,
+     * es de alguien que pago y puede querer renovar.
+     */
+    public function limpiarVencidas()
+    {
+        $vencidas = ConsultaLlave::where('entorno', 'sandbox')
+            ->whereNotNull('expira_en')
+            ->whereDate('expira_en', '<', now()->toDateString())
+            ->get();
+
+        if ($vencidas->isEmpty()) {
+            return back()->with('success', 'No hay ninguna llave de prueba vencida.');
+        }
+
+        // El consumo no se va con ellas: la columna llave_id queda en nulo y
+        // las consultas siguen contando en el historial.
+        $cuantas = $vencidas->count();
+        ConsultaLlave::whereIn('id', $vencidas->pluck('id'))->delete();
+
+        return back()->with('success', $cuantas === 1
+            ? 'Se eliminó 1 llave de prueba vencida.'
+            : "Se eliminaron {$cuantas} llaves de prueba vencidas.");
+    }
+
     /** @return array<string,mixed> */
     private function validar(Request $request, ?ConsultaLlave $llave = null): array
     {

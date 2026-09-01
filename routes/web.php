@@ -233,6 +233,10 @@ Route::prefix('super-admin')
         Route::post('/consultas/llaves/{llave}/alternar', [SuperAdminConsultaLlaveController::class, 'alternar'])->name('consultas.llaves.alternar');
         Route::delete('/consultas/llaves/{llave}', [SuperAdminConsultaLlaveController::class, 'destroy'])->name('consultas.llaves.borrar');
 
+        // Limpieza de las llaves de prueba caducadas, que se acumulan.
+        Route::delete('/consultas/llaves-vencidas', [\App\Http\Controllers\Web\SuperAdmin\ConsultaLlaveController::class, 'limpiarVencidas'])
+            ->name('consultas.llaves.limpiar-vencidas');
+
         // Padron reducido de SUNAT: estado y actualizacion.
         Route::get('/padron', [SuperAdminPadronController::class, 'index'])->name('padron');
         Route::post('/padron/actualizar', [SuperAdminPadronController::class, 'actualizar'])->name('padron.actualizar');
