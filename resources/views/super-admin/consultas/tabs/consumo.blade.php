@@ -37,10 +37,10 @@
             <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
                 <tr>
                     <th class="w-1/8 whitespace-nowrap px-5 py-3">Fecha y hora</th>
-                    <th class="w-1/6 whitespace-nowrap px-5 py-3">Quién consultó</th>
+                    <th class="w-1/5 whitespace-nowrap px-5 py-3">Quién consultó</th>
                     <th class="w-1/12 whitespace-nowrap px-5 py-3">Servicio</th>
                     <th class="w-1/12 whitespace-nowrap px-5 py-3">Número</th>
-                    <th class="w-1/5 whitespace-nowrap px-5 py-3">A nombre de</th>
+                    <th class="w-1/6 whitespace-nowrap px-5 py-3">A nombre de</th>
                     <th class="w-1/6 whitespace-nowrap px-5 py-3">Estado</th>
                     <th class="w-1/12 whitespace-nowrap px-5 py-3">Origen</th>
                     <th class="w-1/12 whitespace-nowrap px-5 py-3 text-right">Tardó</th>
@@ -59,22 +59,22 @@
                              identifica a nadie. --}}
                         <td class="px-5 py-2.5">
                             @if($h->llave)
+                                {{-- El nombre en una linea y la etiqueta al lado.
+                                     Si el nombre se parte en dos, la etiqueta baja
+                                     con el y en cada fila queda a una altura, que
+                                     es lo que descuadraba la columna. --}}
                                 <div class="flex items-center gap-1.5">
-                                    <span class="font-medium text-gray-900">{{ $h->llave }}</span>
-                                    {{-- Las dos llevan distintivo. Antes solo las de
-                                         prueba, y una de produccion se quedaba sin
-                                         nada: no se sabia si es que era real o si
-                                         faltaba el dato. --}}
+                                    <span class="min-w-0 truncate font-medium text-gray-900" title="{{ $h->llave }}">{{ $h->llave }}</span>
                                     @if($h->entorno === 'sandbox')
-                                        <span class="rounded-full bg-blue-50 px-1.5 py-0.5 text-xs font-medium text-blue-700">Sandbox</span>
+                                        <span class="shrink-0 rounded-full bg-blue-50 px-1.5 py-0.5 text-xs font-medium text-blue-700">Sandbox</span>
                                     @elseif($h->entorno === 'produccion')
-                                        <span class="rounded-full bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700">Producción</span>
+                                        <span class="shrink-0 rounded-full bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700">Producción</span>
                                     @endif
                                 </div>
                                 {{-- El plan va aqui, no en columna propia: es de
                                      la llave, no de la consulta, y al lado de
                                      «Origen» parecian decir lo mismo. --}}
-                                <p class="text-xs text-gray-400">
+                                <p class="truncate text-xs text-gray-400">
                                     @if($h->empresa){{ $h->empresa }} · @endif{{ $h->plan ?? 'sin plan' }}@if($h->plan_a_medida) · a convenir @elseif((float) $h->plan_precio > 0) · S/ {{ number_format($h->plan_precio, 2) }}/mes @endif
                                 </p>
                             @elseif($h->empresa)
