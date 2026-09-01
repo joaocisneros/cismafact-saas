@@ -7,8 +7,11 @@
     // Las pestañas van por la direccion y no por JavaScript: asi se puede
     // enlazar una en concreto, y al guardar un formulario back() vuelve a la
     // misma en vez de tirar al usuario a la primera.
+    // Planes va la ultima y no la primera: los precios y las cuotas se tocan
+    // el dia que se monta el servicio o cuando cambia una tarifa, mientras que
+    // las llaves y el consumo se miran a diario. Abrir el modulo por la
+    // configuracion obligaba a pasar de largo por ella cada vez.
     $pestanas = [
-        'planes' => 'Planes',
         'apis' => 'Mis APIs',
         'sandbox' => 'Sandbox',
         // Dos consumos y no uno: el de fuera es lo que se cobra y descuenta
@@ -17,9 +20,10 @@
         'consumo' => 'Consumo externo',
         'interno' => 'Consumo interno',
         'docs' => 'Documentación',
+        'planes' => 'Planes',
     ];
 
-    $actual = array_key_exists(request('tab'), $pestanas) ? request('tab') : 'planes';
+    $actual = array_key_exists(request('tab'), $pestanas) ? request('tab') : 'apis';
 @endphp
 
 <div class="space-y-5">
