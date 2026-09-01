@@ -192,6 +192,50 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                               ? [...new Set([...this.marcados, slug])]
                               : this.marcados.filter(s => s !== slug);
                       },
+
+                      buscando: false,
+                      aviso: '',
+                      avisoTipo: '',
+
+                      /* El nombre sale del documento, como en el alta de un
+                         cliente: se teclea una vez y no dos, y la razon social
+                         queda tal cual figura, sin erratas. */
+                      async buscar(numero) {
+                          const n = String(numero || '').replace(/\D/g, '');
+                          const tipo = n.length === 11 ? 'ruc' : (n.length === 8 ? 'dni' : null);
+
+                          this.aviso = '';
+                          this.avisoTipo = '';
+
+                          if (! tipo) return;
+
+                          this.buscando = true;
+                          try {
+                              const res = await fetch('{{ url('super-admin/consultas/documento') }}/' + tipo + '/' + n, {
+                                  headers: { 'Accept': 'application/json' },
+                              });
+                              const d = await res.json();
+
+                              if (! d.encontrado) {
+                                  this.aviso = d.mensaje;
+                                  this.avisoTipo = 'error';
+                                  return;
+                              }
+
+                              this.$refs.titular.value = d.nombre;
+
+                              /* Un RUC de baja o no habido se puede dar de alta
+                                 igual, pero conviene saberlo antes de cobrarle. */
+                              const ojo = [d.estado, d.condicion].filter(v => v && v !== 'ACTIVO' && v !== 'HABIDO');
+                              this.aviso = ojo.length ? 'Figura como ' + ojo.join(' y ') + '.' : d.nombre;
+                              this.avisoTipo = ojo.length ? 'ojo' : 'ok';
+                          } catch (e) {
+                              this.aviso = 'No se pudo consultar. Escríbelo a mano.';
+                              this.avisoTipo = 'error';
+                          } finally {
+                              this.buscando = false;
+                          }
+                      },
                   }"
                   x-effect="if (llave) { marcados = llave.servicios ?? []; }">
                 @csrf
@@ -220,14 +264,34 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                     <input type="hidden" name="entorno" value="produccion">
                     <input type="hidden" name="titular_tipo" value="externo">
 
+                    {{-- El documento primero: de el sale el nombre. Ademas es
+                         el dato que hace falta para facturarle. --}}
+                    <div>
+                        <label for="l_doc" class="mb-1.5 block text-sm font-medium text-gray-900">
+                            RUC o DNI
+                        </label>
+                        <input type="text" name="titular_documento" id="l_doc" maxlength="11"
+                               :value="llave?.titular_documento ?? ''"
+                               @input.debounce.400ms="buscar($event.target.value)"
+                               placeholder="11 dígitos para RUC, 8 para DNI"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+
+                        <template x-if="aviso">
+                            <p class="mt-1.5 text-xs"
+                               :class="{ 'text-green-700': avisoTipo === 'ok', 'text-amber-700': avisoTipo === 'ojo', 'text-red-600': avisoTipo === 'error' }"
+                               x-text="aviso"></p>
+                        </template>
+                        <p x-show="buscando" class="mt-1.5 text-xs text-gray-500">Consultando…</p>
+                    </div>
+
                     <div>
                         <label for="l_titular" class="mb-1.5 block text-sm font-medium text-gray-900">
-                            Empresa
+                            Nombre o razón social
                         </label>
                         <input type="text" name="titular" id="l_titular" maxlength="120" required
-                               :value="llave?.titular ?? ''"
-                               placeholder="Ej.: Contables SAC"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                               x-ref="titular" :value="llave?.titular ?? ''"
+                               placeholder="Se rellena al escribir el documento"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase placeholder:normal-case outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
 
                     <div>

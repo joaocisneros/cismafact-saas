@@ -241,6 +241,11 @@ Route::prefix('super-admin')
         // a la vista de todas las llaves en cada carga de la pagina.
         Route::get('/consultas/llaves/{llave}/secreto', [\App\Http\Controllers\Web\SuperAdmin\ConsultaLlaveController::class, 'secreto'])
             ->name('consultas.llaves.secreto');
+
+        // Rellenar el alta de una llave con la ficha del RUC o el DNI, para no
+        // teclear la razon social a mano.
+        Route::get('/consultas/documento/{tipo}/{numero}', [\App\Http\Controllers\Web\SuperAdmin\ConsultaLlaveController::class, 'documento'])
+            ->name('consultas.documento');
         Route::delete('/consultas/llaves/{llave}', [SuperAdminConsultaLlaveController::class, 'destroy'])->name('consultas.llaves.borrar');
 
         // Limpieza de las llaves de prueba caducadas, que se acumulan.

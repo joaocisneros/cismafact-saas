@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Web\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ConsultaLlave;
+use App\Support\ConsumoInterno;
+use App\Services\ConsultaDocumentoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -78,6 +80,42 @@ class ConsultaLlaveController extends Controller
         return back()->with('success', $cuantas
             ? "«{$nombre}» eliminada, junto con sus {$cuantas} consultas."
             : "«{$nombre}» eliminada.");
+    }
+
+    /**
+     * La ficha de un RUC o un DNI, para rellenar el alta de una llave.
+     *
+     * Se anota como consumo interno igual que la busqueda de clientes: sale al
+     * proveedor y cuesta lo mismo la pida quien la pida. Sin anotarla, el
+     * gasto del panel se veria a medias.
+     */
+    public function documento(string $tipo, string $numero, ConsultaDocumentoService $consultas)
+    {
+        if (! in_array($tipo, ['ruc', 'dni'], true)) {
+            return response()->json(['encontrado' => false, 'mensaje' => 'Solo se puede consultar RUC o DNI.']);
+        }
+
+        $numero = preg_replace('/\D/', '', $numero);
+
+        $empezo = microtime(true);
+        $r = $tipo === 'ruc' ? $consultas->ruc($numero) : $consultas->dni($numero);
+
+        // Sin empresa: la pide el super admin, no una empresa del sistema.
+        ConsumoInterno::anotar(null, $tipo, $numero, $r, (int) round((microtime(true) - $empezo) * 1000));
+
+        if (empty($r['nombre'])) {
+            return response()->json([
+                'encontrado' => false,
+                'mensaje' => $r['motivo'] ?? 'No se pudo consultar.',
+            ]);
+        }
+
+        return response()->json([
+            'encontrado' => true,
+            'nombre' => $r['nombre'],
+            'estado' => $r['estado'] ?? null,
+            'condicion' => $r['condicion'] ?? null,
+        ]);
     }
 
     /**
