@@ -2,7 +2,7 @@
      Un sandbox devuelve datos de ejemplo y no gasta cuota, asi que quien lo usa
      esta integrando, no consumiendo. Mezclarlas con las de produccion enturbia
      las dos preguntas: "a quien le cobro" y "quien esta probando". --}}
-<div x-data="{ nueva: false, detalle: null }">
+<div x-data="{ nueva: false, detalle: null, llave: null }">
 
     @if($creada = session('llave_creada'))
         <div x-data="{ abierto: true }" x-show="abierto" x-cloak
@@ -140,6 +140,19 @@
                                                            'expira' => $l->expira_en?->format('d/m/Y'),
                                                        ]) }}" />
 
+                                        {{-- Faltaba: sin esto no habia forma de
+                                             cambiarle la caducidad a una llave ya
+                                             creada, que es justo lo que se toca
+                                             cuando alguien sigue integrando. --}}
+                                        <x-icon-action icon="editar" label="Editar" color="slate" type="button"
+                                                       @click="llave = {{ Illuminate\Support\Js::from([
+                                                           'id' => $l->id,
+                                                           'nombre' => $l->nombre,
+                                                           'titular' => $l->titular,
+                                                           'servicios' => (array) $l->servicios,
+                                                           'expira_en' => $l->expira_en?->format('Y-m-d'),
+                                                       ]) }}" />
+
                                         <form method="POST" action="{{ route('super-admin.consultas.llaves.alternar', $l) }}">
                                             @csrf
                                             <x-icon-action :icon="$l->activa ? 'bloquear' : 'desbloquear'"
@@ -171,17 +184,23 @@
 
     {{-- Alta rapida: en pruebas no hace falta plan ni cuota, solo a quien es y
          a que da acceso. Preguntar lo demas seria papeleo para nada. --}}
-    <div x-show="nueva" x-cloak @keydown.escape.window="nueva = false"
+    <div x-show="nueva || llave" x-cloak @keydown.escape.window="nueva = false; llave = null"
          class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
-        <div @click.outside="nueva = false" class="my-auto w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl">
-            <form method="POST" action="{{ route('super-admin.consultas.llaves.guardar') }}">
+        <div @click.outside="nueva = false; llave = null" class="my-auto w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl">
+            {{-- El mismo modal crea y edita: son los mismos campos, y tener dos
+                 formularios iguales acaba con uno de los dos desactualizado. --}}
+            <form method="POST"
+                  :action="nueva
+                      ? '{{ route('super-admin.consultas.llaves.guardar') }}'
+                      : '{{ url('super-admin/consultas/llaves') }}/' + (llave?.id ?? '')">
                 @csrf
+                <template x-if="! nueva"><input type="hidden" name="_method" value="PUT"></template>
                 <input type="hidden" name="entorno" value="sandbox">
                 <input type="hidden" name="titular_tipo" value="externo">
                 <input type="hidden" name="api_plan_id" value="{{ $planesApi->first()?->id }}">
 
                 <div class="border-b border-gray-200 px-5 py-4">
-                    <h3 class="text-base font-semibold text-gray-900">Nueva llave de prueba</h3>
+                    <h3 class="text-base font-semibold text-gray-900" x-text="nueva ? 'Nueva llave de prueba' : 'Editar llave de prueba'"></h3>
                     <p class="mt-0.5 text-xs text-gray-500">Devuelve datos de ejemplo. No gasta cuota ni sale a internet.</p>
                 </div>
 
@@ -189,6 +208,7 @@
                     <div>
                         <label for="s_nombre" class="mb-1 block text-sm font-medium text-gray-700">Nombre</label>
                         <input type="text" name="nombre" id="s_nombre" required maxlength="80"
+                               :value="llave?.nombre ?? ''"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                                placeholder="Pruebas - ERP de Contables SAC">
                     </div>
@@ -196,6 +216,7 @@
                     <div>
                         <label for="s_titular" class="mb-1 block text-sm font-medium text-gray-700">Para quién</label>
                         <input type="text" name="titular" id="s_titular" required maxlength="120"
+                               :value="llave?.titular ?? ''"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                                placeholder="Nombre del programador o de su empresa">
                     </div>
@@ -205,7 +226,8 @@
                         <div class="flex flex-wrap gap-4">
                             @foreach($apis as $api)
                                 <label class="flex items-center gap-2 text-sm text-gray-700">
-                                    <input type="checkbox" name="servicios[]" value="{{ $api->slug }}" checked
+                                    <input type="checkbox" name="servicios[]" value="{{ $api->slug }}"
+                                           :checked="nueva || (llave?.servicios ?? []).includes('{{ $api->slug }}')"
                                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                                     {{ $api->nombre }}
                                 </label>
@@ -218,6 +240,7 @@
                             Caduca el <span class="font-normal text-gray-400">— opcional</span>
                         </label>
                         <input type="date" name="expira_en" id="s_expira"
+                               :value="llave?.expira_en ?? ''"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                         <p class="mt-1 text-xs text-gray-500">
                             Útil aquí: una llave de prueba que caduca sola no se queda viva para siempre.
@@ -226,13 +249,12 @@
                 </div>
 
                 <div class="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
-                    <button type="button" @click="nueva = false"
+                    <button type="button" @click="nueva = false; llave = null"
                             class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                         Cancelar
                     </button>
-                    <button type="submit" class="whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
-                        Crear
-                    </button>
+                    <button type="submit" class="whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+                            x-text="nueva ? 'Crear' : 'Guardar cambios'"></button>
                 </div>
             </form>
         </div>
