@@ -99,22 +99,22 @@
             </div>
         @else
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <table class="min-w-full table-fixed divide-y divide-gray-200 text-sm">
                     <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
                         {{-- «Para quién» encabezaba la llave, y el titular iba
                              colgado de «Da acceso a», que es de los servicios.
                              Cada dato pasa a su columna. --}}
                         <tr>
-                            {{-- Empresa era la unica sin ancho fijo, asi que se
-                                 llevaba todo el sobrante y dejaba el resto
-                                 apretado contra el borde. Se reparte a ojo segun
-                                 lo que lleva cada una. --}}
-                            <th class="w-2/5 px-5 py-3">Empresa</th>
-                            <th class="whitespace-nowrap px-5 py-3">Servicios</th>
-                            <th class="whitespace-nowrap px-5 py-3 text-right">Consultas</th>
-                            <th class="whitespace-nowrap px-5 py-3">Último uso</th>
-                            <th class="whitespace-nowrap px-5 py-3">Vigencia</th>
-                            <th class="w-px whitespace-nowrap px-5 py-3 text-right">Acciones</th>
+                            {{-- Reparto fijo. Antes solo «Empresa» podia crecer,
+                                 asi que acumulaba todo el sobrante en un hueco
+                                 en blanco y las otras cinco quedaban apiladas
+                                 contra el borde derecho. --}}
+                            <th class="w-1/3 px-5 py-3">Empresa</th>
+                            <th class="w-1/12 whitespace-nowrap px-5 py-3">Servicios</th>
+                            <th class="w-1/12 whitespace-nowrap px-5 py-3 text-right">Consultas</th>
+                            <th class="w-1/6 whitespace-nowrap px-5 py-3">Último uso</th>
+                            <th class="w-1/6 whitespace-nowrap px-5 py-3">Vigencia</th>
+                            <th class="w-1/6 whitespace-nowrap px-5 py-3 text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -125,10 +125,10 @@
                                      mismo titular tiene mas de una, pero no es lo
                                      que se busca al mirar la lista. --}}
                                 <td class="px-5 py-3">
-                                    <p class="font-medium text-gray-900">{{ $l->nombreDelTitular() }}</p>
-                                    <p class="truncate text-xs text-gray-500">
+                                    <p class="truncate font-medium text-gray-900" title="{{ $l->nombreDelTitular() }}">{{ $l->nombreDelTitular() }}</p>
+                                    <p class="truncate text-xs text-gray-500" title="{{ $l->nombre }}">
                                         {{ $l->nombre }}
-                                        <span class="font-mono text-gray-400">· {{ Str::limit($l->clave, 20) }}</span>
+                                        <span class="font-mono text-gray-400">· {{ Str::limit($l->clave, 16) }}</span>
                                     </p>
                                 </td>
 
