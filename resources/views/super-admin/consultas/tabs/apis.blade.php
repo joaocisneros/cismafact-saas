@@ -295,7 +295,7 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                      estar dado de alta como empresa.
 
                      El nombre no se pregunta: se arma con el titular. --}}
-                <div class="space-y-4 px-5 py-4">
+                <div class="space-y-3 px-5 py-4">
 
                     <input type="hidden" name="entorno" value="produccion">
                     <input type="hidden" name="titular_tipo" value="externo">
@@ -303,7 +303,7 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                     {{-- El documento primero: de el sale el nombre. Ademas es
                          el dato que hace falta para facturarle. --}}
                     <div>
-                        <label for="l_doc" class="mb-1.5 block text-sm font-medium text-gray-900">
+                        <label for="l_doc" class="mb-1 block text-sm font-medium text-gray-900">
                             RUC o DNI
                         </label>
                         <input type="text" name="titular_documento" id="l_doc" maxlength="11"
@@ -321,7 +321,7 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                     </div>
 
                     <div>
-                        <label for="l_titular" class="mb-1.5 block text-sm font-medium text-gray-900">
+                        <label for="l_titular" class="mb-1 block text-sm font-medium text-gray-900">
                             Nombre o razón social
                         </label>
                         <input type="text" name="titular" id="l_titular" maxlength="120" required
@@ -331,10 +331,10 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                     </div>
 
                     <div>
-                        <p class="mb-1.5 block text-sm font-medium text-gray-900">¿A qué le da acceso?</p>
+                        <p class="mb-1 block text-sm font-medium text-gray-900">¿A qué le da acceso?</p>
                         <div class="grid gap-2 sm:grid-cols-2">
                             @foreach($apis as $api)
-                                <label class="flex cursor-pointer gap-2.5 rounded-lg border p-3 transition"
+                                <label class="flex cursor-pointer gap-2 rounded-lg border px-2.5 py-2 transition"
                                        :class="marcados.includes('{{ $api->slug }}') ? 'border-blue-500 bg-blue-50/50' : 'border-gray-200 hover:bg-gray-50'">
                                     <input type="checkbox" name="servicios[]" value="{{ $api->slug }}"
                                            :checked="marcados.includes('{{ $api->slug }}')"
@@ -343,7 +343,7 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                                     <span class="min-w-0">
                                         <span class="block text-sm font-medium text-gray-900">{{ $api->nombre }}</span>
                                         @if($api->descripcion)
-                                            <span class="mt-0.5 block text-xs leading-snug text-gray-500">{{ $api->descripcion }}</span>
+                                            <span class="block truncate text-xs text-gray-500" title="{{ $api->descripcion }}">{{ $api->descripcion }}</span>
                                         @endif
                                     </span>
                                 </label>
@@ -354,10 +354,18 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                     {{-- El plan si se pregunta, y es lo que separa esta pestaña
                          de Sandbox: aqui se cobra, y de el salen las cuotas. --}}
                     <div>
-                        <label for="l_plan" class="mb-1.5 block text-sm font-medium text-gray-900">Plan contratado</label>
+                        <label for="l_plan" class="mb-1 block text-sm font-medium text-gray-900">Plan contratado</label>
+                        {{-- Sin los planes gratis: aqui se da de alta a quien
+                             paga, y lo gratuito se reparte desde Sandbox. Salia
+                             el primero de la lista, asi que un despiste al elegir
+                             regalaba trescientas consultas al mes.
+
+                             Los de a convenir si salen: cuestan cero en la ficha
+                             porque el precio se acuerda aparte, no porque sean
+                             gratis. --}}
                         <select name="api_plan_id" id="l_plan" required
                                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                            @foreach($planesApi as $p)
+                            @foreach($planesApi->filter(fn ($p) => $p->a_medida || (float) $p->precio_mensual > 0) as $p)
                                 <option value="{{ $p->id }}" :selected="llave?.api_plan_id == {{ $p->id }}">
                                     {{ $p->nombre }}@if($p->a_medida) — a convenir @elseif((float) $p->precio_mensual > 0) — S/ {{ number_format($p->precio_mensual, 2) }}/mes @else — sin costo @endif
                                 </option>
@@ -366,7 +374,7 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                     </div>
 
                     <div>
-                        <label for="l_expira" class="mb-1.5 block text-sm font-medium text-gray-900">
+                        <label for="l_expira" class="mb-1 block text-sm font-medium text-gray-900">
                             Vence el <span class="font-normal text-gray-400">— opcional</span>
                         </label>
                         <input type="date" name="expira_en" id="l_expira"

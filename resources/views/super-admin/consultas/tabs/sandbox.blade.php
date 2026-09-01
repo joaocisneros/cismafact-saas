@@ -296,7 +296,7 @@ El historial no se puede recuperar.
                      ser un programador, no una empresa dada de alta.
 
                      El nombre no se pregunta: se arma con el titular. --}}
-                <div class="space-y-4 px-5 py-4"
+                <div class="space-y-3 px-5 py-4"
                      x-data="{
                          marcados: @js($apis->pluck('slug')),
                          alterna(slug, on) {
@@ -322,7 +322,7 @@ El historial no se puede recuperar.
                     <div>
                         {{-- «Empresa», que es como se llama la columna de la
                              lista: el mismo dato dicho igual en los dos sitios. --}}
-                        <label for="s_titular" class="mb-1.5 block text-sm font-medium text-gray-900">
+                        <label for="s_titular" class="mb-1 block text-sm font-medium text-gray-900">
                             Empresa
                         </label>
                         <input type="text" name="titular" id="s_titular" maxlength="120" required
@@ -336,10 +336,10 @@ El historial no se puede recuperar.
                          cada una; aqui lo dice debajo, que es lo mismo que se
                          lee en la pestaña de planes. --}}
                     <div>
-                        <p class="mb-1.5 block text-sm font-medium text-gray-900">¿A qué le da acceso?</p>
+                        <p class="mb-1 block text-sm font-medium text-gray-900">¿A qué le da acceso?</p>
                         <div class="grid gap-2 sm:grid-cols-2">
                             @foreach($apis as $api)
-                                <label class="flex cursor-pointer gap-2.5 rounded-lg border p-3 transition"
+                                <label class="flex cursor-pointer gap-2 rounded-lg border px-2.5 py-2 transition"
                                        :class="marcados.includes('{{ $api->slug }}') ? 'border-blue-500 bg-blue-50/50' : 'border-gray-200 hover:bg-gray-50'">
                                     <input type="checkbox" name="servicios[]" value="{{ $api->slug }}"
                                            :checked="marcados.includes('{{ $api->slug }}')"
@@ -348,7 +348,7 @@ El historial no se puede recuperar.
                                     <span class="min-w-0">
                                         <span class="block text-sm font-medium text-gray-900">{{ $api->nombre }}</span>
                                         @if($api->descripcion)
-                                            <span class="mt-0.5 block text-xs leading-snug text-gray-500">{{ $api->descripcion }}</span>
+                                            <span class="block truncate text-xs text-gray-500" title="{{ $api->descripcion }}">{{ $api->descripcion }}</span>
                                         @endif
                                     </span>
                                 </label>
@@ -360,7 +360,7 @@ El historial no se puede recuperar.
                          consulta de verdad, pero poco. Sin el, una llave gratis
                          seria un plan de pago regalado. --}}
                     <div>
-                        <label for="s_tope" class="mb-1.5 block text-sm font-medium text-gray-900">
+                        <label for="s_tope" class="mb-1 block text-sm font-medium text-gray-900">
                             Cuántas consultas le das
                         </label>
                         <div class="flex items-center gap-2">
@@ -377,7 +377,7 @@ El historial no se puede recuperar.
                          cae dentro de un mes. Al editar si va la fecha, que ahi
                          se busca un dia concreto. --}}
                     <div x-show="! llave">
-                        <label for="s_dias" class="mb-1.5 block text-sm font-medium text-gray-900">
+                        <label for="s_dias" class="mb-1 block text-sm font-medium text-gray-900">
                             Caduca en
                         </label>
                         <div class="flex items-center gap-2">
