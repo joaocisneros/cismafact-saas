@@ -327,7 +327,7 @@ El historial no se puede recuperar.
                         </label>
                         <input type="text" name="titular" id="s_titular" maxlength="120" required
                                :value="llave?.titular ?? ''"
-                               placeholder="Ej.: Contables SAC (o el programador)"
+                               placeholder="Contables SAC"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
 

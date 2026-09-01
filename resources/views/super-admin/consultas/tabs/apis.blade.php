@@ -313,8 +313,9 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                         <input type="text" name="titular_documento" id="l_doc" maxlength="11"
                                :value="llave?.titular_documento ?? ''"
                                @input.debounce.400ms="buscar($event.target.value)"
-                               placeholder="11 dígitos para RUC, 8 para DNI"
+                               placeholder="20601030013"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="mt-1 text-xs text-gray-500">11 dígitos si es RUC, 8 si es DNI.</p>
 
                         {{-- Solo cuando hay algo que decir: el nombre ya se ve
                              en su campo, repetirlo debajo en verde sobraba. --}}
@@ -332,7 +333,7 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                         </label>
                         <input type="text" name="titular" id="l_titular" maxlength="120" required
                                x-ref="titular" :value="llave?.titular ?? ''"
-                               placeholder="Sale del documento"
+                               placeholder="Se completa al escribir el documento"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase placeholder:normal-case outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     </div>
