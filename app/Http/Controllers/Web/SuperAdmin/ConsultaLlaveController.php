@@ -172,18 +172,22 @@ class ConsultaLlaveController extends Controller
     }
 
     /**
-     * Nombre para una llave de prueba, sacado de a quien se le da.
+     * Nombre para una llave, sacado de a quien se le da.
      *
      * Si ya tiene una, se numera: un mismo cliente pide otra cuando prueba
      * desde dos sitios, y dos llaves llamadas igual no se pueden distinguir.
      */
-    private function nombreDePrueba(Request $request): string
+    private function nombreAutomatico(Request $request): string
     {
         $titular = $request->input('titular_tipo') === 'empresa'
             ? (\App\Models\Company::find($request->input('company_id'))?->razon_social ?? 'Empresa')
             : ($request->input('titular') ?: 'Sin titular');
 
-        $base = 'Sandbox · ' . $titular;
+        // El entorno delante: en la lista se ve de un vistazo cual es de prueba
+        // y cual no, sin tener que mirar otra columna.
+        $prefijo = $request->input('entorno') === 'sandbox' ? 'Sandbox' : 'Producción';
+
+        $base = $prefijo . ' · ' . $titular;
 
         // El primer numero libre, no «cuantas hay mas una». Contando, al borrar
         // una del medio se proponia un nombre que ya existia: quedaban la (2) y
@@ -213,12 +217,12 @@ class ConsultaLlaveController extends Controller
     /** @return array<string,mixed> */
     private function validar(Request $request, ?ConsultaLlave $llave = null): array
     {
-        // En sandbox el nombre no se pide en ningun momento: se arma con el
-        // titular, que es como se busca la llave en la lista. Al editar se
-        // conserva el que ya tiene, para no renombrarla por cambiar otra cosa.
-        if ($request->input('entorno') === 'sandbox' && ! $request->filled('nombre')) {
+        // El nombre no se pide: se arma con el titular, que es como se busca la
+        // llave en la lista. Al editar se conserva el que ya tiene, para no
+        // renombrarla por haber venido a cambiar otra cosa.
+        if (! $request->filled('nombre')) {
             $request->merge([
-                'nombre' => $llave?->nombre ?? $this->nombreDePrueba($request),
+                'nombre' => $llave?->nombre ?? $this->nombreAutomatico($request),
             ]);
         }
 

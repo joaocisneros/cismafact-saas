@@ -185,122 +185,95 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                   :action="nueva
                       ? '{{ route('super-admin.consultas.llaves.guardar') }}'
                       : '{{ url('super-admin/consultas/llaves') }}/' + (llave?.id ?? '')"
-                  x-data="{ tipo: 'empresa' }"
-                  x-effect="tipo = llave?.titular_tipo ?? 'empresa'">
+                  x-data="{
+                      marcados: @js($apis->pluck('slug')),
+                      alterna(slug, on) {
+                          this.marcados = on
+                              ? [...new Set([...this.marcados, slug])]
+                              : this.marcados.filter(s => s !== slug);
+                      },
+                  }"
+                  x-effect="if (llave) { marcados = llave.servicios ?? []; }">
                 @csrf
                 <template x-if="!nueva"><input type="hidden" name="_method" value="PUT"></template>
 
                 <div class="border-b border-gray-200 px-5 py-4">
-                    <h3 class="text-base font-semibold text-gray-900" x-text="nueva ? 'Nueva API Key' : 'Editar llave'"></h3>
+                    <h3 class="text-base font-semibold text-gray-900" x-text="nueva ? 'Nueva llave' : 'Editar llave'"></h3>
+                    <p class="mt-0.5 text-xs text-gray-500">Consulta datos reales con el plan que le pongas.</p>
                 </div>
 
+                {{-- Cuatro campos: a quien, a que le da acceso, con que plan y
+                     hasta cuando.
+
+                     Sin entorno: esta pestaña crea de produccion y las de
+                     prueba se crean en Sandbox, que tiene su propio formulario.
+                     Teniendolo aqui se podian crear sandbox desde dos sitios y
+                     equivocarse de entorno sin enterarse.
+
+                     Sin desplegable de empresas: las consultas se venden aparte
+                     de la facturacion, asi que quien compra no tiene por que
+                     estar dado de alta como empresa.
+
+                     El nombre no se pregunta: se arma con el titular. --}}
                 <div class="space-y-4 px-5 py-4">
+
+                    <input type="hidden" name="entorno" value="produccion">
+                    <input type="hidden" name="titular_tipo" value="externo">
+
                     <div>
-                        <label for="l_nombre" class="mb-1 block text-sm font-medium text-gray-700">Nombre</label>
-                        <input type="text" name="nombre" id="l_nombre" required maxlength="80"
-                               :value="llave?.nombre ?? ''"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                               placeholder="Producción - Web">
-                        <p class="mt-1 text-xs text-gray-500">Para saber cuál es cuál cuando haya varias.</p>
+                        <label for="l_titular" class="mb-1.5 block text-sm font-medium text-gray-900">
+                            Empresa
+                        </label>
+                        <input type="text" name="titular" id="l_titular" maxlength="120" required
+                               :value="llave?.titular ?? ''"
+                               placeholder="Ej.: Contables SAC"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
 
                     <div>
-                        <p class="mb-1 block text-sm font-medium text-gray-700">Para quién</p>
-                        <div class="flex gap-4">
-                            @foreach(['empresa' => 'Una empresa del sistema', 'externo' => 'Alguien de fuera'] as $valor => $texto)
-                                <label class="flex items-center gap-2 text-sm text-gray-700">
-                                    <input type="radio" name="titular_tipo" value="{{ $valor }}" x-model="tipo"
-                                           class="border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    {{ $texto }}
+                        <p class="mb-1.5 block text-sm font-medium text-gray-900">¿A qué le da acceso?</p>
+                        <div class="grid gap-2 sm:grid-cols-2">
+                            @foreach($apis as $api)
+                                <label class="flex cursor-pointer gap-2.5 rounded-lg border p-3 transition"
+                                       :class="marcados.includes('{{ $api->slug }}') ? 'border-blue-500 bg-blue-50/50' : 'border-gray-200 hover:bg-gray-50'">
+                                    <input type="checkbox" name="servicios[]" value="{{ $api->slug }}"
+                                           :checked="marcados.includes('{{ $api->slug }}')"
+                                           @change="alterna('{{ $api->slug }}', $event.target.checked)"
+                                           class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="min-w-0">
+                                        <span class="block text-sm font-medium text-gray-900">{{ $api->nombre }}</span>
+                                        @if($api->descripcion)
+                                            <span class="mt-0.5 block text-xs leading-snug text-gray-500">{{ $api->descripcion }}</span>
+                                        @endif
+                                    </span>
                                 </label>
                             @endforeach
                         </div>
                     </div>
 
-                    <div x-show="tipo === 'empresa'">
-                        <label for="l_empresa" class="mb-1 block text-sm font-medium text-gray-700">Empresa</label>
-                        <select name="company_id" id="l_empresa"
+                    {{-- El plan si se pregunta, y es lo que separa esta pestaña
+                         de Sandbox: aqui se cobra, y de el salen las cuotas. --}}
+                    <div>
+                        <label for="l_plan" class="mb-1.5 block text-sm font-medium text-gray-900">Plan contratado</label>
+                        <select name="api_plan_id" id="l_plan" required
                                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">Elige…</option>
-                            @foreach($empresas as $e)
-                                <option value="{{ $e->id }}" :selected="llave?.company_id == {{ $e->id }}">
-                                    {{ $e->razon_social }} — {{ $e->ruc }}
+                            @foreach($planesApi as $p)
+                                <option value="{{ $p->id }}" :selected="llave?.api_plan_id == {{ $p->id }}">
+                                    {{ $p->nombre }}@if($p->a_medida) — a convenir @elseif((float) $p->precio_mensual > 0) — S/ {{ number_format($p->precio_mensual, 2) }}/mes @else — sin costo @endif
                                 </option>
                             @endforeach
                         </select>
                     </div>
 
-                    <div x-show="tipo === 'externo'" x-cloak class="space-y-3">
-                        <div>
-                            <label for="l_titular" class="mb-1 block text-sm font-medium text-gray-700">Nombre o razón social</label>
-                            <input type="text" name="titular" id="l_titular" maxlength="120"
-                                   :value="llave?.titular ?? ''"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div class="grid gap-3 sm:grid-cols-2">
-                            <div>
-                                <label for="l_doc" class="mb-1 block text-sm font-medium text-gray-700">RUC o DNI</label>
-                                <input type="text" name="titular_documento" id="l_doc" maxlength="20"
-                                       :value="llave?.titular_documento ?? ''"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label for="l_email" class="mb-1 block text-sm font-medium text-gray-700">Correo</label>
-                                <input type="email" name="titular_email" id="l_email" maxlength="120"
-                                       :value="llave?.titular_email ?? ''"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="border-t border-gray-100 pt-4">
-                        <p class="mb-1 block text-sm font-medium text-gray-700">A qué da acceso</p>
-                        <div class="flex flex-wrap gap-4">
-                            @foreach($apis as $api)
-                                <label class="flex items-center gap-2 text-sm text-gray-700">
-                                    <input type="checkbox" name="servicios[]" value="{{ $api->slug }}"
-                                           :checked="(llave?.servicios ?? ['{{ $apis->first()->slug }}']).includes('{{ $api->slug }}')"
-                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    {{ $api->nombre }}
-                                </label>
-                            @endforeach
-                        </div>
-                        <p class="mt-1 text-xs text-gray-500">
-                            Si le roban esta API Key, solo podrán usar lo que esté marcado.
-                        </p>
-                    </div>
-
-                    <div class="grid gap-3 sm:grid-cols-2">
-                        <div>
-                            <label for="l_plan" class="mb-1 block text-sm font-medium text-gray-700">Plan</label>
-                            <select name="api_plan_id" id="l_plan" required
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                                @foreach($planesApi as $p)
-                                    <option value="{{ $p->id }}" :selected="llave?.api_plan_id == {{ $p->id }}">
-                                        {{ $p->nombre }}{{ $p->a_medida ? '' : ' — S/ ' . rtrim(rtrim(number_format((float) $p->precio_mensual, 2), '0'), '.') }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label for="l_entorno" class="mb-1 block text-sm font-medium text-gray-700">Entorno</label>
-                            <select name="entorno" id="l_entorno" required
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="produccion" :selected="(llave?.entorno ?? 'produccion') === 'produccion'">Producción</option>
-                                <option value="sandbox" :selected="llave?.entorno === 'sandbox'">Sandbox — datos de ejemplo</option>
-                            </select>
-                        </div>
-                    </div>
-
                     <div>
-                        <label for="l_expira" class="mb-1 block text-sm font-medium text-gray-700">
+                        <label for="l_expira" class="mb-1.5 block text-sm font-medium text-gray-900">
                             Vence el <span class="font-normal text-gray-400">— opcional</span>
                         </label>
-                        <input type="date" name="expira_en" id="l_expira" :value="llave?.expira_en ?? ''"
+                        <input type="date" name="expira_en" id="l_expira"
+                               :value="llave?.expira_en ?? ''"
+                               min="{{ now()->addDay()->format('Y-m-d') }}"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                        <p class="mt-1 text-xs text-gray-500">
-                            Vacío para que no caduque. Con fecha, deja de responder sola.
-                        </p>
+                        <p class="mt-1 text-xs text-gray-500">Vacío = sin caducidad. Al llegar el día deja de funcionar.</p>
                     </div>
                 </div>
 
