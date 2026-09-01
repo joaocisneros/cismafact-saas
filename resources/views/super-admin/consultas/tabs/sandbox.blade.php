@@ -76,7 +76,7 @@
                 @php $vencidas = $sandbox->filter->vencida(); @endphp
                 @if($vencidas->isNotEmpty())
                     <form method="POST" action="{{ route('super-admin.consultas.llaves.limpiar-vencidas') }}"
-                          onsubmit="return confirm('Se eliminarán {{ $vencidas->count() }} llave(s) de prueba ya vencida(s). Las consultas que hicieron se conservan en el historial. ¿Seguir?')">
+                          onsubmit="return confirm('Se eliminarán {{ $vencidas->count() }} llave(s) de prueba ya vencida(s). Se borran también las consultas que hicieron. ¿Seguir?')">
                         @csrf
                         @method('DELETE')
                         <button type="submit"
@@ -242,7 +242,11 @@ El actual deja de funcionar en cuanto se guarde, así que hay que pasarle el nue
                                         </form>
 
                                         <form method="POST" action="{{ route('super-admin.consultas.llaves.borrar', $l) }}"
-                                              onsubmit="return confirm('Se elimina «{{ $l->nombre }}». ¿Continuar?')">
+                                              onsubmit="return confirm('Se elimina «{{ $l->nombre }}» y las {{ $l->consumo_count }} consultas que hizo.
+
+El historial no se puede recuperar.
+
+¿Continuar?')">
                                             @csrf
                                             @method('DELETE')
                                             <x-icon-action icon="eliminar" label="Eliminar" color="red" />

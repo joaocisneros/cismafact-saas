@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\ConsultaLlave;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
@@ -61,12 +62,22 @@ class ConsultaLlaveController extends Controller
 
     public function destroy(ConsultaLlave $llave)
     {
-        // El consumo no se va con ella: es lo que se cobro. La columna
-        // llave_id queda en nulo.
         $nombre = $llave->nombre;
+
+        // El historial se va con la llave. Conservarlo dejaba filas sueltas en
+        // el consumo que ponian «llave eliminada» y no decian de quien fueron:
+        // no sirven para auditar nada y solo ensucian el listado.
+        //
+        // Tiene un coste que hay que saber: de una llave de produccion se
+        // pierde tambien la constancia de lo que consumio quien pagaba. Por eso
+        // el boton lo avisa antes de borrar.
+        $cuantas = $llave->consumo()->count();
+        $llave->consumo()->delete();
         $llave->delete();
 
-        return back()->with('success', "«{$nombre}» eliminada. El consumo que hubo se conserva.");
+        return back()->with('success', $cuantas
+            ? "«{$nombre}» eliminada, junto con sus {$cuantas} consultas."
+            : "«{$nombre}» eliminada.");
     }
 
     /**
@@ -148,9 +159,11 @@ class ConsultaLlaveController extends Controller
             return back()->with('success', 'No hay ninguna llave de prueba vencida.');
         }
 
-        // El consumo no se va con ellas: la columna llave_id queda en nulo y
-        // las consultas siguen contando en el historial.
+        // Son de prueba, asi que su historial se va con ellas: no se cobro
+        // nada y en el listado quedarian como «llave eliminada», sin decir de
+        // quien fueron.
         $cuantas = $vencidas->count();
+        DB::table('consultas_consumo')->whereIn('llave_id', $vencidas->pluck('id'))->delete();
         ConsultaLlave::whereIn('id', $vencidas->pluck('id'))->delete();
 
         return back()->with('success', $cuantas === 1

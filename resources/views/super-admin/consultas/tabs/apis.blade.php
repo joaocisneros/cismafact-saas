@@ -154,7 +154,11 @@
                     </form>
 
                     <form method="POST" action="{{ route('super-admin.consultas.llaves.borrar', $l) }}"
-                          onsubmit="return confirm('Se elimina «{{ $l->nombre }}». Quien la use dejará de tener acceso al instante. ¿Continuar?')">
+                          onsubmit="return confirm('Se elimina «{{ $l->nombre }}» y todo su historial de consultas.
+
+Quien la use dejará de tener acceso al instante, y no quedará constancia de lo que consumió.
+
+¿Continuar?')">
                         @csrf
                         @method('DELETE')
                         <x-icon-action icon="eliminar" label="Eliminar" color="red" />
