@@ -170,7 +170,7 @@ class ConsultaLlaveController extends Controller
             ? (\App\Models\Company::find($request->input('company_id'))?->razon_social ?? 'Empresa')
             : ($request->input('titular') ?: 'Sin titular');
 
-        $base = 'Pruebas · ' . $titular;
+        $base = 'Sandbox · ' . $titular;
 
         $cuantas = ConsultaLlave::where('entorno', 'sandbox')
             ->where('nombre', 'like', $base . '%')
@@ -182,11 +182,13 @@ class ConsultaLlaveController extends Controller
     /** @return array<string,mixed> */
     private function validar(Request $request, ?ConsultaLlave $llave = null): array
     {
-        // En sandbox el nombre no se pide: una llave de prueba se reparte
-        // deprisa y pararse a inventarle un nombre sobra. Se arma con el
-        // titular, que es como se la busca en la lista.
+        // En sandbox el nombre no se pide en ningun momento: se arma con el
+        // titular, que es como se busca la llave en la lista. Al editar se
+        // conserva el que ya tiene, para no renombrarla por cambiar otra cosa.
         if ($request->input('entorno') === 'sandbox' && ! $request->filled('nombre')) {
-            $request->merge(['nombre' => $this->nombreDePrueba($request)]);
+            $request->merge([
+                'nombre' => $llave?->nombre ?? $this->nombreDePrueba($request),
+            ]);
         }
 
         // La caducidad se piensa en dias («que le dure un mes»), no en una

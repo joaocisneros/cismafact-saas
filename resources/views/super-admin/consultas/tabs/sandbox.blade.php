@@ -355,15 +355,12 @@ El actual deja de funcionar en cuanto se guarde, así que hay que pasarle el nue
                         </div>
                     </div>
 
+                    {{-- Sin campo de nombre: se arma con el titular al crear y
+                         se conserva al editar. Enseñarlo aqui invitaba a
+                         cambiarlo, y el nombre es lo unico por lo que se
+                         distingue una llave en la lista. --}}
                     <template x-if="llave">
                         <div class="space-y-4 border-t border-gray-100 pt-4">
-                            <div>
-                                <label for="s_nombre" class="mb-1 block text-sm font-medium text-gray-900">Nombre de la llave</label>
-                                <input type="text" name="nombre" id="s_nombre" maxlength="80"
-                                       :value="llave?.nombre ?? ''"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-
                             <div>
                                 <label for="s_expira" class="mb-1 block text-sm font-medium text-gray-900">Caduca el</label>
                                 <input type="date" name="expira_en" id="s_expira"
