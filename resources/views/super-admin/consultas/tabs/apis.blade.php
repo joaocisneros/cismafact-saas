@@ -204,7 +204,7 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                       ? '{{ route('super-admin.consultas.llaves.guardar') }}'
                       : '{{ url('super-admin/consultas/llaves') }}/' + (llave?.id ?? '')"
                   x-data="{
-                      marcados: @js($apis->pluck('slug')),
+                      marcados: [],
                       alterna(slug, on) {
                           this.marcados = on
                               ? [...new Set([...this.marcados, slug])]
@@ -219,7 +219,7 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                           this.aviso = '';
                           this.avisoTipo = '';
                           this.buscando = false;
-                          this.marcados = @js($apis->pluck('slug'));
+                          this.marcados = [];
                           this.$refs.formulario?.reset();
                       },
 

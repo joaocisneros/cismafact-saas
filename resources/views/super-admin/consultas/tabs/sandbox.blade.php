@@ -298,7 +298,7 @@ El historial no se puede recuperar.
                      El nombre no se pregunta: se arma con el titular. --}}
                 <div class="space-y-3 px-5 py-4"
                      x-data="{
-                         marcados: @js($apis->pluck('slug')),
+                         marcados: [],
                          alterna(slug, on) {
                              this.marcados = on
                                  ? [...new Set([...this.marcados, slug])]
@@ -312,7 +312,7 @@ El historial no se puede recuperar.
                              /* El modal se oculta pero no se destruye, asi que
                                 sus campos guardaban lo ultimo escrito. Se vacia
                                 al cerrarse. */
-                             marcados = @js($apis->pluck('slug'));
+                             marcados = [];
                              $refs.formulario?.reset();
                          }
                      ">
