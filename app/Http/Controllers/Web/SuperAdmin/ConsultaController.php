@@ -421,10 +421,24 @@ class ConsultaController extends Controller
             // consumo, y asi se ve de donde sale cada cifra sin sumar a mano.
             'mes_externo' => DB::table('consultas_consumo')->where('origen', 'externo')->where('created_at', '>=', $mes)->count(),
             'mes_interno' => DB::table('consultas_consumo')->where('origen', 'interno')->where('created_at', '>=', $mes)->count(),
-            'empresas' => DB::table('consultas_consumo')
-                ->where('created_at', '>=', $mes)
-                ->distinct()
-                ->count('company_id'),
+            // Las llaves que hay, que es lo que resumen las dos primeras
+            // pestañas. Sustituyen a «Empresas usandola», que contaba
+            // company_id distintos y salia 0 al lado de 25 consultas: las
+            // llaves se venden a gente de fuera, que no tiene empresa en el
+            // sistema, y las del panel tampoco la llevan. Contaba lo unico que
+            // aqui no pasa nunca.
+            'llaves_produccion' => \App\Models\ConsultaLlave::where('entorno', 'produccion')
+                ->where('activa', true)->count(),
+            'llaves_sandbox' => \App\Models\ConsultaLlave::where('entorno', 'sandbox')->count(),
+            // Lo que suman al mes los planes de las llaves de produccion vivas.
+            // Los de precio a convenir no se pueden sumar, asi que van aparte y
+            // no inflan el importe con un cero que no es su precio.
+            'ingresos_mes' => \App\Models\ConsultaLlave::with('plan')
+                ->where('entorno', 'produccion')->where('activa', true)->get()
+                ->sum(fn ($l) => $l->plan && ! $l->plan->a_medida ? (float) $l->plan->precio_mensual : 0),
+            'a_convenir' => \App\Models\ConsultaLlave::with('plan')
+                ->where('entorno', 'produccion')->where('activa', true)->get()
+                ->filter(fn ($l) => $l->plan?->a_medida)->count(),
             'cerca_del_tope' => $cercaDelTope,
         ];
     }

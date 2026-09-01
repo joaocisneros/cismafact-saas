@@ -52,20 +52,32 @@
             </x-slot:icon>
         </x-stat-card>
 
-        <x-stat-card title="Hoy" :value="number_format($cabecera['hoy'])"
-                     subtitle="Consultas en lo que va de día" color="indigo">
+        {{-- Las llaves que hay, que es lo que abren las dos primeras pestañas.
+
+             Antes iba «Hoy», que repetia el numero del mes cuando todo lo del
+             mes era de hoy y no lleva a hacer nada, y «Empresas usandola», que
+             salia 0 al lado de 25 consultas porque contaba empresas del
+             sistema y estas llaves se venden a gente de fuera. --}}
+        <x-stat-card title="API Keys activas" :value="number_format($cabecera['llaves_produccion'])"
+                     :subtitle="number_format($cabecera['llaves_sandbox']) . ' llaves de sandbox además'"
+                     color="indigo">
             <x-slot:icon>
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                 </svg>
             </x-slot:icon>
         </x-stat-card>
 
-        <x-stat-card title="Empresas usándola" :value="number_format($cabecera['empresas'])"
-                     subtitle="Consultaron al menos una vez este mes" color="green">
+        {{-- Lo que suman los planes contratados: es el resumen de Planes, la
+             ultima pestaña, y el unico numero de aqui que no son consultas. --}}
+        <x-stat-card title="Ingresos al mes" :value="'S/ ' . number_format($cabecera['ingresos_mes'], 2)"
+                     :subtitle="$cabecera['a_convenir']
+                        ? number_format($cabecera['a_convenir']) . ' más a convenir, sin importe fijo'
+                        : 'De los planes de las llaves activas'"
+                     color="green">
             <x-slot:icon>
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-2a4 4 0 10-8 0 4 4 0 008 0zm6-3a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </x-slot:icon>
         </x-stat-card>
