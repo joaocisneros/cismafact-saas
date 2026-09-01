@@ -68,16 +68,19 @@
             </x-slot:icon>
         </x-stat-card>
 
-        {{-- Lo que suman los planes contratados: es el resumen de Planes, la
-             ultima pestaña, y el unico numero de aqui que no son consultas. --}}
-        <x-stat-card title="Ingresos al mes" :value="'S/ ' . number_format($cabecera['ingresos_mes'], 2)"
-                     :subtitle="$cabecera['a_convenir']
-                        ? number_format($cabecera['a_convenir']) . ' más a convenir, sin importe fijo'
-                        : 'De los planes de las llaves activas'"
-                     color="green">
+        {{-- Aqui iba «Ingresos al mes».
+
+             Esta pantalla se enseña delante de clientes, y lo que se factura
+             no tiene por que salir en ella. En su sitio va lo que si hace
+             falta mirar: a quien se le acaba el plazo. --}}
+        <x-stat-card title="Caducan en 30 días" :value="number_format($cabecera['caducan_pronto'])"
+                     :subtitle="$cabecera['caducan_produccion']
+                        ? number_format($cabecera['caducan_produccion']) . ' de ellas son de producción'
+                        : 'Ninguna de producción'"
+                     :color="$cabecera['caducan_produccion'] ? 'orange' : 'green'">
             <x-slot:icon>
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
             </x-slot:icon>
         </x-stat-card>

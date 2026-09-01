@@ -430,15 +430,22 @@ class ConsultaController extends Controller
             'llaves_produccion' => \App\Models\ConsultaLlave::where('entorno', 'produccion')
                 ->where('activa', true)->count(),
             'llaves_sandbox' => \App\Models\ConsultaLlave::where('entorno', 'sandbox')->count(),
-            // Lo que suman al mes los planes de las llaves de produccion vivas.
-            // Los de precio a convenir no se pueden sumar, asi que van aparte y
-            // no inflan el importe con un cero que no es su precio.
-            'ingresos_mes' => \App\Models\ConsultaLlave::with('plan')
-                ->where('entorno', 'produccion')->where('activa', true)->get()
-                ->sum(fn ($l) => $l->plan && ! $l->plan->a_medida ? (float) $l->plan->precio_mensual : 0),
-            'a_convenir' => \App\Models\ConsultaLlave::with('plan')
-                ->where('entorno', 'produccion')->where('activa', true)->get()
-                ->filter(fn ($l) => $l->plan?->a_medida)->count(),
+            // Las que caducan pronto. Sin importes: esta pantalla se enseña
+            // delante de clientes y lo que se factura no tiene por que salir en
+            // ella.
+            //
+            // Va al lado de «cerca de su limite» a proposito: son las dos
+            // formas de quedarse sin servicio —agotar la cuota o que se pase la
+            // fecha— y las dos se arreglan antes si se ven a tiempo.
+            'caducan_pronto' => \App\Models\ConsultaLlave::where('activa', true)
+                ->whereNotNull('expira_en')
+                ->whereBetween('expira_en', [now(), now()->addDays(30)])
+                ->count(),
+            'caducan_produccion' => \App\Models\ConsultaLlave::where('activa', true)
+                ->where('entorno', 'produccion')
+                ->whereNotNull('expira_en')
+                ->whereBetween('expira_en', [now(), now()->addDays(30)])
+                ->count(),
             'cerca_del_tope' => $cercaDelTope,
         ];
     }
