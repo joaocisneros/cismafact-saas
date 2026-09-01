@@ -83,6 +83,24 @@ class ConsultaController extends Controller
                 ->withCount(['consumo as consultas_mes' => fn ($q) => $q->where('created_at', '>=', now()->startOfMonth())])
                 ->get(),
             'planesApi' => ApiPlan::orderBy('a_medida')->orderBy('precio_mensual')->orderBy('orden')->get(),
+            /*
+             * Lo gastado este mes por llave Y POR SERVICIO.
+             *
+             * La cuota se agota por separado —los 1000 del RUC no los salva
+             * que sobren los del DNI—, asi que un total unico puede enseñar
+             * un 77% tranquilo mientras el RUC lleva rato devolviendo 429.
+             *
+             * Agrupado de una vez y no llave por llave: son dos numeros por
+             * fila y en consulta suelta serian dos por llave.
+             */
+            'consumoPorApi' => DB::table('consultas_consumo')
+                ->selectRaw('llave_id, api_id, count(*) as total')
+                ->whereNotNull('llave_id')
+                ->where('created_at', '>=', now()->startOfMonth())
+                ->groupBy('llave_id', 'api_id')
+                ->get()
+                ->groupBy('llave_id')
+                ->map(fn ($filas) => $filas->pluck('total', 'api_id')),
             // Separadas por entorno: las de prueba tienen su pestaña. Mezclarlas
             // con las que cobran confunde al mirar quien gasta que.
             'llaves' => \App\Models\ConsultaLlave::with(['empresa:id,razon_social,ruc', 'plan'])

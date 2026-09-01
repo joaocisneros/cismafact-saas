@@ -127,15 +127,37 @@
                                     @endif
                                 </td>
 
-                                {{-- Lo gastado pegado a su tope: sueltos no
-                                     dicen si va sobrado o a punto de agotarse. --}}
+                                {{-- Una linea por servicio, que es como se gasta.
+
+                                     Sumados enseñaban una cuenta que no existe:
+                                     con 1000 de RUC agotados y 300 de DNI sin
+                                     tocar salia «1000 / 1300, 77%» en ambar,
+                                     tranquilizador, mientras las consultas de RUC
+                                     ya devolvian 429. Y nunca llegaba al rojo,
+                                     porque lo que sobraba del DNI tapaba lo
+                                     agotado del RUC. --}}
                                 <td class="px-5 py-3">
-                                    <p class="font-medium text-gray-900">
-                                        {{ number_format($l->usadas_mes) }} <span class="font-normal text-gray-400">/ {{ number_format($tope) }}</span>
-                                    </p>
-                                    <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-                                        <div class="h-full rounded-full {{ $pct >= 90 ? 'bg-red-500' : ($pct >= 70 ? 'bg-amber-500' : 'bg-green-500') }}"
-                                             style="width: {{ $pct }}%"></div>
+                                    <div class="space-y-1.5">
+                                        @foreach($apis->whereIn('slug', (array) $l->servicios) as $api)
+                                            @php
+                                                $usadasApi = (int) ($consumoPorApi[$l->id][$api->id] ?? 0);
+                                                $topeApi = $l->topeDe($api);
+                                                $pctApi = $topeApi > 0 ? min(100, round($usadasApi / $topeApi * 100)) : 0;
+                                            @endphp
+                                            <div>
+                                                <p class="flex items-baseline justify-between gap-2 text-xs">
+                                                    <span class="font-medium uppercase text-gray-500">{{ $api->slug }}</span>
+                                                    <span>
+                                                        <span class="font-medium text-gray-900">{{ number_format($usadasApi) }}</span>
+                                                        <span class="text-gray-400">/ {{ number_format($topeApi) }}</span>
+                                                    </span>
+                                                </p>
+                                                <div class="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-gray-100">
+                                                    <div class="h-full rounded-full {{ $pctApi >= 100 ? 'bg-red-500' : ($pctApi >= 80 ? 'bg-amber-500' : 'bg-green-500') }}"
+                                                         style="width: {{ $pctApi }}%"></div>
+                                                </div>
+                                            </div>
+                                        @endforeach
                                     </div>
                                 </td>
 
