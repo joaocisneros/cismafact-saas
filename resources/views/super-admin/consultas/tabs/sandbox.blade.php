@@ -244,40 +244,45 @@
                      dos consultas, asi que preguntarlos solo alargaba el modal.
                      Se cambian despues editando, que es cuando de verdad hace
                      falta y donde si aparecen. --}}
-                <div class="space-y-4 px-5 py-4" x-data="{ tipo: 'empresa' }"
-                     x-effect="tipo = llave ? (llave.company_id ? 'empresa' : 'externo') : 'empresa'">
+                {{-- Tres campos: a quien, a que le da acceso y cuanto le dura.
+
+                     Sin desplegable de empresas: las consultas se venden aparte
+                     de la facturacion —quien compra consultas no tiene por que
+                     facturar aqui— y quien pide una llave de prueba suele ser un
+                     programador, no una empresa dada de alta. Se escribe y ya.
+
+                     El nombre no se pregunta: se arma con el titular. --}}
+                <div class="space-y-4 px-5 py-4">
+
+                    <input type="hidden" name="titular_tipo" value="externo">
 
                     <div>
-                        <label class="mb-1.5 block text-sm font-medium text-gray-900">¿Para quién es?</label>
+                        <label for="s_titular" class="mb-1.5 block text-sm font-medium text-gray-900">
+                            ¿Para quién es?
+                        </label>
+                        <input type="text" name="titular" id="s_titular" maxlength="120" required
+                               :value="llave?.titular ?? ''"
+                               placeholder="Ej.: Juan Pérez (ERP Contable)"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
 
-                        <div class="flex items-center gap-2">
-                            <select x-model="tipo"
-                                    class="rounded-lg border border-gray-300 px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="empresa">Empresa</option>
-                                <option value="externo">De fuera</option>
-                            </select>
-
-                            <input type="hidden" name="titular_tipo" :value="tipo">
-
-                            <select name="company_id" x-show="tipo === 'empresa'" :disabled="tipo !== 'empresa'"
-                                    class="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">Elige la empresa…</option>
-                                @foreach($empresas as $e)
-                                    <option value="{{ $e->id }}" :selected="llave?.company_id == {{ $e->id }}">
-                                        {{ $e->razon_social }} — {{ $e->ruc }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            <input type="text" name="titular" maxlength="120" x-show="tipo === 'externo'" x-cloak
-                                   :disabled="tipo !== 'externo'" :value="llave?.titular ?? ''"
-                                   placeholder="Ej.: Juan Pérez (ERP Contable)"
-                                   class="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    <div>
+                        <p class="mb-1.5 block text-sm font-medium text-gray-900">¿A qué le da acceso?</p>
+                        <div class="flex flex-wrap gap-4">
+                            @foreach($apis as $api)
+                                <label class="flex items-center gap-2 text-sm text-gray-700">
+                                    <input type="checkbox" name="servicios[]" value="{{ $api->slug }}"
+                                           :checked="llave ? (llave.servicios ?? []).includes('{{ $api->slug }}') : true"
+                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    {{ $api->nombre }}
+                                </label>
+                            @endforeach
                         </div>
                     </div>
 
                     {{-- En dias, no en fecha: nadie sabe de memoria en que dia
-                         cae dentro de un mes. --}}
+                         cae dentro de un mes. Al editar si va la fecha, que ahi
+                         se busca un dia concreto. --}}
                     <div x-show="! llave">
                         <label for="s_dias" class="mb-1.5 block text-sm font-medium text-gray-900">
                             Caduca en
@@ -285,24 +290,10 @@
                         <div class="flex items-center gap-2">
                             <input type="number" name="expira_dias" id="s_dias" min="1" max="365" value="30"
                                    class="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                            <span class="text-sm text-gray-500">días — déjalo vacío para que no caduque</span>
+                            <span class="text-sm text-gray-500">días — vacío para que no caduque</span>
                         </div>
                     </div>
 
-                    <p x-show="! llave" class="text-xs text-gray-500">
-                        Con acceso a <strong class="text-gray-700">RUC y DNI</strong>. Se puede cambiar después.
-                    </p>
-
-                    {{-- Sin abrir nada, el formulario manda igualmente el acceso. --}}
-                    <template x-if="! llave">
-                        <div>
-                            @foreach($apis as $api)
-                                <input type="hidden" name="servicios[]" value="{{ $api->slug }}">
-                            @endforeach
-                        </div>
-                    </template>
-
-                    {{-- Al editar si se ve todo: se entra justo a cambiarlo. --}}
                     <template x-if="llave">
                         <div class="space-y-4 border-t border-gray-100 pt-4">
                             <div>
@@ -310,20 +301,6 @@
                                 <input type="text" name="nombre" id="s_nombre" maxlength="80"
                                        :value="llave?.nombre ?? ''"
                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-
-                            <div>
-                                <p class="mb-1 block text-sm font-medium text-gray-900">A qué consultas da acceso</p>
-                                <div class="flex flex-wrap gap-4">
-                                    @foreach($apis as $api)
-                                        <label class="flex items-center gap-2 text-sm text-gray-700">
-                                            <input type="checkbox" name="servicios[]" value="{{ $api->slug }}"
-                                                   :checked="(llave?.servicios ?? []).includes('{{ $api->slug }}')"
-                                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                            {{ $api->nombre }}
-                                        </label>
-                                    @endforeach
-                                </div>
                             </div>
 
                             <div>
