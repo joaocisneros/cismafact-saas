@@ -62,130 +62,178 @@
         </button>
     </div>
 
-    <section class="divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        @forelse($llaves as $l)
-            @php
-                $estado = $l->estado();
-                $tope = $l->plan
-                    ? $apis->whereIn('slug', (array) $l->servicios)->sum(fn ($a) => $a->limiteDelPlan($l->api_plan_id))
-                    : 0;
-                $pct = $tope > 0 ? min(100, round($l->usadas_mes / $tope * 100)) : 0;
-            @endphp
+    {{-- En tabla, como Sandbox.
 
-            <div class="flex flex-wrap items-center gap-4 px-5 py-4 {{ $estado === 'activa' ? '' : 'bg-gray-50/60' }}">
-                <div class="min-w-0 flex-1">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <p class="font-semibold text-gray-900">{{ $l->nombre }}</p>
-                        <span class="rounded-full px-2 py-0.5 text-xs font-medium
-                            @if($estado === 'activa') bg-green-50 text-green-700
-                            @elseif($estado === 'sandbox') bg-blue-50 text-blue-700
-                            @elseif($estado === 'vencida') bg-amber-50 text-amber-700
-                            @else bg-red-50 text-red-700 @endif">
-                            {{ ['activa' => '● Activa', 'sandbox' => 'Sandbox', 'vencida' => 'Vencida', 'bloqueada' => 'Bloqueada'][$estado] }}
-                        </span>
-                    </div>
-
-                    <p class="mt-0.5 text-xs text-gray-500">
-                        {{ collect($l->servicios)->map(fn ($s) => strtoupper($s))->join(' y ') }}
-                        · {{ $l->nombreDelTitular() }}
-                        · {{ $l->plan?->nombre ?? 'sin plan' }}
-                        · creada {{ $l->created_at->format('d/m/Y') }}
-                        @if($l->expira_en)
-                            · vence {{ $l->expira_en->format('d/m/Y') }}
-                        @endif
-                    </p>
-
-                    {{-- Recortada: entera ensuciaba la fila y aqui no se puede
-                         copiar. Va completa en el detalle, con su boton. --}}
-                    <p class="mt-1 font-mono text-xs text-gray-400">{{ Str::limit($l->clave, 30) }}</p>
-                </div>
-
-                <div class="w-40 shrink-0">
-                    <p class="text-sm font-medium text-gray-900">
-                        {{ number_format($l->usadas_mes) }} <span class="text-gray-400">/ {{ number_format($tope) }}</span>
-                    </p>
-                    <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-                        <div class="h-full rounded-full {{ $pct >= 90 ? 'bg-red-500' : ($pct >= 70 ? 'bg-amber-500' : 'bg-green-500') }}"
-                             style="width: {{ $pct }}%"></div>
-                    </div>
-                </div>
-
-                {{-- Los mismos botones que el resto del sistema: x-icon-action
-                     es el componente que usan Empresas, Documentos y API. Con
-                     botones a mano esta pantalla se veia de otro sitio. --}}
-                <div class="flex shrink-0 items-center gap-1.5">
-                    <x-icon-action icon="ver" label="Ver esta API Key" color="blue" type="button"
-                                   @click="detalle = {{ Illuminate\Support\Js::from([
-                                       'id' => $l->id,
-                                       'nombre' => $l->nombre,
-                                       'estado' => $estado,
-                                       'entorno' => $l->entorno,
-                                       'clave' => $l->clave,
-                                       'pista' => $l->secreto_pista,
-                                       'titular' => $l->nombreDelTitular(),
-                                       'plan' => $l->plan?->nombre,
-                                       'servicios' => collect($l->servicios)->map(fn ($x) => strtoupper($x))->join(' y '),
-                                       'usadas' => $l->usadas_mes,
-                                       'tope' => $tope,
-                                       'creada' => $l->created_at->format('d/m/Y'),
-                                       'expira' => $l->expira_en?->format('d/m/Y'),
-                                       'ultimo_uso' => $l->ultimo_uso_en?->format('d/m/Y H:i'),
-                                   ]) }}" />
-
-                    <x-icon-action icon="editar" label="Editar" color="slate" type="button"
-                                   @click="llave = {{ Illuminate\Support\Js::from([
-                                       'id' => $l->id,
-                                       'nombre' => $l->nombre,
-                                       'titular_tipo' => $l->company_id ? 'empresa' : 'externo',
-                                       'company_id' => $l->company_id,
-                                       'titular' => $l->titular,
-                                       'titular_documento' => $l->titular_documento,
-                                       'titular_email' => $l->titular_email,
-                                       'api_plan_id' => $l->api_plan_id,
-                                       'entorno' => $l->entorno,
-                                       'servicios' => (array) $l->servicios,
-                                       'expira_en' => $l->expira_en?->toDateString(),
-                                   ]) }}; nueva = false" />
-
-                    {{-- Lo tenia Sandbox y aqui no, que es al reves de lo que
-                         hace falta: al que paga no se le puede decir que se
-                         borra su llave y empiece de cero porque perdio el
-                         secreto. --}}
-                    <form method="POST" action="{{ route('super-admin.consultas.llaves.regenerar', $l) }}"
-                          onsubmit="return confirm('Se genera un secreto nuevo para «{{ $l->nombre }}».
-
-El actual deja de funcionar en cuanto se guarde, así que hay que pasarle el nuevo al cliente. La clave (X-Api-Key) no cambia.
-
-¿Seguir?')">
-                        @csrf
-                        <x-icon-action icon="renovar" label="Generar un secreto nuevo" color="slate" />
-                    </form>
-
-                    <form method="POST" action="{{ route('super-admin.consultas.llaves.alternar', $l) }}">
-                        @csrf
-                        <x-icon-action :icon="$l->activa ? 'bloquear' : 'desbloquear'"
-                                       :label="$l->activa ? 'Bloquear' : 'Desbloquear'"
-                                       :color="$l->activa ? 'amber' : 'emerald'" />
-                    </form>
-
-                    <form method="POST" action="{{ route('super-admin.consultas.llaves.borrar', $l) }}"
-                          onsubmit="return confirm('Se elimina «{{ $l->nombre }}» y todo su historial de consultas.
-
-Quien la use dejará de tener acceso al instante, y no quedará constancia de lo que consumió.
-
-¿Continuar?')">
-                        @csrf
-                        @method('DELETE')
-                        <x-icon-action icon="eliminar" label="Eliminar" color="red" />
-                    </form>
-                </div>
-            </div>
-        @empty
+         En lista cada dato colgaba de donde cabia: el titular, el plan y las
+         fechas iban seguidos en una linea de puntos que hay que leer entera
+         para encontrar uno, y el consumo flotaba a la derecha sin decir de
+         que era. Con columnas se compara de arriba abajo y se busca por la
+         cabecera. --}}
+    <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        @if($llaves->isEmpty())
             <div class="px-5 py-12 text-center">
                 <p class="text-sm text-gray-500">Todavía no hay ninguna API Key.</p>
                 <p class="mt-1 text-xs text-gray-400">Crea una para que alguien pueda usar las consultas.</p>
             </div>
-        @endforelse
+        @else
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-fixed divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        <tr>
+                            <th class="w-1/4 px-5 py-3">Titular</th>
+                            <th class="w-1/12 px-5 py-3">Servicios</th>
+                            <th class="w-1/12 px-5 py-3">Plan</th>
+                            <th class="w-1/6 px-5 py-3">Consumo del mes</th>
+                            <th class="w-1/6 px-5 py-3">Vigencia</th>
+                            <th class="w-1/4 px-5 py-3 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach($llaves as $l)
+                            @php
+                                $estado = $l->estado();
+                                $tope = $l->plan
+                                    ? $apis->whereIn('slug', (array) $l->servicios)->sum(fn ($a) => $a->limiteDelPlan($l->api_plan_id))
+                                    : 0;
+                                $pct = $tope > 0 ? min(100, round($l->usadas_mes / $tope * 100)) : 0;
+                            @endphp
+
+                            <tr class="{{ $estado === 'activa' ? '' : 'bg-gray-50/60' }}">
+                                {{-- De quien es manda sobre como se llama la
+                                     llave: para buscar se busca por el cliente.
+                                     Debajo el nombre y la clave recortada, que
+                                     son los que distinguen cuando uno tiene
+                                     varias. Entera va en el detalle, que ahi
+                                     hay boton para copiarla. --}}
+                                <td class="px-5 py-3">
+                                    <p class="truncate font-medium text-gray-900" title="{{ $l->nombreDelTitular() }}">
+                                        {{ $l->nombreDelTitular() }}
+                                    </p>
+                                    <p class="truncate text-xs text-gray-500" title="{{ $l->nombre }}">{{ $l->nombre }}</p>
+                                    <p class="truncate font-mono text-xs text-gray-400">{{ Str::limit($l->clave, 22) }}</p>
+                                </td>
+
+                                <td class="px-5 py-3 text-gray-600">
+                                    {{ collect($l->servicios)->map(fn ($s) => strtoupper($s))->join(' y ') }}
+                                </td>
+
+                                <td class="px-5 py-3">
+                                    @if($l->plan)
+                                        <span class="text-gray-700">{{ $l->plan->nombre }}</span>
+                                    @else
+                                        <span class="text-xs text-red-600" title="No tiene cuota: sus consultas se rechazan">sin plan</span>
+                                    @endif
+                                </td>
+
+                                {{-- Lo gastado pegado a su tope: sueltos no
+                                     dicen si va sobrado o a punto de agotarse. --}}
+                                <td class="px-5 py-3">
+                                    <p class="font-medium text-gray-900">
+                                        {{ number_format($l->usadas_mes) }} <span class="font-normal text-gray-400">/ {{ number_format($tope) }}</span>
+                                    </p>
+                                    <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                                        <div class="h-full rounded-full {{ $pct >= 90 ? 'bg-red-500' : ($pct >= 70 ? 'bg-amber-500' : 'bg-green-500') }}"
+                                             style="width: {{ $pct }}%"></div>
+                                    </div>
+                                </td>
+
+                                {{-- Estado y caducidad juntos: lo que se
+                                     pregunta de una llave es si hoy funciona y
+                                     hasta cuando va a seguir haciendolo. --}}
+                                <td class="px-5 py-3">
+                                    <span class="inline-block rounded-full px-2 py-0.5 text-xs font-medium
+                                        @if($estado === 'activa') bg-green-50 text-green-700
+                                        @elseif($estado === 'sandbox') bg-blue-50 text-blue-700
+                                        @elseif($estado === 'vencida') bg-amber-50 text-amber-700
+                                        @else bg-red-50 text-red-700 @endif">
+                                        {{ ['activa' => '● Activa', 'sandbox' => 'Sandbox', 'vencida' => 'Vencida', 'bloqueada' => 'Bloqueada'][$estado] }}
+                                    </span>
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        @if($l->expira_en)
+                                            hasta el {{ $l->expira_en->format('d/m/Y') }}
+                                        @else
+                                            sin caducidad
+                                        @endif
+                                    </p>
+                                </td>
+
+                                <td class="px-5 py-3">
+                                    {{-- Los mismos botones que el resto del sistema: x-icon-action
+                                         es el componente que usan Empresas, Documentos y API. Con
+                                         botones a mano esta pantalla se veia de otro sitio. --}}
+                                    <div class="flex shrink-0 items-center gap-1.5">
+                                        <x-icon-action icon="ver" label="Ver esta API Key" color="blue" type="button"
+                                                       @click="detalle = {{ Illuminate\Support\Js::from([
+                                                           'id' => $l->id,
+                                                           'nombre' => $l->nombre,
+                                                           'estado' => $estado,
+                                                           'entorno' => $l->entorno,
+                                                           'clave' => $l->clave,
+                                                           'pista' => $l->secreto_pista,
+                                                           'titular' => $l->nombreDelTitular(),
+                                                           'plan' => $l->plan?->nombre,
+                                                           'servicios' => collect($l->servicios)->map(fn ($x) => strtoupper($x))->join(' y '),
+                                                           'usadas' => $l->usadas_mes,
+                                                           'tope' => $tope,
+                                                           'creada' => $l->created_at->format('d/m/Y'),
+                                                           'expira' => $l->expira_en?->format('d/m/Y'),
+                                                           'ultimo_uso' => $l->ultimo_uso_en?->format('d/m/Y H:i'),
+                                                       ]) }}" />
+
+                                        <x-icon-action icon="editar" label="Editar" color="slate" type="button"
+                                                       @click="llave = {{ Illuminate\Support\Js::from([
+                                                           'id' => $l->id,
+                                                           'nombre' => $l->nombre,
+                                                           'titular_tipo' => $l->company_id ? 'empresa' : 'externo',
+                                                           'company_id' => $l->company_id,
+                                                           'titular' => $l->titular,
+                                                           'titular_documento' => $l->titular_documento,
+                                                           'titular_email' => $l->titular_email,
+                                                           'api_plan_id' => $l->api_plan_id,
+                                                           'entorno' => $l->entorno,
+                                                           'servicios' => (array) $l->servicios,
+                                                           'expira_en' => $l->expira_en?->toDateString(),
+                                                       ]) }}; nueva = false" />
+
+                                        {{-- Lo tenia Sandbox y aqui no, que es al reves de lo que
+                                             hace falta: al que paga no se le puede decir que se
+                                             borra su llave y empiece de cero porque perdio el
+                                             secreto. --}}
+                                        <form method="POST" action="{{ route('super-admin.consultas.llaves.regenerar', $l) }}"
+                                              onsubmit="return confirm('Se genera un secreto nuevo para «{{ $l->nombre }}».
+
+                    El actual deja de funcionar en cuanto se guarde, así que hay que pasarle el nuevo al cliente. La clave (X-Api-Key) no cambia.
+
+                    ¿Seguir?')">
+                                            @csrf
+                                            <x-icon-action icon="renovar" label="Generar un secreto nuevo" color="slate" />
+                                        </form>
+
+                                        <form method="POST" action="{{ route('super-admin.consultas.llaves.alternar', $l) }}">
+                                            @csrf
+                                            <x-icon-action :icon="$l->activa ? 'bloquear' : 'desbloquear'"
+                                                           :label="$l->activa ? 'Bloquear' : 'Desbloquear'"
+                                                           :color="$l->activa ? 'amber' : 'emerald'" />
+                                        </form>
+
+                                        <form method="POST" action="{{ route('super-admin.consultas.llaves.borrar', $l) }}"
+                                              onsubmit="return confirm('Se elimina «{{ $l->nombre }}» y todo su historial de consultas.
+
+                    Quien la use dejará de tener acceso al instante, y no quedará constancia de lo que consumió.
+
+                    ¿Continuar?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <x-icon-action icon="eliminar" label="Eliminar" color="red" />
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
     </section>
 
     {{-- Crear y editar en modal: son siete campos y meterlos en la fila la
