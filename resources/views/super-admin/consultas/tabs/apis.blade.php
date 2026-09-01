@@ -12,7 +12,7 @@
         <div x-data="{ abierto: true }" x-show="abierto" x-cloak
              @keydown.escape.window="abierto = false"
              class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
-            <div class="my-auto w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-xl">
+            <div class="my-auto w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
                 <div class="border-b border-gray-200 px-5 py-4">
                     <h3 class="text-base font-semibold text-gray-900">«{{ $nueva['nombre'] }}» creada</h3>
                     <p class="mt-0.5 text-xs text-gray-500">
@@ -30,7 +30,7 @@
                             @foreach(['URL base' => url('/api/consultas'), 'X-Api-Key' => $nueva['clave'], 'X-Api-Secret' => $nueva['secreto']] as $etiqueta => $valor)
                                 <div class="flex items-center gap-3 px-4 py-2.5">
                                     <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">{{ $etiqueta }}</span>
-                                    <code class="min-w-0 flex-1 break-all rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100">{{ $valor }}</code>
+                                    <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100">{{ $valor }}</code>
                                     <button type="button" onclick="window.copyCompanyCredential(this, @js($valor))"
                                             class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
                                 </div>
@@ -197,7 +197,7 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
          @keydown.escape.window="llave = null; nueva = false"
          class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
         <div @click.outside="llave = null; nueva = false"
-             class="my-auto w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-xl">
+             class="my-auto w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl">
 
             <form method="POST" x-ref="formulario"
                   :action="nueva
@@ -396,7 +396,7 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
          @keydown.escape.window="detalle = null"
          class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
         <div @click.outside="detalle = null"
-             class="my-auto w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-xl">
+             class="my-auto w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
 
             <div class="flex items-start justify-between gap-3 border-b border-gray-200 px-5 py-4">
                 <div class="min-w-0">
@@ -447,14 +447,14 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                     <div class="divide-y divide-indigo-100">
                         <div class="flex items-center gap-3 px-4 py-2.5">
                             <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">URL base</span>
-                            <code class="min-w-0 flex-1 break-all rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100">{{ url('/api/consultas') }}</code>
+                            <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100">{{ url('/api/consultas') }}</code>
                             <button type="button" onclick="window.copyCompanyCredential(this, @js(url('/api/consultas')))"
                                     class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
                         </div>
 
                         <div class="flex items-center gap-3 px-4 py-2.5">
                             <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">X-Api-Key</span>
-                            <code class="min-w-0 flex-1 break-all rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100" x-text="detalle?.clave"></code>
+                            <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100" x-text="detalle?.clave"></code>
                             <button type="button" @click="window.copyCompanyCredential($el, detalle?.clave)"
                                     class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
                         </div>
