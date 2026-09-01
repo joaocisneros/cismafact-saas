@@ -8,12 +8,22 @@ use App\Services\ConsultaDocumentoService;
 use App\Support\ConsumoInterno;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class ClientController extends Controller
 {
     /** Tipos de documento de identidad aceptados por SUNAT. */
     private const TIPOS_DOC = ['1', '4', '6', '0'];
+
+    /**
+     * Busquedas por minuto y empresa en el autocompletado.
+     *
+     * No es por seguridad sino por dinero: cada una que no este en casa sale al
+     * proveedor y se paga, y un formulario abierto no puede convertirse en un
+     * grifo por un dedo apoyado en una tecla.
+     */
+    private const BUSQUEDAS_POR_MINUTO = 20;
 
     public function index(Request $request)
     {
@@ -109,6 +119,30 @@ class ClientController extends Controller
 
         $numero = preg_replace('/\D/', '', $numero);
         $slug = $tipo === '6' ? 'ruc' : 'dni';
+        $empresa = Auth::user()->company_id;
+
+        // El tope se comprueba aqui y no con throttle: aquel corta antes de
+        // llegar al controlador, asi que las cortadas no se anotaban y en el
+        // panel se veian las que pasaron y ninguna señal de las que no. Es lo
+        // que se mira cuando alguien avisa de que no le sale.
+        $ultimoMinuto = DB::table('consultas_consumo')
+            ->where('origen', 'interno')
+            ->where('company_id', $empresa)
+            ->where('created_at', '>=', now()->subMinute())
+            ->count();
+
+        if ($ultimoMinuto >= self::BUSQUEDAS_POR_MINUTO) {
+            ConsumoInterno::anotar($empresa, $slug, $numero, [
+                'valido' => false,
+                'fuente' => 'rechazada',
+                'motivo' => 'Demasiadas búsquedas seguidas: más de ' . self::BUSQUEDAS_POR_MINUTO . ' en un minuto.',
+            ], 0);
+
+            return response()->json([
+                'encontrado' => false,
+                'mensaje' => 'Demasiadas búsquedas seguidas. Espera un momento.',
+            ]);
+        }
 
         $empezo = microtime(true);
         $r = $slug === 'ruc' ? $consultas->ruc($numero) : $consultas->dni($numero);

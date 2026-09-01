@@ -50,17 +50,17 @@
 
 
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <table class="min-w-full table-fixed divide-y divide-gray-200 text-sm">
                 <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
                     <tr>
-                        <th class="w-px whitespace-nowrap px-4 py-3">Fecha y hora</th>
-                        <th class="whitespace-nowrap px-4 py-3">Empresa</th>
-                        <th class="w-px whitespace-nowrap px-4 py-3">Servicio</th>
-                        <th class="w-px whitespace-nowrap px-4 py-3">Número</th>
-                        <th class="px-4 py-3">A nombre de</th>
-                        <th class="w-px whitespace-nowrap px-4 py-3">Estado</th>
-                        <th class="w-px whitespace-nowrap px-4 py-3">Origen</th>
-                        <th class="w-px whitespace-nowrap px-4 py-3 text-right">Tardó</th>
+                        <th class="w-1/8 whitespace-nowrap px-4 py-3">Fecha y hora</th>
+                        <th class="w-1/6 whitespace-nowrap px-4 py-3">Empresa</th>
+                        <th class="w-1/12 whitespace-nowrap px-4 py-3">Servicio</th>
+                        <th class="w-1/12 whitespace-nowrap px-4 py-3">Número</th>
+                        <th class="w-1/5 whitespace-nowrap px-4 py-3">A nombre de</th>
+                        <th class="w-1/6 whitespace-nowrap px-4 py-3">Estado</th>
+                        <th class="w-1/12 whitespace-nowrap px-4 py-3">Origen</th>
+                        <th class="w-1/12 whitespace-nowrap px-4 py-3 text-right">Tardó</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -107,7 +107,7 @@
                                 @php
                                     $ficha = $h->ficha ? json_decode($h->ficha, true) : null;
                                 @endphp
-                                {{ $ficha['nombre'] ?? '—' }}
+                                <p class="truncate" title="{{ $ficha['nombre'] ?? '' }}">{{ $ficha['nombre'] ?? '—' }}</p>
                             </td>
                             <td class="whitespace-nowrap px-4 py-2.5">
                                 @if($h->exito)
@@ -123,7 +123,7 @@
                                         <span class="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">Sin datos</span>
                                     @endif
                                     @if($h->motivo)
-                                        <p class="mt-0.5 text-xs text-gray-500">{{ $h->motivo }}</p>
+                                        <p class="mt-0.5 truncate text-xs text-gray-500" title="{{ $h->motivo }}">{{ $h->motivo }}</p>
                                     @endif
                                 @endif
                             </td>

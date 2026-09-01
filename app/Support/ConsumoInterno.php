@@ -41,7 +41,11 @@ class ConsumoInterno
             // valia, asi que no se pregunto a nadie. Sin esto se guardaba
             // «ninguna», igual que cuando el numero si vale pero el proveedor
             // no contesta, y en pantalla los dos salian como «sin ficha».
-            'fuente' => ($resultado['valido'] ?? false) ? ($resultado['fuente'] ?? 'ninguna') : 'invalido',
+            // Si el llamador dice de donde viene, manda el suyo: un corte por
+            // exceso de busquedas no es un numero invalido, y con la misma
+            // etiqueta se leian igual en el panel.
+            'fuente' => $resultado['fuente']
+                ?? (($resultado['valido'] ?? false) ? 'ninguna' : 'invalido'),
             'exito' => (bool) ($resultado['valido'] ?? false) && ! empty($resultado['nombre']),
             'ms' => min($ms, 65535),
             'motivo' => isset($resultado['motivo']) ? mb_substr($resultado['motivo'], 0, 120) : null,
