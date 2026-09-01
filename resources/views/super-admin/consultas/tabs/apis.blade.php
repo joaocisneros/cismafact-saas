@@ -443,8 +443,15 @@
                         <select name="api_plan_id" id="l_plan" required
                                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                             @foreach($planesApi->filter(fn ($p) => $p->a_medida || (float) $p->precio_mensual > 0) as $p)
+                                {{-- Las cuotas y no el precio.
+
+                                     Esta pantalla se abre delante de clientes y
+                                     el importe no pinta nada en ella. Ademas al
+                                     elegir plan lo que se compara es cuanto da
+                                     cada uno; la tarifa esta en Planes, que es
+                                     donde se mira cuando toca cobrar. --}}
                                 <option value="{{ $p->id }}" :selected="llave?.api_plan_id == {{ $p->id }}">
-                                    {{ $p->nombre }}@if($p->a_medida) — a convenir @elseif((float) $p->precio_mensual > 0) — S/ {{ number_format($p->precio_mensual, 2) }}/mes @else — sin costo @endif
+                                    {{ $p->nombre }} — {{ $apis->map(fn ($a) => number_format($a->limiteDelPlan($p->id)) . ' ' . strtoupper($a->slug))->join(' · ') }}
                                 </option>
                             @endforeach
                         </select>

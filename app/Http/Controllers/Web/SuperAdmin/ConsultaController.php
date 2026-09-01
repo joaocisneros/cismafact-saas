@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Web\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\Api;
 use App\Models\ApiPlan;
+use App\Models\ConsultaLlave;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * La API de RUC y DNI que se sirve a los clientes.
@@ -257,12 +259,39 @@ class ConsultaController extends Controller
 
     public function actualizarPlan(Request $request, ApiPlan $plan)
     {
-        $plan->update($request->validate([
+        $datos = $request->validate([
             'nombre' => 'required|string|max:60',
             'descripcion' => 'nullable|string|max:120',
             'precio_mensual' => 'required|numeric|min:0|max:99999',
             'a_medida' => 'nullable|boolean',
-        ]) + ['a_medida' => $request->boolean('a_medida')]);
+        ]);
+
+        $datos['a_medida'] = $request->boolean('a_medida');
+
+        /*
+         * Un plan con llaves de produccion dentro no puede quedarse a cero.
+         *
+         * El gratis es el de sandbox, y al crear o editar una llave se rechaza
+         * que una de produccion lo lleve. Pero se llegaba por el otro lado:
+         * bastaba con bajar a cero el precio de un plan que ya tenian, y esas
+         * llaves se quedaban en un plan gratuito sin pasar por esa
+         * comprobacion, cobrando cero y contando contra la cuota del free.
+         */
+        if (! $datos['a_medida'] && (float) $datos['precio_mensual'] <= 0) {
+            $enProduccion = ConsultaLlave::where('api_plan_id', $plan->id)
+                ->where('entorno', 'produccion')
+                ->count();
+
+            if ($enProduccion > 0) {
+                throw ValidationException::withMessages([
+                    'precio_mensual' => "No se puede dejar «{$plan->nombre}» sin precio: hay {$enProduccion} "
+                        . 'API Key de producción con ese plan, y las de producción no pueden ir en un plan '
+                        . 'gratuito. Cámbialas de plan primero, o ponle «a convenir».',
+                ]);
+            }
+        }
+
+        $plan->update($datos);
 
         // syncWithoutDetaching y no sync: una consulta que no venga en el
         // formulario —porque se creo despues de abrir la pantalla— no debe
