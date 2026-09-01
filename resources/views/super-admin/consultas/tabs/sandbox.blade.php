@@ -253,26 +253,33 @@ El actual deja de funcionar en cuanto se guarde, así que hay que pasarle el nue
                     <p class="mt-0.5 text-xs text-gray-500">Consulta datos reales, con el tope que le pongas.</p>
                 </div>
 
-                {{-- Una llave de prueba se reparte deprisa: se elige a quien y
-                     se manda. Lo demas trae puesto lo de siempre —las dos
-                     consultas y un mes— y solo se abre si hay que cambiarlo.
-                     Antes eran cuatro campos para algo que se hace en un minuto
-                     entre dos correos. --}}
-                {{-- Dos campos al crear: a quien y cuanto le dura.
-
-                     El nombre se arma con el titular y el acceso son siempre las
-                     dos consultas, asi que preguntarlos solo alargaba el modal.
-                     Se cambian despues editando, que es cuando de verdad hace
-                     falta y donde si aparecen. --}}
-                {{-- Tres campos: a quien, a que le da acceso y cuanto le dura.
+                {{-- Tres campos: a quien, a que le da acceso y cuantas
+                     consultas le tocan.
 
                      Sin desplegable de empresas: las consultas se venden aparte
-                     de la facturacion —quien compra consultas no tiene por que
-                     facturar aqui— y quien pide una llave de prueba suele ser un
-                     programador, no una empresa dada de alta. Se escribe y ya.
+                     de la facturacion, y quien pide una llave de prueba suele
+                     ser un programador, no una empresa dada de alta.
 
                      El nombre no se pregunta: se arma con el titular. --}}
-                <div class="space-y-4 px-5 py-4">
+                <div class="space-y-4 px-5 py-4"
+                     x-data="{
+                         marcados: @js($apis->pluck('slug')),
+                         tope: 20,
+                         alterna(slug, on) {
+                             this.marcados = on
+                                 ? [...new Set([...this.marcados, slug])]
+                                 : this.marcados.filter(s => s !== slug);
+                         },
+                         /* Lo que significa el numero, dicho con los servicios
+                            que estan marcados: «por cada servicio» se pasaba por
+                            alto y no quedaba claro si eran 20 en total. */
+                         resumen() {
+                             const n = Number(this.tope) || 0;
+                             if (! this.marcados.length) return 'Marca al menos una consulta.';
+                             return this.marcados.map(s => n + ' ' + s.toUpperCase()).join(' y ') + ' al mes';
+                         },
+                     }"
+                     x-effect="if (llave) { marcados = llave.servicios ?? []; tope = llave.tope_pruebas ?? 20; }">
 
                     <input type="hidden" name="titular_tipo" value="externo">
 
@@ -297,11 +304,10 @@ El actual deja de funcionar en cuanto se guarde, así que hay que pasarle el nue
                         <div class="grid gap-2 sm:grid-cols-2">
                             @foreach($apis as $api)
                                 <label class="flex cursor-pointer gap-2.5 rounded-lg border p-3 transition"
-                                       x-data="{ on: true }"
-                                       x-effect="on = llave ? (llave.servicios ?? []).includes('{{ $api->slug }}') : true"
-                                       :class="on ? 'border-blue-500 bg-blue-50/50' : 'border-gray-200 hover:bg-gray-50'">
+                                       :class="marcados.includes('{{ $api->slug }}') ? 'border-blue-500 bg-blue-50/50' : 'border-gray-200 hover:bg-gray-50'">
                                     <input type="checkbox" name="servicios[]" value="{{ $api->slug }}"
-                                           x-model="on"
+                                           :checked="marcados.includes('{{ $api->slug }}')"
+                                           @change="alterna('{{ $api->slug }}', $event.target.checked)"
                                            class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                                     <span class="min-w-0">
                                         <span class="block text-sm font-medium text-gray-900">{{ $api->nombre }}</span>
@@ -323,9 +329,15 @@ El actual deja de funcionar en cuanto se guarde, así que hay que pasarle el nue
                         </label>
                         <div class="flex items-center gap-2">
                             <input type="number" name="tope_pruebas" id="s_tope" min="1" max="5000"
-                                   :value="llave?.tope_pruebas ?? 20"
+                                   x-model="tope"
                                    class="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                            <span class="text-sm text-gray-500">al mes, por cada servicio</span>
+                            {{-- Se dice en que se traduce el numero con los
+                                 servicios marcados: «por cada servicio» se
+                                 pasaba por alto y quedaba la duda de si eran
+                                 veinte en total o veinte de cada. --}}
+                            <span class="text-sm text-gray-500">
+                                de cada una: <span class="font-medium text-gray-900" x-text="resumen()"></span>
+                            </span>
                         </div>
                     </div>
 
