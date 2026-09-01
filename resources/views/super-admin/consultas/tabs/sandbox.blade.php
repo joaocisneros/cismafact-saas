@@ -101,13 +101,17 @@
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 text-sm">
                     <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
+                        {{-- «Para quién» encabezaba la llave, y el titular iba
+                             colgado de «Da acceso a», que es de los servicios.
+                             Cada dato pasa a su columna. --}}
                         <tr>
-                            <th class="px-5 py-3">Para quién</th>
-                            <th class="px-5 py-3">Da acceso a</th>
-                            <th class="px-5 py-3">Llamadas</th>
-                            <th class="px-5 py-3">Último uso</th>
-                            <th class="px-5 py-3">Caduca</th>
-                            <th class="px-5 py-3 text-right">Acciones</th>
+                            <th class="px-5 py-3">Llave</th>
+                            <th class="px-5 py-3">Titular</th>
+                            <th class="w-px whitespace-nowrap px-5 py-3">Servicios</th>
+                            <th class="w-px whitespace-nowrap px-5 py-3 text-right">Consultas</th>
+                            <th class="w-px whitespace-nowrap px-5 py-3">Último uso</th>
+                            <th class="w-px whitespace-nowrap px-5 py-3">Vigencia</th>
+                            <th class="w-px whitespace-nowrap px-5 py-3 text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -118,30 +122,41 @@
                                     <p class="truncate font-mono text-xs text-gray-400">{{ Str::limit($l->clave, 26) }}</p>
                                 </td>
 
-                                <td class="px-5 py-3 text-gray-600">
-                                    {{ collect($l->servicios)->map(fn ($s) => strtoupper($s))->join(' y ') }}
-                                    <p class="text-xs text-gray-400">{{ $l->nombreDelTitular() }}</p>
-                                </td>
-
-                                <td class="px-5 py-3 font-medium text-gray-900">{{ number_format($l->consumo_count) }}</td>
-
-                                <td class="px-5 py-3 text-gray-600">
-                                    {{ $l->ultimo_uso_en?->diffForHumans() ?? 'nunca' }}
-                                </td>
-
                                 <td class="px-5 py-3">
-                                    @if(! $l->activa)
-                                        <span class="text-xs font-medium text-red-600">Bloqueada</span>
-                                    @elseif($l->vencida())
-                                        <span class="text-xs font-medium text-red-600">Expiró el {{ $l->expira_en->format('d/m/Y') }}</span>
-                                    @elseif($l->expira_en)
-                                        <span class="text-xs text-gray-600">{{ $l->expira_en->format('d/m/Y') }}</span>
-                                    @else
-                                        <span class="text-xs text-gray-400">Sin caducidad</span>
+                                    <span class="text-gray-900">{{ $l->nombreDelTitular() }}</span>
+                                    @if($l->company_id)
+                                        <p class="text-xs text-gray-400">Empresa del sistema</p>
                                     @endif
                                 </td>
 
-                                <td class="px-5 py-3">
+                                <td class="whitespace-nowrap px-5 py-3 text-gray-600">
+                                    {{ collect($l->servicios)->map(fn ($s) => strtoupper($s))->join(' y ') }}
+                                </td>
+
+                                <td class="whitespace-nowrap px-5 py-3 text-right font-medium text-gray-900">{{ number_format($l->consumo_count) }}</td>
+
+                                <td class="whitespace-nowrap px-5 py-3 text-gray-600">
+                                    {{ $l->ultimo_uso_en?->diffForHumans() ?? 'nunca' }}
+                                </td>
+
+                                <td class="whitespace-nowrap px-5 py-3">
+                                    @if(! $l->activa)
+                                        <span class="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">Bloqueada</span>
+                                    @elseif($l->vencida())
+                                        <span class="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">Vencida</span>
+                                        <p class="mt-0.5 text-xs text-gray-400">el {{ $l->expira_en->format('d/m/Y') }}</p>
+                                    @elseif($l->expira_en)
+                                        <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Activa</span>
+                                        <p class="mt-0.5 text-xs text-gray-400">
+                                            hasta el {{ $l->expira_en->format('d/m/Y') }}
+                                        </p>
+                                    @else
+                                        <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Activa</span>
+                                        <p class="mt-0.5 text-xs text-gray-400">sin caducidad</p>
+                                    @endif
+                                </td>
+
+                                <td class="whitespace-nowrap px-5 py-3">
                                     <div class="flex items-center justify-end gap-1.5">
                                         <x-icon-action icon="ver" label="Ver credenciales" color="blue" type="button"
                                                        @click="detalle = {{ Illuminate\Support\Js::from([
