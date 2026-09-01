@@ -75,13 +75,16 @@
                                  entre quien busco y que busco. --}}
                             <td class="px-4 py-2.5">
                                 <div class="flex items-center gap-1.5">
-                                    {{-- Sin empresa es una consulta del propio panel:
-                                         al dar de alta una llave se busca el RUC del
-                                         cliente, y eso cuesta igual. Poniendo «—» no
-                                         se distinguia de un dato que falta. --}}
-                                    <span class="{{ $h->empresa ? 'text-gray-900' : 'italic text-gray-500' }}">
-                                        {{ $h->empresa ?? 'Desde el panel' }}
-                                    </span>
+                                    {{-- Sin empresa la hizo el super admin desde el
+                                         panel: al dar de alta una llave se busca el
+                                         RUC del cliente, y eso cuesta igual. Se dice
+                                         quien fue, que con un guion no se distinguia
+                                         de un dato que falta. --}}
+                                    @if($h->empresa)
+                                        <span class="text-gray-900">{{ $h->empresa }}</span>
+                                    @else
+                                        <span class="rounded bg-violet-50 px-1.5 py-0.5 text-xs font-medium text-violet-700">Super Admin</span>
+                                    @endif
                                     @if($h->empresa)
                                         @php
                                             // Suspendida a mano cuenta como no activa: para
