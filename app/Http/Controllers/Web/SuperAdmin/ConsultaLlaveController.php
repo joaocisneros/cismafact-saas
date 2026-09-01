@@ -185,11 +185,29 @@ class ConsultaLlaveController extends Controller
 
         $base = 'Sandbox · ' . $titular;
 
-        $cuantas = ConsultaLlave::where('entorno', 'sandbox')
-            ->where('nombre', 'like', $base . '%')
-            ->count();
+        // El primer numero libre, no «cuantas hay mas una». Contando, al borrar
+        // una del medio se proponia un nombre que ya existia: quedaban la (2) y
+        // la (3), contaba dos y pedia la (3) otra vez. La creacion se quedaba
+        // bloqueada para ese cliente hasta renombrar algo a mano.
+        $ocupados = ConsultaLlave::where('nombre', 'like', $base . '%')
+            ->pluck('nombre')
+            ->all();
 
-        return $cuantas === 0 ? $base : $base . ' (' . ($cuantas + 1) . ')';
+        if (! in_array($base, $ocupados, true)) {
+            return $base;
+        }
+
+        for ($n = 2; $n < 1000; $n++) {
+            $candidato = $base . ' (' . $n . ')';
+
+            if (! in_array($candidato, $ocupados, true)) {
+                return $candidato;
+            }
+        }
+
+        // Mil llaves para el mismo titular no va a pasar, pero si pasara vale
+        // mas un nombre feo que un error sin salida.
+        return mb_substr($base . ' ' . now()->format('YmdHis'), 0, 80);
     }
 
     /** @return array<string,mixed> */
