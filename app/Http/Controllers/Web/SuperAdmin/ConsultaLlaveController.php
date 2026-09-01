@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Web\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApiPlan;
 use App\Models\ConsultaLlave;
 use App\Support\ConsumoInterno;
 use App\Services\ConsultaDocumentoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Las llaves de acceso a las consultas de RUC y DNI.
@@ -316,10 +318,33 @@ class ConsultaLlaveController extends Controller
         if (($datos['entorno'] ?? null) === 'sandbox') {
             $datos['datos_reales'] = true;
             $datos['tope_pruebas'] = (int) ($datos['tope_pruebas'] ?? 0) ?: 20;
+
+            // Sandbox no cobra: sale siempre con el plan gratis, venga lo que
+            // venga en el formulario. Antes lo decidia un campo oculto con el
+            // primer plan de la lista, que es una posicion, no un precio.
+            $gratis = ApiPlan::gratis();
+
+            if (! $gratis) {
+                throw ValidationException::withMessages([
+                    'api_plan_id' => 'No hay ningún plan gratuito, y las llaves de prueba salen con ese. Crea uno en Planes.',
+                ]);
+            }
+
+            $datos['api_plan_id'] = $gratis->id;
         } else {
             // En produccion manda el plan contratado.
             $datos['datos_reales'] = true;
             $datos['tope_pruebas'] = null;
+
+            // Y tiene que costar algo: el gratis es el de sandbox. El
+            // desplegable ya no lo ofrece, pero eso es la pantalla; sin
+            // comprobarlo aqui basta con reenviar el formulario para dejar una
+            // llave cobrando cero y consumiendo cuota de pago.
+            if (ApiPlan::find($datos['api_plan_id'])?->esGratis()) {
+                throw ValidationException::withMessages([
+                    'api_plan_id' => 'Ese es el plan de las llaves de prueba. En producción hay que elegir uno de pago.',
+                ]);
+            }
         }
 
         // Solo uno de los dos titulares queda guardado. Sin esto, cambiar de

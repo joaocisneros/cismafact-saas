@@ -30,6 +30,28 @@ class ApiPlan extends Model
             ->withTimestamps();
     }
 
+    /** El de las llaves de prueba: no se cobra y no es a convenir. */
+    public function esGratis(): bool
+    {
+        return ! $this->a_medida && (float) $this->precio_mensual <= 0;
+    }
+
+    /**
+     * El plan con el que salen las llaves de sandbox.
+     *
+     * Se busca por precio, no por posicion en la lista: antes se cogia el
+     * primero del desplegable y ese orden depende de como esten los precios,
+     * asi que crear otro plan barato habria cambiado de plan a las llaves de
+     * prueba sin que nadie lo pidiera.
+     */
+    public static function gratis(): ?self
+    {
+        return static::where('a_medida', false)
+            ->where('precio_mensual', '<=', 0)
+            ->orderBy('orden')
+            ->first();
+    }
+
     /** Lo que se enseña donde iria el importe. */
     public function precio(): string
     {

@@ -281,7 +281,10 @@ El historial no se puede recuperar.
                 @csrf
                 <template x-if="! nueva"><input type="hidden" name="_method" value="PUT"></template>
                 <input type="hidden" name="entorno" value="sandbox">
-                <input type="hidden" name="api_plan_id" value="{{ $planesApi->first()?->id }}">
+                {{-- El gratis, que es el de las pruebas. El servidor lo vuelve a
+                     imponer al guardar: esto solo es para que el formulario
+                     mande lo correcto. --}}
+                <input type="hidden" name="api_plan_id" value="{{ \App\Models\ApiPlan::gratis()?->id }}">
 
                 <div class="border-b border-gray-200 px-5 py-4">
                     <h3 class="text-base font-semibold text-gray-900" x-text="nueva ? 'Nueva llave de prueba' : 'Editar llave de prueba'"></h3>
