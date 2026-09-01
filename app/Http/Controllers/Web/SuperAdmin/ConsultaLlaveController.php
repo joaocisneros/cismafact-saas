@@ -70,6 +70,38 @@ class ConsultaLlaveController extends Controller
     }
 
     /**
+     * Genera credenciales nuevas para una llave que ya existe.
+     *
+     * El secreto se enseña una sola vez y despues queda cifrado: si el cliente
+     * lo pierde no hay de donde sacarlo, y sin esto la unica salida era borrar
+     * la llave y crear otra. Se pierde entonces el historial de consumo y la
+     * llave aparece como «eliminada» en el listado, sin saber de quien era.
+     *
+     * Asi conserva su nombre, su titular, su plan y todo lo que lleva
+     * consultado: solo cambian la clave y el secreto.
+     */
+    public function regenerar(ConsultaLlave $llave)
+    {
+        $credenciales = ConsultaLlave::nuevasCredenciales();
+
+        $llave->update([
+            'clave' => $credenciales['clave'],
+            'secreto' => $credenciales['secreto'],
+            'secreto_pista' => substr($credenciales['secreto'], -6),
+        ]);
+
+        // Por el mismo camino que al crear: el secreto se enseña una vez y no
+        // se guarda en ningun sitio del que se pueda volver a leer.
+        return back()->with('llave_creada', [
+            'id' => $llave->id,
+            'nombre' => $llave->nombre,
+            'clave' => $credenciales['clave'],
+            'secreto' => $credenciales['secreto'],
+            'regenerada' => true,
+        ]);
+    }
+
+    /**
      * Borra de una vez las llaves de sandbox ya vencidas.
      *
      * Se reparten muchas para que la gente pruebe, y caducan solas. Borrarlas

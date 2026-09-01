@@ -16,7 +16,8 @@
                     <div class="min-w-0">
                         <h3 class="truncate text-base font-semibold text-gray-900">{{ $creada['nombre'] }}</h3>
                         <p class="mt-0.5 text-xs text-gray-500">
-                            Recién creada. Cópiala ahora:
+                            {{ ($creada['regenerada'] ?? false) ? 'Credenciales nuevas. Las anteriores ya no valen.' : 'Recién creada.' }}
+                            Cópiala ahora:
                             <strong class="text-gray-700">el secreto no se vuelve a mostrar.</strong>
                         </p>
                     </div>
@@ -186,6 +187,20 @@
                                                            'servicios' => (array) $l->servicios,
                                                            'expira_en' => $l->expira_en?->format('Y-m-d'),
                                                        ]) }}" />
+
+                                        {{-- El secreto no se puede recuperar: si el
+                                             cliente lo pierde, la unica salida era
+                                             borrar la llave y crear otra, y con
+                                             ella se iba su historial. --}}
+                                        <form method="POST" action="{{ route('super-admin.consultas.llaves.regenerar', $l) }}"
+                                              onsubmit="return confirm('Se generan una clave y un secreto nuevos para «{{ $l->nombre }}».
+
+Los actuales dejarán de funcionar en cuanto se guarde, así que hay que pasarle los nuevos al programador.
+
+¿Seguir?')">
+                                            @csrf
+                                            <x-icon-action icon="renovar" label="Generar credenciales nuevas" color="slate" />
+                                        </form>
 
                                         <form method="POST" action="{{ route('super-admin.consultas.llaves.alternar', $l) }}">
                                             @csrf

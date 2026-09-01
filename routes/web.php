@@ -231,6 +231,11 @@ Route::prefix('super-admin')
         Route::post('/consultas/llaves', [SuperAdminConsultaLlaveController::class, 'store'])->name('consultas.llaves.guardar');
         Route::put('/consultas/llaves/{llave}', [SuperAdminConsultaLlaveController::class, 'update'])->name('consultas.llaves.actualizar');
         Route::post('/consultas/llaves/{llave}/alternar', [SuperAdminConsultaLlaveController::class, 'alternar'])->name('consultas.llaves.alternar');
+
+        // Credenciales nuevas para una llave que ya existe: el secreto no se
+        // puede recuperar, asi que cuando el cliente lo pierde se rehace.
+        Route::post('/consultas/llaves/{llave}/regenerar', [\App\Http\Controllers\Web\SuperAdmin\ConsultaLlaveController::class, 'regenerar'])
+            ->name('consultas.llaves.regenerar');
         Route::delete('/consultas/llaves/{llave}', [SuperAdminConsultaLlaveController::class, 'destroy'])->name('consultas.llaves.borrar');
 
         // Limpieza de las llaves de prueba caducadas, que se acumulan.
