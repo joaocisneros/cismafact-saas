@@ -67,7 +67,7 @@
                 <p class="text-gray-600">Son tres pasos:</p>
                 <ol class="ml-5 list-decimal space-y-1.5 text-gray-600">
                     <li>Pides tus credenciales. Te llegan una <strong>API Key</strong> y un <strong>API Secret</strong>.</li>
-                    <li>Pruebas contra el entorno de pruebas, que no gasta cuota.</li>
+                    <li>Pruebas con una llave de sandbox, gratis y con un tope de consultas al mes.</li>
                     <li>Cambias las credenciales por las de producción y ya estás consultando de verdad.</li>
                 </ol>
                 <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -98,101 +98,41 @@ Accept: application/json</code></pre>
             <section id="pruebas" class="scroll-mt-24 space-y-3">
                 <h2 class="text-xl font-semibold text-gray-900">3. Pruebas</h2>
                 <p class="text-gray-600">
-                    Si te damos credenciales de prueba, la API responde igual pero con datos inventados,
-                    sin salir a internet y sin gastar cuota. Sirve para dejar tu integración terminada
-                    antes de contratar nada. Las respuestas llevan
-                    <code class="rounded bg-gray-100 px-1 text-sm">"fuente": "modo prueba"</code>
-                    para que no las confundas con datos reales.
+                    Te damos una <strong>llave de sandbox</strong> gratuita para que dejes tu integración
+                    terminada antes de contratar nada. Consulta <strong>los mismos datos reales</strong>
+                    que producción —la misma SUNAT y el mismo RENIEC—, porque con datos inventados no
+                    verías si el servicio te sirve.
                 </p>
-                {{-- Sin esta tabla el sandbox no sirve de mucho: los casos
-                     existen, pero no hay forma de saber que numero pedir para
-                     provocar cada uno. --}}
+
+                {{-- Antes esta seccion publicaba nueve numeros magicos que
+                     devolvian casos fijos. Cuando el sandbox paso a consultar
+                     de verdad dejaron de existir, y quien seguia el manual
+                     fallaba en su primera prueba: se los llevo por delante el
+                     mismo cambio que hizo util al sandbox. --}}
                 <p class="text-gray-600">
-                    Cada número de prueba devuelve un caso distinto, para que puedas comprobar
-                    <strong>cómo responde tu código</strong> ante cada situación, no solo ante la buena.
-                    Siempre devuelven lo mismo, así que una prueba que falla la puedes repetir.
+                    Pruébala con <strong>RUC y DNI de verdad</strong>: los tuyos, los de tus clientes,
+                    los que quieras comprobar. No hay números especiales que devuelvan casos preparados.
                 </p>
 
-                <p class="text-sm font-medium text-gray-700">RUC de prueba</p>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm">
-                        <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
-                            <tr>
-                                <th class="px-4 py-2.5">Número</th>
-                                <th class="px-4 py-2.5">Qué devuelve</th>
-                                <th class="px-4 py-2.5">Para probar</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 text-gray-600">
-                            <tr>
-                                <td class="px-4 py-2 font-mono text-xs">20000000010</td>
-                                <td class="px-4 py-2">ACTIVO · HABIDO</td>
-                                <td class="px-4 py-2">El caso normal.</td>
-                            </tr>
-                            <tr>
-                                <td class="px-4 py-2 font-mono text-xs">20000000028</td>
-                                <td class="px-4 py-2">BAJA DE OFICIO · NO HABIDO</td>
-                                <td class="px-4 py-2">Que tu sistema no le deje facturar.</td>
-                            </tr>
-                            <tr>
-                                <td class="px-4 py-2 font-mono text-xs">20000000036</td>
-                                <td class="px-4 py-2">ACTIVO · NO HABIDO</td>
-                                <td class="px-4 py-2">Se le puede facturar, pero conviene avisar.</td>
-                            </tr>
-                            <tr>
-                                <td class="px-4 py-2 font-mono text-xs">20000000044</td>
-                                <td class="px-4 py-2">SUSPENSION TEMPORAL</td>
-                                <td class="px-4 py-2">Un estado que no es ni activo ni de baja.</td>
-                            </tr>
-                            <tr>
-                                <td class="px-4 py-2 font-mono text-xs">20000000052</td>
-                                <td class="px-4 py-2">Razón social muy larga (90 caracteres)</td>
-                                <td class="px-4 py-2">Que te quepa en pantalla y en el comprobante.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <p class="text-sm font-medium text-gray-700">DNI de prueba</p>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm">
-                        <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
-                            <tr>
-                                <th class="px-4 py-2.5">Número</th>
-                                <th class="px-4 py-2.5">Qué devuelve</th>
-                                <th class="px-4 py-2.5">Para probar</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 text-gray-600">
-                            <tr>
-                                <td class="px-4 py-2 font-mono text-xs">10000001</td>
-                                <td class="px-4 py-2">JUAN DE PRUEBA EJEMPLO</td>
-                                <td class="px-4 py-2">El caso normal.</td>
-                            </tr>
-                            <tr>
-                                <td class="px-4 py-2 font-mono text-xs">10000002</td>
-                                <td class="px-4 py-2">MARIA EJEMPLO, <strong>sin apellido materno</strong></td>
-                                <td class="px-4 py-2">Que no te salga un espacio de más al juntar el nombre.</td>
-                            </tr>
-                            <tr>
-                                <td class="px-4 py-2 font-mono text-xs">10000003</td>
-                                <td class="px-4 py-2">JOSE LUIS DE LA CRUZ VASQUEZ DE PRUEBA</td>
-                                <td class="px-4 py-2">Nombre compuesto y apellidos de varias palabras.</td>
-                            </tr>
-                            <tr>
-                                <td class="px-4 py-2 font-mono text-xs">10000004</td>
-                                <td class="px-4 py-2">ANDRÉS MUÑOZ PEÑA</td>
-                                <td class="px-4 py-2">Tildes y eñes, por si se te rompe la codificación.</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+                    <p class="font-medium text-gray-900">Lo único distinto de producción es el tope.</p>
+                    <p class="mt-1">
+                        La llave de sandbox trae <strong>20 consultas de cada tipo al mes</strong>: 20 de RUC
+                        y 20 de DNI, que se cuentan por separado. Al agotarse responde
+                        <code class="rounded bg-gray-100 px-1">429</code>. Puedes ver lo que te queda en
+                        cualquier momento con <code class="rounded bg-gray-100 px-1">GET /api/consultas/cuota</code>,
+                        y si necesitas más para terminar, nos lo dices.
+                    </p>
                 </div>
 
                 <p class="text-gray-600">
-                    Cualquier otro número válido devuelve el caso normal. Los que no son válidos
-                    dan <code class="rounded bg-gray-100 px-1 text-sm">422</code>, igual que en producción:
-                    prueba con <code class="rounded bg-gray-100 px-1 text-sm">20000000000</code> (dígito
-                    verificador incorrecto) o un DNI de 7 cifras.
+                    Cuando la consulta no sale adelante responde
+                    <code class="rounded bg-gray-100 px-1 text-sm">422</code> y el porqué viene en
+                    <code class="rounded bg-gray-100 px-1 text-sm">message</code>, así que conviene leerlo
+                    y no solo mirar el código: es el mismo 422 para un número mal escrito
+                    (prueba <code class="rounded bg-gray-100 px-1 text-sm">20000000000</code>, cuyo dígito
+                    verificador no cuadra, o un DNI de 7 cifras) que para uno correcto cuyo titular
+                    no aparece.
                 </p>
 
                 <p class="text-gray-600">
@@ -204,8 +144,8 @@ Accept: application/json</code></pre>
             <section id="ruc" class="scroll-mt-24 space-y-3">
                 <h2 class="text-xl font-semibold text-gray-900">4. Consultar RUC</h2>
                 <p class="text-sm text-gray-500">
-                    Los números y los datos de los ejemplos son inventados: son los mismos que
-                    devuelve el entorno de pruebas, así que es lo que verás al probar.
+                    El número y los datos de este ejemplo son inventados, solo para enseñar la
+                    forma de la respuesta. Al probar verás los datos reales del RUC que consultes.
                 </p>
                 <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-gray-100"><code>GET {{ url('/api/consultas/ruc') }}/20000000001</code></pre>
                 <p class="text-sm font-medium text-gray-700">Respuesta</p>
