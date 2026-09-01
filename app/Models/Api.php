@@ -53,31 +53,81 @@ class Api extends Model
      */
     public function ejemplo(string $numero): array
     {
+        // Una cifra del numero elige el caso. Antes se devolvia siempre la
+        // misma ficha, y con eso solo se puede probar que la peticion llega:
+        // no hay forma de comprobar que pasa cuando el RUC esta de baja o no
+        // habido, que es justo donde suele fallar la integracion del cliente.
+        //
+        // Se elige por el numero y no al azar para que las pruebas den siempre
+        // lo mismo: una que falla tiene que poder repetirse.
+        //
+        // En el RUC es la PENULTIMA: la ultima es el digito verificador y no se
+        // puede elegir, va calculada a partir de las demas. El DNI no lleva
+        // verificador, asi que ahi vale la ultima.
         if ($this->slug === 'dni') {
-            return [
-                'valido' => true,
-                'numero' => $numero,
-                'tipo' => 'dni',
-                'nombre' => 'JUAN DE PRUEBA EJEMPLO',
-                'nombres' => 'JUAN',
-                'apellido_paterno' => 'DE PRUEBA',
-                'apellido_materno' => 'EJEMPLO',
-                'fuente' => 'modo prueba',
-            ];
+            return $this->ejemploDni($numero, (int) substr($numero, -1));
         }
+
+        return $this->ejemploRuc($numero, (int) substr($numero, -2, 1));
+    }
+
+    /** @return array<string,mixed> */
+    private function ejemploRuc(string $numero, int $caso): array
+    {
+        $casos = [
+            // Termina en 1: el caso corriente, activo y habido.
+            1 => ['EMPRESA DE EJEMPLO S.A.C.', 'ACTIVO', 'HABIDO'],
+            // En 2: de baja. El cliente no deberia dejar facturarle.
+            2 => ['EJEMPLO CERRADO S.R.L.', 'BAJA DE OFICIO', 'NO HABIDO'],
+            // En 3: activa pero no habida, que se puede facturar con reparos.
+            3 => ['EJEMPLO MUDADO E.I.R.L.', 'ACTIVO', 'NO HABIDO'],
+            // En 4: suspension temporal.
+            4 => ['EJEMPLO EN PAUSA S.A.', 'SUSPENSION TEMPORAL', 'HABIDO'],
+            // En 5: nombre largo, para ver si le cabe en pantalla.
+            5 => ['CORPORACION DE SERVICIOS GENERALES Y REPRESENTACIONES DEL PERU SOCIEDAD ANONIMA CERRADA', 'ACTIVO', 'HABIDO'],
+        ];
+
+        [$nombre, $estado, $condicion] = $casos[$caso] ?? $casos[1];
 
         return [
             'valido' => true,
             'numero' => $numero,
             'tipo' => 'ruc',
-            'nombre' => 'EMPRESA DE EJEMPLO S.A.C.',
-            'estado' => 'ACTIVO',
-            'condicion' => 'HABIDO',
-            'direccion' => 'AV. DE PRUEBA NRO. 100',
+            'nombre' => $nombre,
+            'estado' => $estado,
+            'condicion' => $condicion,
+            'direccion' => 'AV. DE PRUEBA NRO. ' . (100 + $caso),
             'ubigeo' => '150101',
             'departamento' => 'LIMA',
             'provincia' => 'LIMA',
             'distrito' => 'LIMA',
+            'fuente' => 'modo prueba',
+        ];
+    }
+
+    /** @return array<string,mixed> */
+    private function ejemploDni(string $numero, int $caso): array
+    {
+        $casos = [
+            1 => ['JUAN', 'DE PRUEBA', 'EJEMPLO'],
+            // Sin apellido materno: pasa, y parte los nombres mal armados.
+            2 => ['MARIA', 'EJEMPLO', ''],
+            // Nombre compuesto y apellidos largos.
+            3 => ['JOSE LUIS', 'DE LA CRUZ', 'VASQUEZ DE PRUEBA'],
+            // Con tilde y con enye, que es donde se ven los problemas de acentos.
+            4 => ['ANDRÉS', 'MUÑOZ', 'PEÑA'],
+        ];
+
+        [$nombres, $paterno, $materno] = $casos[$caso] ?? $casos[1];
+
+        return [
+            'valido' => true,
+            'numero' => $numero,
+            'tipo' => 'dni',
+            'nombre' => trim($nombres . ' ' . $paterno . ' ' . $materno),
+            'nombres' => $nombres,
+            'apellido_paterno' => $paterno,
+            'apellido_materno' => $materno,
             'fuente' => 'modo prueba',
         ];
     }

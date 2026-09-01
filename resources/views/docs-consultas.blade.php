@@ -104,6 +104,97 @@ Accept: application/json</code></pre>
                     <code class="rounded bg-gray-100 px-1 text-sm">"fuente": "modo prueba"</code>
                     para que no las confundas con datos reales.
                 </p>
+                {{-- Sin esta tabla el sandbox no sirve de mucho: los casos
+                     existen, pero no hay forma de saber que numero pedir para
+                     provocar cada uno. --}}
+                <p class="text-gray-600">
+                    Cada número de prueba devuelve un caso distinto, para que puedas comprobar
+                    <strong>cómo responde tu código</strong> ante cada situación, no solo ante la buena.
+                    Siempre devuelven lo mismo, así que una prueba que falla la puedes repetir.
+                </p>
+
+                <p class="text-sm font-medium text-gray-700">RUC de prueba</p>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
+                            <tr>
+                                <th class="px-4 py-2.5">Número</th>
+                                <th class="px-4 py-2.5">Qué devuelve</th>
+                                <th class="px-4 py-2.5">Para probar</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-gray-600">
+                            <tr>
+                                <td class="px-4 py-2 font-mono text-xs">20000000010</td>
+                                <td class="px-4 py-2">ACTIVO · HABIDO</td>
+                                <td class="px-4 py-2">El caso normal.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2 font-mono text-xs">20000000028</td>
+                                <td class="px-4 py-2">BAJA DE OFICIO · NO HABIDO</td>
+                                <td class="px-4 py-2">Que tu sistema no le deje facturar.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2 font-mono text-xs">20000000036</td>
+                                <td class="px-4 py-2">ACTIVO · NO HABIDO</td>
+                                <td class="px-4 py-2">Se le puede facturar, pero conviene avisar.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2 font-mono text-xs">20000000044</td>
+                                <td class="px-4 py-2">SUSPENSION TEMPORAL</td>
+                                <td class="px-4 py-2">Un estado que no es ni activo ni de baja.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2 font-mono text-xs">20000000052</td>
+                                <td class="px-4 py-2">Razón social muy larga (90 caracteres)</td>
+                                <td class="px-4 py-2">Que te quepa en pantalla y en el comprobante.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="text-sm font-medium text-gray-700">DNI de prueba</p>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
+                            <tr>
+                                <th class="px-4 py-2.5">Número</th>
+                                <th class="px-4 py-2.5">Qué devuelve</th>
+                                <th class="px-4 py-2.5">Para probar</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-gray-600">
+                            <tr>
+                                <td class="px-4 py-2 font-mono text-xs">10000001</td>
+                                <td class="px-4 py-2">JUAN DE PRUEBA EJEMPLO</td>
+                                <td class="px-4 py-2">El caso normal.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2 font-mono text-xs">10000002</td>
+                                <td class="px-4 py-2">MARIA EJEMPLO, <strong>sin apellido materno</strong></td>
+                                <td class="px-4 py-2">Que no te salga un espacio de más al juntar el nombre.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2 font-mono text-xs">10000003</td>
+                                <td class="px-4 py-2">JOSE LUIS DE LA CRUZ VASQUEZ DE PRUEBA</td>
+                                <td class="px-4 py-2">Nombre compuesto y apellidos de varias palabras.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2 font-mono text-xs">10000004</td>
+                                <td class="px-4 py-2">ANDRÉS MUÑOZ PEÑA</td>
+                                <td class="px-4 py-2">Tildes y eñes, por si se te rompe la codificación.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="text-gray-600">
+                    Cualquier otro número válido devuelve el caso normal. Los que no son válidos
+                    dan <code class="rounded bg-gray-100 px-1 text-sm">422</code>, igual que en producción:
+                    prueba con <code class="rounded bg-gray-100 px-1 text-sm">20000000000</code> (dígito
+                    verificador incorrecto) o un DNI de 7 cifras.
+                </p>
+
                 <p class="text-gray-600">
                     Cuando termines, cambias las dos cabeceras por las de producción. No hay que tocar nada más.
                 </p>
