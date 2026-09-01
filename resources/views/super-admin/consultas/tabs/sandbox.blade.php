@@ -264,22 +264,13 @@ El actual deja de funcionar en cuanto se guarde, así que hay que pasarle el nue
                 <div class="space-y-4 px-5 py-4"
                      x-data="{
                          marcados: @js($apis->pluck('slug')),
-                         tope: 20,
                          alterna(slug, on) {
                              this.marcados = on
                                  ? [...new Set([...this.marcados, slug])]
                                  : this.marcados.filter(s => s !== slug);
                          },
-                         /* Lo que significa el numero, dicho con los servicios
-                            que estan marcados: «por cada servicio» se pasaba por
-                            alto y no quedaba claro si eran 20 en total. */
-                         resumen() {
-                             const n = Number(this.tope) || 0;
-                             if (! this.marcados.length) return 'Marca al menos una consulta.';
-                             return this.marcados.map(s => n + ' ' + s.toUpperCase()).join(' y ') + ' al mes';
-                         },
                      }"
-                     x-effect="if (llave) { marcados = llave.servicios ?? []; tope = llave.tope_pruebas ?? 20; }">
+                     x-effect="if (llave) { marcados = llave.servicios ?? []; }">
 
                     <input type="hidden" name="titular_tipo" value="externo">
 
@@ -328,16 +319,12 @@ El actual deja de funcionar en cuanto se guarde, así que hay que pasarle el nue
                             Cuántas consultas le das
                         </label>
                         <div class="flex items-center gap-2">
+                            {{-- Vacio, con el 20 solo de sugerencia: si viene sin
+                                 poner, el sistema le da veinte. --}}
                             <input type="number" name="tope_pruebas" id="s_tope" min="1" max="5000"
-                                   x-model="tope"
+                                   placeholder="20" :value="llave?.tope_pruebas ?? ''"
                                    class="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                            {{-- Se dice en que se traduce el numero con los
-                                 servicios marcados: «por cada servicio» se
-                                 pasaba por alto y quedaba la duda de si eran
-                                 veinte en total o veinte de cada. --}}
-                            <span class="text-sm text-gray-500">
-                                de cada una: <span class="font-medium text-gray-900" x-text="resumen()"></span>
-                            </span>
+                            <span class="text-sm text-gray-500">al mes</span>
                         </div>
                     </div>
 
