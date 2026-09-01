@@ -105,11 +105,15 @@
                              colgado de «Da acceso a», que es de los servicios.
                              Cada dato pasa a su columna. --}}
                         <tr>
-                            <th class="px-5 py-3">Empresa</th>
-                            <th class="w-px whitespace-nowrap px-5 py-3">Servicios</th>
-                            <th class="w-px whitespace-nowrap px-5 py-3 text-right">Consultas</th>
-                            <th class="w-px whitespace-nowrap px-5 py-3">Último uso</th>
-                            <th class="w-px whitespace-nowrap px-5 py-3">Vigencia</th>
+                            {{-- Empresa era la unica sin ancho fijo, asi que se
+                                 llevaba todo el sobrante y dejaba el resto
+                                 apretado contra el borde. Se reparte a ojo segun
+                                 lo que lleva cada una. --}}
+                            <th class="w-2/5 px-5 py-3">Empresa</th>
+                            <th class="whitespace-nowrap px-5 py-3">Servicios</th>
+                            <th class="whitespace-nowrap px-5 py-3 text-right">Consultas</th>
+                            <th class="whitespace-nowrap px-5 py-3">Último uso</th>
+                            <th class="whitespace-nowrap px-5 py-3">Vigencia</th>
                             <th class="w-px whitespace-nowrap px-5 py-3 text-right">Acciones</th>
                         </tr>
                     </thead>
@@ -268,15 +272,27 @@
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
 
+                    {{-- Cada consulta, una tarjeta que se marca entera. Con dos
+                         casillas sueltas habia que saberse de memoria que trae
+                         cada una; aqui lo dice debajo, que es lo mismo que se
+                         lee en la pestaña de planes. --}}
                     <div>
                         <p class="mb-1.5 block text-sm font-medium text-gray-900">¿A qué le da acceso?</p>
-                        <div class="flex flex-wrap gap-4">
+                        <div class="grid gap-2 sm:grid-cols-2">
                             @foreach($apis as $api)
-                                <label class="flex items-center gap-2 text-sm text-gray-700">
+                                <label class="flex cursor-pointer gap-2.5 rounded-lg border p-3 transition"
+                                       x-data="{ on: true }"
+                                       x-effect="on = llave ? (llave.servicios ?? []).includes('{{ $api->slug }}') : true"
+                                       :class="on ? 'border-blue-500 bg-blue-50/50' : 'border-gray-200 hover:bg-gray-50'">
                                     <input type="checkbox" name="servicios[]" value="{{ $api->slug }}"
-                                           :checked="llave ? (llave.servicios ?? []).includes('{{ $api->slug }}') : true"
-                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    {{ $api->nombre }}
+                                           x-model="on"
+                                           class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="min-w-0">
+                                        <span class="block text-sm font-medium text-gray-900">{{ $api->nombre }}</span>
+                                        @if($api->descripcion)
+                                            <span class="mt-0.5 block text-xs leading-snug text-gray-500">{{ $api->descripcion }}</span>
+                                        @endif
+                                    </span>
                                 </label>
                             @endforeach
                         </div>
