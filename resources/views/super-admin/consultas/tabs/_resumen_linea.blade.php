@@ -40,6 +40,13 @@
         </span>
     @endif
 
+    @if(($r['sin_ficha'] ?? 0) > 0)
+        <span class="text-gray-500">
+            <span class="font-semibold text-amber-700">{{ number_format($r['sin_ficha']) }}</span>
+            sin ficha
+        </span>
+    @endif
+
     <span class="text-gray-500">
         <span class="font-semibold {{ $r['fallidas'] ? 'text-red-700' : 'text-gray-400' }}">{{ number_format($r['fallidas']) }}</span>
         con error

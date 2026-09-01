@@ -171,6 +171,11 @@ class ConsultaController extends Controller
             // se sirvieron igual: sin contarlas, las cifras de la linea no
             // sumaban el total que tenian al lado.
             'de_prueba' => $base()->where('fuente', 'modo prueba')->count(),
+            // El numero valia pero no se trajo la ficha: la consulta se sirvio,
+            // asi que no es un fallo, pero no salio de ningun sitio. Sin esta
+            // linea se escapaba de la cuenta y el total no cuadraba con la suma
+            // que tenia al lado.
+            'sin_ficha' => $base()->where('exito', true)->where('fuente', 'ninguna')->count(),
             'fallidas' => $base()->where('exito', false)->count(),
             'ms_medio' => (int) round((float) $base()->where('exito', true)->avg('ms')),
         ];
