@@ -9,17 +9,33 @@
              @keydown.escape.window="abierto = false"
              class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
             <div class="my-auto w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-xl">
-                <div class="border-b border-gray-200 px-5 py-4">
-                    <h3 class="text-base font-semibold text-gray-900">«{{ $creada['nombre'] }}» creada</h3>
-                    <p class="mt-0.5 text-xs text-gray-500">
-                        Cópiala ahora: <strong class="text-gray-700">el secreto no se vuelve a mostrar.</strong>
-                    </p>
+                {{-- La misma cabecera que el modal de «Ver»: es la misma llave
+                     mirada en dos momentos, y con dos formas distintas parecia
+                     otra pantalla. --}}
+                <div class="flex items-start justify-between gap-3 border-b border-gray-200 px-5 py-4">
+                    <div class="min-w-0">
+                        <h3 class="truncate text-base font-semibold text-gray-900">{{ $creada['nombre'] }}</h3>
+                        <p class="mt-0.5 text-xs text-gray-500">
+                            Recién creada. Cópiala ahora:
+                            <strong class="text-gray-700">el secreto no se vuelve a mostrar.</strong>
+                        </p>
+                    </div>
+                    <span class="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                        <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span> Sandbox
+                    </span>
+                    <button type="button" @click="abierto = false" aria-label="Cerrar"
+                            class="shrink-0 rounded-md p-2 text-gray-500 hover:bg-gray-100">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
                 </div>
 
                 <div class="p-4">
                     <div class="overflow-hidden rounded-lg border border-indigo-200 bg-indigo-50/40">
-                        <div class="border-b border-indigo-200 bg-indigo-50 px-4 py-2.5">
+                        <div class="flex items-center justify-between border-b border-indigo-200 bg-indigo-50 px-4 py-2.5">
                             <span class="text-xs font-semibold uppercase tracking-wide text-indigo-700">Credenciales</span>
+                            <span class="rounded bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">Datos de ejemplo</span>
                         </div>
                         <div class="divide-y divide-indigo-100">
                             @foreach(['URL base' => url('/api/consultas'), 'X-Api-Key' => $creada['clave'], 'X-Api-Secret' => $creada['secreto']] as $etiqueta => $valor)
@@ -196,7 +212,6 @@
                 @csrf
                 <template x-if="! nueva"><input type="hidden" name="_method" value="PUT"></template>
                 <input type="hidden" name="entorno" value="sandbox">
-                <input type="hidden" name="titular_tipo" value="externo">
                 <input type="hidden" name="api_plan_id" value="{{ $planesApi->first()?->id }}">
 
                 <div class="border-b border-gray-200 px-5 py-4">
@@ -206,23 +221,60 @@
 
                 <div class="space-y-4 px-5 py-4">
                     <div>
-                        <label for="s_nombre" class="mb-1 block text-sm font-medium text-gray-700">Nombre</label>
+                        <label for="s_nombre" class="mb-1 block text-sm font-medium text-gray-900">
+                            Nombre de la llave
+                        </label>
+                        <p class="mb-1.5 text-xs text-gray-500">Para reconocerla en la lista. Solo lo ves tú.</p>
                         <input type="text" name="nombre" id="s_nombre" required maxlength="80"
                                :value="llave?.nombre ?? ''"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                                placeholder="Pruebas - ERP de Contables SAC">
                     </div>
 
-                    <div>
-                        <label for="s_titular" class="mb-1 block text-sm font-medium text-gray-700">Para quién</label>
-                        <input type="text" name="titular" id="s_titular" required maxlength="120"
-                               :value="llave?.titular ?? ''"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                               placeholder="Nombre del programador o de su empresa">
+                    {{-- Antes solo admitia texto libre. Pero una llave de prueba
+                         tambien se le da a una empresa que ya esta en el sistema,
+                         y escribir su nombre a mano la deja sin relacionar: en el
+                         consumo aparecia como si fuera de un tercero. --}}
+                    <div x-data="{ tipo: 'empresa' }" x-effect="tipo = llave ? (llave.company_id ? 'empresa' : 'externo') : 'empresa'">
+                        <p class="mb-1.5 block text-sm font-medium text-gray-900">¿Para quién es?</p>
+
+                        <div class="mb-2 flex items-center gap-1 rounded-lg bg-gray-100 p-0.5 text-xs font-medium">
+                            <button type="button" @click="tipo = 'empresa'"
+                                    :class="tipo === 'empresa' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                                    class="flex-1 rounded-md px-3 py-1.5 transition">
+                                Una empresa del sistema
+                            </button>
+                            <button type="button" @click="tipo = 'externo'"
+                                    :class="tipo === 'externo' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                                    class="flex-1 rounded-md px-3 py-1.5 transition">
+                                Alguien de fuera
+                            </button>
+                        </div>
+
+                        <input type="hidden" name="titular_tipo" :value="tipo">
+
+                        <div x-show="tipo === 'empresa'">
+                            <select name="company_id" :disabled="tipo !== 'empresa'"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Elige la empresa…</option>
+                                @foreach($empresas as $e)
+                                    <option value="{{ $e->id }}" :selected="llave?.company_id == {{ $e->id }}">
+                                        {{ $e->razon_social }} — {{ $e->ruc }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div x-show="tipo === 'externo'" x-cloak>
+                            <input type="text" name="titular" maxlength="120" :disabled="tipo !== 'externo'"
+                                   :value="llave?.titular ?? ''"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="Nombre del programador o de su empresa">
+                        </div>
                     </div>
 
                     <div>
-                        <p class="mb-1 block text-sm font-medium text-gray-700">A qué da acceso</p>
+                        <p class="mb-1 block text-sm font-medium text-gray-900">A qué consultas da acceso</p>
                         <div class="flex flex-wrap gap-4">
                             @foreach($apis as $api)
                                 <label class="flex items-center gap-2 text-sm text-gray-700">
@@ -235,16 +287,40 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label for="s_expira" class="mb-1 block text-sm font-medium text-gray-700">
-                            Caduca el <span class="font-normal text-gray-400">— opcional</span>
+                    {{-- Se piensa en dias («que le dure un mes»), no en una fecha
+                         del calendario. Los botones la calculan; el campo queda
+                         igual por si se quiere una concreta. --}}
+                    <div x-data="{
+                             dias(n) {
+                                 const d = new Date();
+                                 d.setDate(d.getDate() + n);
+                                 this.$refs.expira.value = d.toISOString().slice(0, 10);
+                             },
+                         }">
+                        <label for="s_expira" class="mb-1 block text-sm font-medium text-gray-900">
+                            ¿Hasta cuándo le vale?
                         </label>
-                        <input type="date" name="expira_en" id="s_expira"
-                               :value="llave?.expira_en ?? ''"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                        <p class="mt-1 text-xs text-gray-500">
-                            Útil aquí: una llave de prueba que caduca sola no se queda viva para siempre.
+                        <p class="mb-1.5 text-xs text-gray-500">
+                            Al llegar el día deja de funcionar sola. Se puede cambiar después.
                         </p>
+
+                        <div class="mb-2 flex flex-wrap gap-1.5">
+                            @foreach([15 => '15 días', 30 => '1 mes', 90 => '3 meses'] as $n => $etiqueta)
+                                <button type="button" @click="dias({{ $n }})"
+                                        class="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50">
+                                    {{ $etiqueta }}
+                                </button>
+                            @endforeach
+                            <button type="button" @click="$refs.expira.value = ''"
+                                    class="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-500 transition hover:bg-gray-50">
+                                Sin caducidad
+                            </button>
+                        </div>
+
+                        <input type="date" name="expira_en" id="s_expira" x-ref="expira"
+                               :value="llave?.expira_en ?? ''"
+                               min="{{ now()->addDay()->format('Y-m-d') }}"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                 </div>
 
