@@ -116,6 +116,7 @@
                 <div class="flex shrink-0 items-center gap-1.5">
                     <x-icon-action icon="ver" label="Ver esta API Key" color="blue" type="button"
                                    @click="detalle = {{ Illuminate\Support\Js::from([
+                                       'id' => $l->id,
                                        'nombre' => $l->nombre,
                                        'estado' => $estado,
                                        'entorno' => $l->entorno,
@@ -145,6 +146,20 @@
                                        'servicios' => (array) $l->servicios,
                                        'expira_en' => $l->expira_en?->toDateString(),
                                    ]) }}; nueva = false" />
+
+                    {{-- Lo tenia Sandbox y aqui no, que es al reves de lo que
+                         hace falta: al que paga no se le puede decir que se
+                         borra su llave y empiece de cero porque perdio el
+                         secreto. --}}
+                    <form method="POST" action="{{ route('super-admin.consultas.llaves.regenerar', $l) }}"
+                          onsubmit="return confirm('Se genera un secreto nuevo para «{{ $l->nombre }}».
+
+El actual deja de funcionar en cuanto se guarde, así que hay que pasarle el nuevo al cliente. La clave (X-Api-Key) no cambia.
+
+¿Seguir?')">
+                        @csrf
+                        <x-icon-action icon="renovar" label="Generar un secreto nuevo" color="slate" />
+                    </form>
 
                     <form method="POST" action="{{ route('super-admin.consultas.llaves.alternar', $l) }}">
                         @csrf
@@ -444,15 +459,50 @@ Quien la use dejará de tener acceso al instante, y no quedará constancia de lo
                                     class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
                         </div>
 
-                        <div class="flex items-center gap-3 px-4 py-2.5">
+                        {{-- Tapado hasta que se pide. Se guarda cifrado, asi que
+                             el sistema puede leerlo, pero no viaja con la pagina:
+                             en el listado saldria el de todas las llaves en cada
+                             carga. Solo se trae el que se pulsa. --}}
+                        <div class="flex items-center gap-3 px-4 py-2.5"
+                             x-data="{ visible: false, valor: null, cargando: false,
+                                 async mostrar() {
+                                     if (this.visible) { this.visible = false; return; }
+                                     if (! this.valor) {
+                                         this.cargando = true;
+                                         try {
+                                             const r = await fetch('{{ url('super-admin/consultas/llaves') }}/' + detalle.id + '/secreto', {
+                                                 headers: { 'Accept': 'application/json' },
+                                             });
+                                             this.valor = (await r.json()).secreto;
+                                         } catch (e) {
+                                             this.valor = null;
+                                         } finally {
+                                             this.cargando = false;
+                                         }
+                                     }
+                                     this.visible = !! this.valor;
+                                 },
+                             }"
+                             x-effect="detalle; visible = false; valor = null">
                             <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">X-Api-Secret</span>
-                            <code class="min-w-0 flex-1 rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-400 ring-1 ring-indigo-100">
-                                ··················<span x-text="detalle?.pista"></span>
+
+                            <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs ring-1 ring-indigo-100"
+                                  :class="visible ? 'text-gray-800' : 'text-gray-400'">
+                                <span x-show="! visible">··················<span x-text="detalle?.pista"></span></span>
+                                <span x-show="visible" x-text="valor"></span>
                             </code>
+
+                            <button type="button" @click="mostrar()" :disabled="cargando"
+                                    class="shrink-0 rounded-md border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50"
+                                    x-text="cargando ? '…' : (visible ? 'Ocultar' : 'Mostrar')"></button>
+
+                            <button type="button" x-show="visible" x-cloak
+                                    @click="window.copyCompanyCredential($el, valor)"
+                                    class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
                         </div>
 
                         <div class="px-4 py-2 text-xs text-gray-500">
-                            El secreto solo lo tiene el cliente. Si lo perdió, hay que crearle otra API Key.
+                            No sale con la página: se pide solo al pulsar «Mostrar».
                         </div>
                     </div>
                 </div>
