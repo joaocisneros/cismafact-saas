@@ -70,6 +70,25 @@ class ConsultaLlaveController extends Controller
     }
 
     /**
+     * Devuelve el secreto de una llave, solo cuando se pide.
+     *
+     * Se guarda cifrado, no hasheado, asi que el sistema puede leerlo. No se
+     * manda con el resto de la pagina a proposito: en el listado saldria el de
+     * todas las llaves en cada carga, y basta con dejar el navegador abierto
+     * para tenerlos todos a la vista. Aqui solo sale el que se pide.
+     *
+     * Alternativa que se descarto: obligar a regenerar. Es mas seguro —el
+     * secreto viviria solo en el servidor del cliente— pero le obliga a el a
+     * cambiar su configuracion por un descuido que no siempre es suyo.
+     */
+    public function secreto(ConsultaLlave $llave)
+    {
+        return response()->json([
+            'secreto' => $llave->secreto,
+        ]);
+    }
+
+    /**
      * Genera credenciales nuevas para una llave que ya existe.
      *
      * El secreto se enseña una sola vez y despues queda cifrado: si el cliente

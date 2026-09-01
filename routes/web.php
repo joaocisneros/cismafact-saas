@@ -236,6 +236,11 @@ Route::prefix('super-admin')
         // puede recuperar, asi que cuando el cliente lo pierde se rehace.
         Route::post('/consultas/llaves/{llave}/regenerar', [\App\Http\Controllers\Web\SuperAdmin\ConsultaLlaveController::class, 'regenerar'])
             ->name('consultas.llaves.regenerar');
+
+        // El secreto, solo cuando se pide: mandarlo con el listado lo dejaria
+        // a la vista de todas las llaves en cada carga de la pagina.
+        Route::get('/consultas/llaves/{llave}/secreto', [\App\Http\Controllers\Web\SuperAdmin\ConsultaLlaveController::class, 'secreto'])
+            ->name('consultas.llaves.secreto');
         Route::delete('/consultas/llaves/{llave}', [SuperAdminConsultaLlaveController::class, 'destroy'])->name('consultas.llaves.borrar');
 
         // Limpieza de las llaves de prueba caducadas, que se acumulan.
