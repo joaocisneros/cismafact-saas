@@ -1,19 +1,19 @@
 @extends('layouts.app')
 
-@section('title', 'API')
+@section('title', 'API Facturación')
 
 @section('content')
 <div class="space-y-5">
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">Administración de API</h1>
+            <h1 class="text-2xl font-bold text-gray-800">API Facturación</h1>
             <p class="mt-1 text-sm text-gray-500">Consumo de cada empresa y control de su acceso.</p>
         </div>
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('super-admin.tokens-prueba.index') }}"
                class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                Tokens de prueba
+                Sandbox Facturación
             </a>
             <a href="{{ route('super-admin.api-global.logs') }}"
                class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" title="Registro cronológico de cada llamada, con filtros">

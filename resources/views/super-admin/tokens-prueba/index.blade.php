@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Tokens de prueba')
+@section('title', 'Sandbox Facturación')
 
 @section('content')
 <div class="space-y-5">
 
     <div>
-        <h1 class="text-2xl font-bold text-gray-800">Tokens de prueba</h1>
+        <h1 class="text-2xl font-bold text-gray-800">Sandbox Facturación</h1>
         <p class="mt-1 text-sm text-gray-500">
             Credenciales para que un programador integre con tu API. Emiten contra SUNAT beta:
             los comprobantes no tienen valor legal y no consumen cupo.
