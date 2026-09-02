@@ -234,6 +234,11 @@ Route::prefix('super-admin')
         Route::put('/consultas/llaves/{llave}', [SuperAdminConsultaLlaveController::class, 'update'])->name('consultas.llaves.actualizar');
         Route::post('/consultas/llaves/{llave}/alternar', [SuperAdminConsultaLlaveController::class, 'alternar'])->name('consultas.llaves.alternar');
 
+        // El secreto, solo cuando se pide: mandarlo con el listado lo dejaria
+        // a la vista de todas las llaves en cada carga de la pagina.
+        Route::get('/consultas/llaves/{llave}/secreto', [\App\Http\Controllers\Web\SuperAdmin\ConsultaLlaveController::class, 'secreto'])
+            ->name('consultas.llaves.secreto');
+
         // Credenciales nuevas para una llave que ya existe: el secreto no se
         // puede recuperar, asi que cuando el cliente lo pierde se rehace.
         Route::post('/consultas/llaves/{llave}/regenerar', [\App\Http\Controllers\Web\SuperAdmin\ConsultaLlaveController::class, 'regenerar'])

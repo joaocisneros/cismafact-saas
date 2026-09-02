@@ -30,6 +30,7 @@ class ConsultaLlave extends Model
         'activa' => 'boolean',
         'expira_en' => 'date',
         'ultimo_uso_en' => 'datetime',
+        'secreto' => 'encrypted',
         'datos_reales' => 'boolean',
     ];
 

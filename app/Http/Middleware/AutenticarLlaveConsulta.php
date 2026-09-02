@@ -4,7 +4,6 @@ namespace App\Http\Middleware;
 
 use App\Models\ConsultaLlave;
 use Closure;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
@@ -39,7 +38,7 @@ class AutenticarLlaveConsulta
 
         // El mismo mensaje para clave inexistente y secreto equivocado: decir
         // cual de los dos falla ayuda a quien esta probando claves a ciegas.
-        if (! $llave || ! Hash::check($secreto, (string) $llave->secreto)) {
+        if (! $llave || ! hash_equals((string) $llave->secreto, $secreto)) {
             // Si la clave existe, sabemos de quien es el intento y se anota: es
             // lo que pasa cuando a alguien le regeneran las credenciales y sigue
             // con las viejas. Sin esto, el cliente dice «no me funciona» y en el

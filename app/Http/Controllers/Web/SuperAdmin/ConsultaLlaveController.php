@@ -9,7 +9,6 @@ use App\Support\ConsumoInterno;
 use App\Services\ConsultaDocumentoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -30,9 +29,7 @@ class ConsultaLlaveController extends Controller
 
         $llave = ConsultaLlave::create($datos + [
             'clave' => $credenciales['clave'],
-            // Hash, no cifrado: de aqui ya no sale el secreto ni teniendo la
-            // base y la APP_KEY, que estan en el mismo servidor.
-            'secreto' => Hash::make($credenciales['secreto']),
+            'secreto' => $credenciales['secreto'],
             // Los ultimos caracteres, para reconocerla en la lista sin
             // guardar el secreto a la vista.
             'secreto_pista' => substr($credenciales['secreto'], -6),
@@ -135,6 +132,13 @@ class ConsultaLlaveController extends Controller
      * secreto viviria solo en el servidor del cliente— pero le obliga a el a
      * cambiar su configuracion por un descuido que no siempre es suyo.
      */
+    public function secreto(ConsultaLlave $llave)
+    {
+        return response()->json([
+            'secreto' => $llave->secreto,
+        ]);
+    }
+
     /**
      * Genera un secreto nuevo para una llave que ya existe.
      *
@@ -159,7 +163,7 @@ class ConsultaLlaveController extends Controller
         $credenciales = ConsultaLlave::nuevasCredenciales();
 
         $llave->update([
-            'secreto' => Hash::make($credenciales['secreto']),
+            'secreto' => $credenciales['secreto'],
             'secreto_pista' => substr($credenciales['secreto'], -6),
         ]);
 
