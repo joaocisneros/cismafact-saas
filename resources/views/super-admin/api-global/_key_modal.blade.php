@@ -69,30 +69,6 @@
                     </div>
                 @endforeach
 
-                @php
-                    // El secret recien generado se enseña aqui, no en un aviso al
-                    // fondo de la pagina: es la respuesta a lo que se acaba de
-                    // pulsar y tiene que salir donde se pulso. Se comprueba la key
-                    // para no enseñar el de otra credencial.
-                    $recien = session('credenciales_nuevas');
-                    $recien = ($recien['key'] ?? null) === $apiKey->key ? $recien : null;
-
-                    if ($recien) {
-                        session()->forget('credenciales_nuevas');
-                    }
-                @endphp
-
-                @if($recien)
-                    <div class="border-t border-amber-200 bg-amber-50 px-4 py-3">
-                        <p class="text-xs font-semibold text-amber-900">X-Api-Secret nuevo — cópialo ahora, no se vuelve a mostrar</p>
-                        <div class="mt-1.5 flex items-center gap-2">
-                            <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-amber-200">{{ $recien['secret'] }}</code>
-                            <button type="button" onclick="window.copyCompanyCredential(this, @js($recien['secret']))"
-                                    class="shrink-0 rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700">Copiar</button>
-                        </div>
-                        <p class="mt-1.5 text-xs text-amber-800">El anterior ya no funciona. La X-Api-Key no ha cambiado.</p>
-                    </div>
-                @else
                     {{-- Tapado hasta que se pide, como en RUC y DNI.
 
                          Se pide al abrir la ficha y no al pulsar «Mostrar»: asi la
@@ -141,7 +117,6 @@
                     <div class="px-4 py-2 text-xs text-gray-500">
                         No sale con la página: se pide solo al abrir esta ficha.
                     </div>
-                @endif
             </div>
         </div>
 

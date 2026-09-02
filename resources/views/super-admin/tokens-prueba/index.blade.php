@@ -13,10 +13,7 @@
         </p>
     </div>
 
-    {{-- Las credenciales del token, la unica vez que se pueden leer. --}}
-    @if(session('credenciales_nuevas'))
-        @include('_credenciales_nuevas', ['credenciales' => session('credenciales_nuevas')])
-    @elseif(session('success'))
+    @if(session('success'))
         <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('success') }}</div>
     @endif
     @if(session('error'))
@@ -115,12 +112,15 @@
                                         <x-icon-action icon="ver" label="Ver credenciales" color="blue" type="button"
                                                        onclick="window.openAdminModal('{{ route('super-admin.api-global.show-key', $token) }}', 'Credenciales del token')" />
 
-                                        {{-- El secret no se puede releer, asi que al que lo pierde
-                                             se le da uno nuevo. La key no cambia. --}}
+                                        {{-- Genera el secret y abre la ficha con el resultado.
+
+                                             Recargando la pagina, el secret nuevo salia en un aviso
+                                             arriba del todo: a la vista de cualquiera que estuviera
+                                             delante de la pantalla, y lejos de donde se consulta. --}}
                                         <form method="POST" action="{{ route('super-admin.tokens-prueba.regenerar', $token) }}"
-                                              onsubmit="return confirm('Se genera un secret nuevo para «{{ $token->name }}».{{ chr(10) }}{{ chr(10) }}El actual deja de funcionar al instante, asi que hay que pasarle el nuevo al programador. La X-Api-Key no cambia.{{ chr(10) }}{{ chr(10) }}Seguir?')">
+                                              @submit.prevent="if (confirm('Se genera un Secret nuevo para «{{ $token->name }}».{{ chr(10) }}{{ chr(10) }}El actual deja de funcionar al instante, así que hay que pasarle el nuevo al programador. La X-Api-Key no cambia.{{ chr(10) }}{{ chr(10) }}¿Seguir?')) window.enviarYAbrirModal($el, '{{ route('super-admin.api-global.show-key', $token) }}', 'Credenciales del token')">
                                             @csrf
-                                            <x-icon-action icon="renovar" label="Generar un secret nuevo" color="amber" />
+                                            <x-icon-action icon="renovar" label="Generar un Secret nuevo" color="amber" />
                                         </form>
 
                                         {{-- Aparte de las credenciales: son dos preguntas distintas

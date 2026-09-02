@@ -244,20 +244,6 @@ class ApiGlobalController extends Controller
          * Y ya no queda copia que consultar: se guarda como hash, asi que esta
          * es la unica vez que se puede leer. Si se pierde, se regenera.
          */
-        /* En sesion y no en flash: el modal envia por fetch, ese fetch
-               sigue el redirect y consume el flash antes de que la pagina
-               llegue a recargarse. Asi el secreto sobrevive hasta que se
-               pinta, y la vista lo borra en cuanto lo enseña. */
-        session()->put('credenciales_nuevas', [
-            // La pantalla donde se enseña: sin esto el aviso se iba con el
-            // usuario a la siguiente que visitara, y aparecia en un modulo
-            // que no tiene nada que ver con la credencial que se genero.
-            'pantalla' => 'super-admin.api-global.api-keys',
-                'nombre' => $apiKey->name,
-                'key' => $apiKey->key,
-                'secret' => $plainSecret,
-        ]);
-
         return back()->with('success', "Token de «{$apiKey->name}» generado.");
     }
 
@@ -291,20 +277,6 @@ class ApiGlobalController extends Controller
         $apiKey->update(['secret' => $plainSecret]);
 
         Cache::forget('api_global_index');
-
-        /* En sesion y no en flash: el modal envia por fetch, ese fetch
-               sigue el redirect y consume el flash antes de que la pagina
-               llegue a recargarse. Asi el secreto sobrevive hasta que se
-               pinta, y la vista lo borra en cuanto lo enseña. */
-        session()->put('credenciales_nuevas', [
-            // La pantalla donde se enseña: sin esto el aviso se iba con el
-            // usuario a la siguiente que visitara, y aparecia en un modulo
-            // que no tiene nada que ver con la credencial que se genero.
-            'pantalla' => 'super-admin.api-global.api-keys',
-                'nombre' => $apiKey->name,
-                'key' => $apiKey->key,
-                'secret' => $plainSecret,
-        ]);
 
         return back()->with('success', "Secret de «{$apiKey->name}» regenerado. El anterior ya no funciona.");
     }

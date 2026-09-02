@@ -101,6 +101,32 @@
           init() {
               window.openAdminModal = (url, title = 'Detalle') => this.loadAdminModal(url, title);
               window.closeAdminModal = () => { this.adminModalOpen = false; };
+
+              /* Enviar un formulario de una fila y abrir su ficha con el
+                 resultado, sin recargar la pagina.
+
+                 Es para acciones cuyo resultado se mira en la ficha: al
+                 generar un secret nuevo desde el listado, recargar la pagina
+                 dejaba el dato en un aviso arriba, a la vista de cualquiera
+                 que estuviera mirando la pantalla. Abriendo la ficha, el
+                 secret se queda donde se consulta y solo si se pulsa. */
+              window.enviarYAbrirModal = async (form, url, titulo) => {
+                  try {
+                      const r = await fetch(form.action, {
+                          method: 'POST',
+                          body: new FormData(form),
+                          headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                      });
+                      if (! r.ok) throw new Error('el servidor respondió ' + r.status);
+                  } catch (e) {
+                      this.toastMessage = 'No se pudo completar la operación. Recarga la página e inténtalo de nuevo.';
+                      this.hideToastLater();
+                      console.error('enviarYAbrirModal:', e);
+                      return;
+                  }
+
+                  this.loadAdminModal(url, titulo);
+              };
               window.syncSubscriptionPlan = (select) => {
                   const option = select.selectedOptions[0];
                   const form = select.form;

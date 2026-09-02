@@ -60,16 +60,6 @@ class TokenPruebaController extends Controller
 
         Cache::forget('api_global_index');
 
-        session()->put('credenciales_nuevas', [
-            // La pantalla donde se enseña: sin esto el aviso se iba con el
-            // usuario a la siguiente que visitara, y aparecia en un modulo
-            // que no tiene nada que ver con la credencial que se genero.
-            'pantalla' => 'super-admin.tokens-prueba.index',
-            'nombre' => $apiKey->name,
-            'key' => $apiKey->key,
-            'secret' => $plainSecret,
-        ]);
-
         return back()->with('success', "Secret de «{$apiKey->name}» regenerado. El anterior ya no funciona.");
     }
 
@@ -106,29 +96,6 @@ class TokenPruebaController extends Controller
         ]);
 
         Cache::forget('api_global_index');
-
-        /*
-         * El secreto viaja aqui porque es la unica vez que se puede ver.
-         *
-         * Antes se guardaba una copia descifrable y este mensaje mandaba a
-         * leerla con «Ver». Al pasar el secret a hash esa copia dejo de
-         * existir, y como aqui no se devolvia, el token salia sin que nadie
-         * pudiera saber con que se usa: inservible desde el momento de
-         * crearlo.
-         *
-         * En sesion y no en flash: el formulario va por fetch, y ese fetch
-         * sigue el redirect y consume el flash antes de que la pagina se
-         * recargue.
-         */
-        session()->put('credenciales_nuevas', [
-            // La pantalla donde se enseña: sin esto el aviso se iba con el
-            // usuario a la siguiente que visitara, y aparecia en un modulo
-            // que no tiene nada que ver con la credencial que se genero.
-            'pantalla' => 'super-admin.tokens-prueba.index',
-            'nombre' => $apiKey->name,
-            'key' => $apiKey->key,
-            'secret' => $plainSecret,
-        ]);
 
         return back()->with('success', "Token de «{$validated['dev_name']}» generado.");
     }

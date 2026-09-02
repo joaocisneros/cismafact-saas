@@ -40,10 +40,7 @@
         </form>
     </div>
 
-    {{-- Las credenciales recien generadas: la unica vez que se ven. --}}
-    @if(session('credenciales_nuevas'))
-        @include('_credenciales_nuevas', ['credenciales' => session('credenciales_nuevas')])
-    @elseif(session('success'))
+    @if(session('success'))
         <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
             {{ session('success') }}
         </div>

@@ -52,20 +52,6 @@ class ApiKeyController extends Controller
          * base y la APP_KEY, que viven en el mismo servidor. Guardado como hash
          * no se puede leer ni aunque se roben las dos.
          */
-        /* En sesion y no en flash: el modal envia por fetch, ese fetch
-               sigue el redirect y consume el flash antes de que la pagina
-               llegue a recargarse. Asi el secreto sobrevive hasta que se
-               pinta, y la vista lo borra en cuanto lo enseña. */
-        session()->put('credenciales_nuevas', [
-            // La pantalla donde se enseña: sin esto el aviso se iba con el
-            // usuario a la siguiente que visitara, y aparecia en un modulo
-            // que no tiene nada que ver con la credencial que se genero.
-            'pantalla' => 'empresa.api-keys.index',
-                'nombre' => $apiKey->name,
-                'key' => $apiKey->key,
-                'secret' => $plainSecret,
-        ]);
-
         return back()->with('success', "API Key «{$request->name}» creada.");
     }
 
@@ -104,20 +90,6 @@ class ApiKeyController extends Controller
         $apiKey->update(['secret' => $plainSecret]);
 
         // La key no cambia: quien la use solo tiene que cambiar el secret.
-        /* En sesion y no en flash: el modal envia por fetch, ese fetch
-               sigue el redirect y consume el flash antes de que la pagina
-               llegue a recargarse. Asi el secreto sobrevive hasta que se
-               pinta, y la vista lo borra en cuanto lo enseña. */
-        session()->put('credenciales_nuevas', [
-            // La pantalla donde se enseña: sin esto el aviso se iba con el
-            // usuario a la siguiente que visitara, y aparecia en un modulo
-            // que no tiene nada que ver con la credencial que se genero.
-            'pantalla' => 'empresa.api-keys.index',
-                'nombre' => $apiKey->name,
-                'key' => $apiKey->key,
-                'secret' => $plainSecret,
-        ]);
-
         return back()->with('success', "Secret de «{$apiKey->name}» regenerado. El anterior dejó de funcionar.");
     }
 

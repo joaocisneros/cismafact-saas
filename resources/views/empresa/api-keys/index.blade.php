@@ -52,10 +52,7 @@
         </div>
     </div>
 
-    {{-- Un solo aviso: las credenciales ya dicen que se creo. --}}
-    @if(session('credenciales_nuevas'))
-        @include('_credenciales_nuevas', ['credenciales' => session('credenciales_nuevas')])
-    @elseif(session('success'))
+    @if(session('success'))
         <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('success') }}</div>
     @endif
     @if(session('error'))
