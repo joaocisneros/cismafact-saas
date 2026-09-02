@@ -88,6 +88,7 @@
                                      ahi es donde se consulta, y no queda a la vista de
                                      quien este mirando la pantalla. --}}
                                 <form method="POST" action="{{ route('super-admin.api-global.regenerate-key', $apiKey) }}"
+                                      data-success-message="Secret regenerado. Ábrelo con «Mostrar» y pásaselo al cliente."
                                       @submit.prevent="if (confirm('Se genera un Secret nuevo para «{{ $apiKey->name }}». El actual deja de funcionar al instante, así que hay que pasarle el nuevo al cliente. La X-Api-Key no cambia. ¿Seguir?')) window.enviarYAbrirModal($el, '{{ route('super-admin.api-global.show-key', $apiKey) }}', 'Detalle de API Key')">
                                     @csrf
                                     <button type="submit" class="text-sm text-amber-600 hover:text-amber-800">Nuevo Secret</button>

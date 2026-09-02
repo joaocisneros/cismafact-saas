@@ -125,6 +125,16 @@
                       return;
                   }
 
+                  /* El aviso se enseña aqui mismo.
+
+                     Los otros formularios lo dejan en sessionStorage porque
+                     recargan la pagina y hay que recuperarlo despues. Este no
+                     recarga, asi que por ese camino el aviso no aparecia nunca:
+                     se pulsaba, se abria la ficha y no habia confirmacion de que
+                     hubiera pasado nada. */
+                  this.toastMessage = form.dataset.successMessage || 'Operación completada correctamente.';
+                  this.hideToastLater();
+
                   this.loadAdminModal(url, titulo);
               };
               window.syncSubscriptionPlan = (select) => {

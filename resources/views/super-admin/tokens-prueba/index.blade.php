@@ -118,6 +118,7 @@
                                              arriba del todo: a la vista de cualquiera que estuviera
                                              delante de la pantalla, y lejos de donde se consulta. --}}
                                         <form method="POST" action="{{ route('super-admin.tokens-prueba.regenerar', $token) }}"
+                                              data-success-message="Secret regenerado. Ábrelo con «Mostrar» y pásaselo al programador."
                                               @submit.prevent="if (confirm('Se genera un Secret nuevo para «{{ $token->name }}». El actual deja de funcionar al instante, así que hay que pasarle el nuevo al programador. La X-Api-Key no cambia. ¿Seguir?')) window.enviarYAbrirModal($el, '{{ route('super-admin.api-global.show-key', $token) }}', 'Credenciales del token')">
                                             @csrf
                                             <x-icon-action icon="renovar" label="Generar un Secret nuevo" color="amber" />
