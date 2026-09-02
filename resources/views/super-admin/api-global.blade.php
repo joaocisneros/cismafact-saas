@@ -129,6 +129,20 @@
                                         <x-icon-action icon="ver" label="Ver credenciales de esta empresa" color="blue" type="button"
                                                        onclick="window.openAdminModal('{{ route('super-admin.api-global.api-keys', ['company_id' => $empresa->id]) }}', 'Credenciales de la empresa')" />
 
+                                        {{-- Generar el secret sin entrar, cuando la empresa
+                                             tiene una sola credencial: es el caso normal y
+                                             ahorra abrir la ficha para una accion de un clic.
+                                             Con varias no se pone: el boton no sabria a cual
+                                             de ellas se refiere, y hay que entrar a elegir. --}}
+                                        @if($e['unica'])
+                                            <form method="POST" action="{{ route('super-admin.api-global.regenerate-key', $e['unica']) }}"
+                                                  data-success-message="Secret regenerado. Ábrelo con «Mostrar» y pásaselo al cliente."
+                                                  @submit.prevent="if (confirm('Se genera un Secret nuevo para ' + @js($empresa->razon_social) + '. El actual deja de funcionar al instante, así que hay que pasarle el nuevo. La X-Api-Key no cambia. ¿Seguir?')) window.enviarYAbrirModal($el, '{{ route('super-admin.api-global.api-keys', ['company_id' => $empresa->id]) }}', 'Credenciales de la empresa')">
+                                                @csrf
+                                                <x-icon-action icon="renovar" label="Generar un Secret nuevo" color="amber" />
+                                            </form>
+                                        @endif
+
                                         @if($e['credenciales'] > 0)
                                             <form method="POST" action="{{ route('super-admin.api-global.toggle-company', $empresa) }}"
                                                   onsubmit="return confirm('{{ $tieneAcceso ? 'Cortar el acceso por API de esta empresa? Sus integraciones dejaran de emitir al instante.' : 'Restablecer el acceso por API de esta empresa?' }}')">

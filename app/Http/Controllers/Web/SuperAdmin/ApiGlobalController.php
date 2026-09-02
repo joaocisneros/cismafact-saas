@@ -60,7 +60,7 @@ class ApiGlobalController extends Controller
             ->groupBy('company_id')
             ->pluck('total', 'company_id');
 
-        $empresas = Company::with('plan:id,name,api_request_limit')
+        $empresas = Company::with(['plan:id,name,api_request_limit', 'apiKeys:id,company_id,name'])
             ->where('es_demo', false)
             ->withCount([
                 'apiKeys',
@@ -80,6 +80,10 @@ class ApiGlobalController extends Controller
                     'ilimitado' => $limite <= 0,
                     'porcentaje' => $limite > 0 ? min(100, (int) round($usado * 100 / $limite)) : 0,
                     'credenciales' => (int) $company->api_keys_count,
+                    // Cual es, cuando solo hay una: asi se le puede generar el
+                    // secret desde la propia fila. Con varias no se sabria a
+                    // cual se refiere el boton, y hay que entrar a elegir.
+                    'unica' => $company->api_keys_count === 1 ? $company->apiKeys->first() : null,
                     'activas' => (int) $company->api_keys_activas_count,
                 ];
             });
