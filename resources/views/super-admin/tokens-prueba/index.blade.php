@@ -3,6 +3,22 @@
 @section('title', 'Sandbox Facturación')
 
 @section('content')
+
+{{-- Recien creado: se abre su ficha sola.
+
+     Lo primero que se hace con un token nuevo es copiar sus credenciales, y
+     estan en la ficha. Sin esto habia que buscarlo en la lista y abrirlo a
+     mano, sabiendo ya cual es. --}}
+@php
+    // Se lee y se olvida en el acto: si se quedara, la ficha volveria a
+    // abrirse cada vez que se recargue la pagina.
+    $fichaNueva = session('abrir_ficha');
+    session()->forget('abrir_ficha');
+@endphp
+
+@if($fichaNueva)
+    <div x-data x-init="$nextTick(() => window.openAdminModal('{{ url('super-admin/api-global/api-keys/' . $fichaNueva) }}', 'Credenciales del token'))"></div>
+@endif
 <div class="space-y-5">
 
     <div>
@@ -119,7 +135,7 @@
                                              delante de la pantalla, y lejos de donde se consulta. --}}
                                         <form method="POST" action="{{ route('super-admin.tokens-prueba.regenerar', $token) }}"
                                               data-success-message="Secret regenerado. Ábrelo con «Mostrar» y pásaselo al programador."
-                                              @submit.prevent="if (confirm('Se genera un Secret nuevo para «{{ $token->name }}». El actual deja de funcionar al instante, así que hay que pasarle el nuevo al programador. La X-Api-Key no cambia. ¿Seguir?')) window.enviarYAbrirModal($el, '{{ route('super-admin.api-global.show-key', $token) }}', 'Credenciales del token')">
+                                              @submit.prevent="if (confirm('Se genera un Secret nuevo para «' + @js($token->name) + '». El actual deja de funcionar al instante, así que hay que pasarle el nuevo al programador. La X-Api-Key no cambia. ¿Seguir?')) window.enviarYAbrirModal($el, '{{ route('super-admin.api-global.show-key', $token) }}', 'Credenciales del token')">
                                             @csrf
                                             <x-icon-action icon="renovar" label="Generar un Secret nuevo" color="amber" />
                                         </form>
