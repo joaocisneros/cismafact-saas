@@ -6,13 +6,19 @@
      Aquí puede haber varias en la misma ventana, así que van una debajo de
      otra sin la cabecera de la ficha —el nombre ya lo pone cada bloque—. --}}
 
-<div class="px-6 py-5">
+<div>
 
-    <p class="mb-3 text-sm text-gray-500">
-        {{ $apiKeys->count() }} {{ Str::plural('credencial', $apiKeys->count()) }} registrada{{ $apiKeys->count() === 1 ? '' : 's' }}.
-    </p>
+    {{-- Solo cuando hay varias: con una, decir «1 credencial registrada»
+         encima de esa credencial es una linea que no informa de nada y
+         empuja hacia abajo lo que se viene a leer. --}}
+    @if($apiKeys->count() > 1)
+        <p class="border-b border-gray-100 px-6 pb-3 pt-5 text-sm text-gray-500">{{ $apiKeys->count() }} credenciales registradas.</p>
+    @endif
 
-    <div class="max-h-[65vh] space-y-4 overflow-y-auto">
+    {{-- Sin desplazamiento propio: la ventana ya trae el suyo y con los dos
+         la ficha se cortaba antes de llegar a los botones del pie. Una raya
+         separa cada credencial de la siguiente cuando hay varias. --}}
+    <div class="divide-y divide-gray-200">
         @forelse($apiKeys as $apiKey)
             @php $esSandbox = (bool) $apiKey->company?->es_demo; @endphp
 
@@ -133,7 +139,7 @@
                 </x-slot:acciones>
             </x-ficha-credencial>
         @empty
-            <div class="rounded-lg border border-dashed border-gray-300 px-4 py-10 text-center">
+            <div class="m-6 rounded-lg border border-dashed border-gray-300 px-4 py-10 text-center">
                 <p class="text-sm text-gray-500">Ninguna empresa tiene credenciales de API todavía.</p>
             </div>
         @endforelse

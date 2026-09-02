@@ -8,7 +8,7 @@
     $esSandbox = (bool) $apiKey->company?->es_demo;
 @endphp
 
-<div class="px-6 py-5">
+<div>
     <x-ficha-credencial :suelta="false">
         <x-slot:titulo>{{ $apiKey->name }}</x-slot:titulo>
         <x-slot:subtitulo>{{ $apiKey->company->razon_social ?? 'Sin empresa' }}</x-slot:subtitulo>

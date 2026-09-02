@@ -13,7 +13,9 @@
 @props([
     'ancho' => 'max-w-3xl',
     // Sin marco propio cuando ya va dentro de una ventana que lo tiene: con
-    // él se veían tres bordes metidos uno dentro de otro.
+    // él se veían tres bordes metidos uno dentro de otro. Solo cambia el marco
+    // de fuera; los márgenes de dentro son los mismos, para que las cuatro
+    // fichas midan igual y el contenido empiece a la misma altura.
     'suelta' => true,
 ])
 
@@ -26,7 +28,7 @@
 <div {{ $attributes->merge(['class' => $marco]) }}>
 
     {{-- Cabecera: de quién es, y si sirve ahora mismo. --}}
-    <div class="flex items-start gap-4 {{ $suelta ? 'border-b border-gray-100 px-6 py-5' : 'pb-5' }}">
+    <div class="flex items-start gap-4 border-b border-gray-100 px-6 py-5">
         @isset($icono)
             <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
                 {{ $icono }}
@@ -45,7 +47,7 @@
         @endisset
     </div>
 
-    <div class="space-y-4 {{ $suelta ? 'px-6 py-5' : '' }}">
+    <div class="space-y-4 px-6 py-5">
 
         {{-- Lo que se viene a buscar. Va en su propio panel de color: es lo
              único de la ficha que se copia, y así se distingue de las cifras
@@ -76,7 +78,7 @@
     </div>
 
     @isset($acciones)
-        <div class="flex flex-wrap items-center justify-end gap-2 border-t border-gray-100 {{ $suelta ? 'bg-gray-50/70 px-6 py-4' : 'mt-5 pt-4' }}">
+        <div class="flex flex-wrap items-center justify-end gap-2 border-t border-gray-100 bg-gray-50/70 px-6 py-4">
             {{ $acciones }}
         </div>
     @endisset
