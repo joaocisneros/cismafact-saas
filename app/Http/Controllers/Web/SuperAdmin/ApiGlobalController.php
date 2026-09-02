@@ -224,7 +224,6 @@ class ApiGlobalController extends Controller
             'name' => 'Sandbox - ' . $validated['dev_name'],
             'key' => ApiKey::generateKey(),
             'secret' => \Illuminate\Support\Facades\Hash::make($plainSecret),
-            'plain_secret' => $plainSecret,
             'abilities' => ['*'],
             'active' => true,
             'expires_at' => isset($validated['expires_in_days'])
@@ -234,12 +233,61 @@ class ApiGlobalController extends Controller
 
         Cache::forget('api_global_index');
 
-        // El secreto no se repite aqui: queda guardado y se consulta cuando haga
-        // falta con el boton "Ver" de la fila. Antes se mostraba en un bloque
-        // aparte diciendo que no se volveria a mostrar, lo cual no era cierto, y
-        // ademas dejaba el secreto dentro de la sesion.
-        return back()->with('success',
-            "Token de «{$apiKey->name}» generado. Ábrelo con «Ver» para copiar sus credenciales.");
+        /*
+         * El secreto se entrega aqui, y solo aqui.
+         *
+         * Decia que se consultaba con el boton «Ver» de la fila, y esa ficha
+         * nunca ha enseñado el secret: solo la key. El token se generaba y no
+         * habia forma de saber con que se usa, salvo entrar como la empresa
+         * demo y mirarlo desde su pantalla.
+         *
+         * Y ya no queda copia que consultar: se guarda como hash, asi que esta
+         * es la unica vez que se puede leer. Si se pierde, se regenera.
+         */
+        /* En sesion y no en flash: el modal envia por fetch, ese fetch
+               sigue el redirect y consume el flash antes de que la pagina
+               llegue a recargarse. Asi el secreto sobrevive hasta que se
+               pinta, y la vista lo borra en cuanto lo enseña. */
+        session()->put('credenciales_nuevas', [
+                'nombre' => $apiKey->name,
+                'key' => $apiKey->key,
+                'secret' => $plainSecret,
+        ]);
+
+        return back()->with('success', "Token de «{$apiKey->name}» generado.");
+    }
+
+    /**
+     * Un secret nuevo para una credencial que ya existe.
+     *
+     * La key no se toca: el cliente solo tiene que cambiar el secret en su
+     * sistema, y lo demas —su integracion, sus permisos, su historial— sigue
+     * igual. Sin esto, un cliente que perdia el secret obligaba a borrarle la
+     * credencial y darle otra, con key nueva, y a rehacer su configuracion
+     * entera por algo que no era culpa suya.
+     *
+     * Corta al instante: el secret anterior deja de valer en cuanto se guarda,
+     * asi que hay que pasarle el nuevo. Por eso se enseña aqui una vez.
+     */
+    public function regenerateApiKey(ApiKey $apiKey)
+    {
+        $plainSecret = ApiKey::generateSecret();
+
+        $apiKey->update(['secret' => \Illuminate\Support\Facades\Hash::make($plainSecret)]);
+
+        Cache::forget('api_global_index');
+
+        /* En sesion y no en flash: el modal envia por fetch, ese fetch
+               sigue el redirect y consume el flash antes de que la pagina
+               llegue a recargarse. Asi el secreto sobrevive hasta que se
+               pinta, y la vista lo borra en cuanto lo enseña. */
+        session()->put('credenciales_nuevas', [
+                'nombre' => $apiKey->name,
+                'key' => $apiKey->key,
+                'secret' => $plainSecret,
+        ]);
+
+        return back()->with('success', "Secret de «{$apiKey->name}» regenerado. El anterior ya no funciona.");
     }
 
     /**

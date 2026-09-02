@@ -210,6 +210,8 @@ Route::prefix('super-admin')
         Route::post('/api-global/sandbox-token', [SuperAdminApiGlobalController::class, 'generateSandboxToken'])->name('api-global.sandbox-token');
         Route::post('/api-global/empresas/{company}/toggle', [SuperAdminApiGlobalController::class, 'toggleCompanyApi'])->name('api-global.toggle-company');
         Route::post('/api-global/api-keys/{apiKey}/extend', [SuperAdminApiGlobalController::class, 'extendApiKey'])->name('api-global.extend-key');
+        // Cambia el secret y deja la key: el cliente no rehace su integracion.
+        Route::post('/api-global/api-keys/{apiKey}/regenerar', [SuperAdminApiGlobalController::class, 'regenerateApiKey'])->name('api-global.regenerate-key');
         Route::delete('/api-global/api-keys/{apiKey}', [SuperAdminApiGlobalController::class, 'destroyApiKey'])->name('api-global.delete-key');
 
         // Credenciales de prueba para programadores externos. Tiene modulo
@@ -237,10 +239,6 @@ Route::prefix('super-admin')
         Route::post('/consultas/llaves/{llave}/regenerar', [\App\Http\Controllers\Web\SuperAdmin\ConsultaLlaveController::class, 'regenerar'])
             ->name('consultas.llaves.regenerar');
 
-        // El secreto, solo cuando se pide: mandarlo con el listado lo dejaria
-        // a la vista de todas las llaves en cada carga de la pagina.
-        Route::get('/consultas/llaves/{llave}/secreto', [\App\Http\Controllers\Web\SuperAdmin\ConsultaLlaveController::class, 'secreto'])
-            ->name('consultas.llaves.secreto');
 
         // Rellenar el alta de una llave con la ficha del RUC o el DNI, para no
         // teclear la razon social a mano.
@@ -293,7 +291,6 @@ Route::prefix('empresa')
         Route::resource('api-keys', ApiKeyController::class)->only(['index', 'create', 'store', 'destroy']);
         Route::post('/api-keys/{apiKey}/regenerate', [ApiKeyController::class, 'regenerate'])->name('api-keys.regenerate');
         Route::post('/api-keys/{apiKey}/toggle', [ApiKeyController::class, 'toggle'])->name('api-keys.toggle');
-        Route::get('/api-keys/{apiKey}/secret', [ApiKeyController::class, 'showSecret'])->name('api-keys.show-secret');
         Route::get('/api-keys/docs', [ApiKeyController::class, 'documentation'])->name('api-keys.documentation');
         Route::get('/api-keys/postman', [ApiKeyController::class, 'postman'])->name('api-keys.postman');
 

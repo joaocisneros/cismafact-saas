@@ -574,50 +574,18 @@
                                     class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
                         </div>
 
-                        {{-- Tapado hasta que se pide. Se guarda cifrado, asi que
-                             el sistema puede leerlo, pero no viaja con la pagina:
-                             en el listado saldria el de todas las llaves en cada
-                             carga. Solo se trae el que se pulsa. --}}
-                        <div class="flex items-center gap-3 px-4 py-2.5"
-                             x-data="{ visible: false, valor: null, cargando: false,
-                                 async mostrar() {
-                                     if (this.visible) { this.visible = false; return; }
-                                     if (! this.valor) {
-                                         this.cargando = true;
-                                         try {
-                                             const r = await fetch('{{ url('super-admin/consultas/llaves') }}/' + detalle.id + '/secreto', {
-                                                 headers: { 'Accept': 'application/json' },
-                                             });
-                                             this.valor = (await r.json()).secreto;
-                                         } catch (e) {
-                                             this.valor = null;
-                                         } finally {
-                                             this.cargando = false;
-                                         }
-                                     }
-                                     this.visible = !! this.valor;
-                                 },
-                             }"
-                             x-effect="detalle; visible = false; valor = null">
+                        {{-- El secret ya no se enseña: se guarda como hash y de ahi
+                             no sale. Queda la pista de sus ultimos caracteres, que
+                             sirve para reconocer cual tiene puesto el cliente sin
+                             llegar a revelarlo. --}}
+                        <div class="flex items-center gap-3 px-4 py-2.5">
                             <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">X-Api-Secret</span>
-
-                            <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs ring-1 ring-indigo-100"
-                                  :class="visible ? 'text-gray-800' : 'text-gray-400'">
-                                <span x-show="! visible">··················<span x-text="detalle?.pista"></span></span>
-                                <span x-show="visible" x-text="valor"></span>
-                            </code>
-
-                            <button type="button" @click="mostrar()" :disabled="cargando"
-                                    class="shrink-0 rounded-md border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50"
-                                    x-text="cargando ? '…' : (visible ? 'Ocultar' : 'Mostrar')"></button>
-
-                            <button type="button" x-show="visible" x-cloak
-                                    @click="window.copyCompanyCredential($el, valor)"
-                                    class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
+                            <code class="min-w-0 flex-1 rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-400 ring-1 ring-indigo-100">··················<span x-text="detalle?.pista"></span></code>
+                            <span class="shrink-0 text-xs text-gray-500">solo lo tiene el cliente</span>
                         </div>
 
                         <div class="px-4 py-2 text-xs text-gray-500">
-                            No sale con la página: se pide solo al pulsar «Mostrar».
+                            Si lo perdió, genérale uno nuevo con el botón de renovar: su X-Api-Key no cambia.
                         </div>
                     </div>
                 </div>

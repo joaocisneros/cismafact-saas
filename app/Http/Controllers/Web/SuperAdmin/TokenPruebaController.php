@@ -70,7 +70,6 @@ class TokenPruebaController extends Controller
             'name' => 'Sandbox - ' . $validated['dev_name'],
             'key' => ApiKey::generateKey(),
             'secret' => Hash::make($plainSecret),
-            'plain_secret' => $plainSecret,
             'abilities' => ['*'],
             'active' => true,
             'expires_at' => isset($validated['expires_in_days'])

@@ -145,7 +145,6 @@ class CompanyController extends Controller
                 'name' => 'API Key Principal',
                 'key' => ApiKey::generateKey(),
                 'secret' => Hash::make($plainSecret),
-                'plain_secret' => $plainSecret,
                 'abilities' => ['*'],
                 'active' => true,
             ]);
@@ -176,7 +175,7 @@ class CompanyController extends Controller
         $apiKeys = $company->apiKeys()
             ->latest()
             ->limit(10)
-            ->get(['id', 'company_id', 'name', 'key', 'secret', 'plain_secret', 'active', 'last_used_at', 'created_at']);
+            ->get(['id', 'company_id', 'name', 'key', 'active', 'last_used_at', 'created_at']);
 
         $users = $company->users()
             ->with('role:id,name,display_name')

@@ -139,14 +139,11 @@
                             <div>
                                 <p class="mb-1 text-[11px] font-semibold uppercase text-gray-500">X-Api-Secret</p>
                                 <div class="flex items-center gap-2 rounded-md bg-white px-3 py-2">
-                                    @if($key->plain_secret)
-                                        <code class="min-w-0 flex-1 truncate font-mono text-xs text-gray-800">{{ $key->plain_secret }}</code>
-                                        <button type="button" @click="copy(@js($key->plain_secret), 'secret-{{ $key->id }}')" class="text-xs font-semibold text-blue-600 hover:text-blue-800">
-                                            <span x-text="copying === 'secret-{{ $key->id }}' ? 'Copiado' : 'Copiar'"></span>
-                                        </button>
-                                    @else
-                                        <span class="text-xs text-amber-700">Secret antiguo no recuperable. Regenera para verlo.</span>
-                                    @endif
+                                    {{-- El secret no se guarda de forma legible: solo
+                                         lo tiene el cliente. Si lo perdio, se le
+                                         genera otro y la key no cambia. --}}
+                                    <code class="min-w-0 flex-1 truncate font-mono text-xs text-gray-400">••••••••••••••••</code>
+                                    <span class="shrink-0 text-xs text-gray-500">solo lo tiene el cliente</span>
                                 </div>
                             </div>
                         </div>

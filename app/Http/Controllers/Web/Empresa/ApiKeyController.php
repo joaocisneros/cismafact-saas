@@ -34,19 +34,35 @@ class ApiKeyController extends Controller
 
         $plainSecret = ApiKey::generateSecret();
 
-        ApiKey::create([
+        $apiKey = ApiKey::create([
             'company_id' => Auth::user()->company_id,
             'name' => $request->name,
             'key' => ApiKey::generateKey(),
             'secret' => Hash::make($plainSecret),
-            'plain_secret' => $plainSecret,
             'abilities' => ['*'],
             'active' => true,
         ]);
 
-        return back()
-            ->with('success', "API Key «{$request->name}» creada.")
-            ->with('api_key_nueva', $request->name);
+        /*
+         * El secreto viaja aqui porque es la unica vez que se va a ver.
+         *
+         * Antes no se devolvia: se guardaba una copia descifrable y se leia
+         * cuando hiciera falta. Eso hacia comodo perderlo, y a cambio dejaba el
+         * secreto de cada cliente recuperable por cualquiera que alcanzara la
+         * base y la APP_KEY, que viven en el mismo servidor. Guardado como hash
+         * no se puede leer ni aunque se roben las dos.
+         */
+        /* En sesion y no en flash: el modal envia por fetch, ese fetch
+               sigue el redirect y consume el flash antes de que la pagina
+               llegue a recargarse. Asi el secreto sobrevive hasta que se
+               pinta, y la vista lo borra en cuanto lo enseña. */
+        session()->put('credenciales_nuevas', [
+                'nombre' => $apiKey->name,
+                'key' => $apiKey->key,
+                'secret' => $plainSecret,
+        ]);
+
+        return back()->with('success', "API Key «{$request->name}» creada.");
     }
 
     public function destroy(ApiKey $apiKey)
@@ -73,18 +89,6 @@ class ApiKeyController extends Controller
         return back()->with('success', "API Key {$status}.");
     }
 
-    public function showSecret(ApiKey $apiKey)
-    {
-        if ($apiKey->company_id !== Auth::user()->company_id) {
-            abort(403);
-        }
-
-        return response()->json([
-            'key' => $apiKey->key,
-            'secret' => $apiKey->plain_secret,
-        ]);
-    }
-
     public function regenerate(ApiKey $apiKey)
     {
         if ($apiKey->company_id !== Auth::user()->company_id) {
@@ -93,14 +97,20 @@ class ApiKeyController extends Controller
 
         $plainSecret = ApiKey::generateSecret();
 
-        $apiKey->update([
-            'secret' => Hash::make($plainSecret),
-            'plain_secret' => $plainSecret,
+        $apiKey->update(['secret' => Hash::make($plainSecret)]);
+
+        // La key no cambia: quien la use solo tiene que cambiar el secret.
+        /* En sesion y no en flash: el modal envia por fetch, ese fetch
+               sigue el redirect y consume el flash antes de que la pagina
+               llegue a recargarse. Asi el secreto sobrevive hasta que se
+               pinta, y la vista lo borra en cuanto lo enseña. */
+        session()->put('credenciales_nuevas', [
+                'nombre' => $apiKey->name,
+                'key' => $apiKey->key,
+                'secret' => $plainSecret,
         ]);
 
-        return back()
-            ->with('success', "Secret de «{$apiKey->name}» regenerado. El anterior dejó de funcionar.")
-            ->with('api_key_nueva', $apiKey->name);
+        return back()->with('success', "Secret de «{$apiKey->name}» regenerado. El anterior dejó de funcionar.");
     }
 
     public function documentation()

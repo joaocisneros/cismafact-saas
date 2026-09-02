@@ -16,7 +16,6 @@ class ApiKey extends Model
         'name',
         'key',
         'secret',
-        'plain_secret',
         'abilities',
         'active',
         'last_used_at',
@@ -26,13 +25,11 @@ class ApiKey extends Model
 
     protected $hidden = [
         'secret',
-        'plain_secret',
     ];
 
     protected function casts(): array
     {
         return [
-            'plain_secret' => 'encrypted',
             'abilities' => 'array',
             'active' => 'boolean',
             'last_used_at' => 'datetime',

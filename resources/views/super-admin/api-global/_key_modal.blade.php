@@ -23,9 +23,6 @@
         $esSandbox = (bool) $apiKey->company?->es_demo;
 
         $credenciales = ['URL base' => url('/api'), 'X-Api-Key' => $apiKey->key];
-        if ($esSandbox) {
-            $credenciales['X-Api-Secret'] = $apiKey->plain_secret;
-        }
     @endphp
 
         <div class="mt-5 overflow-hidden rounded-lg border border-indigo-200 bg-indigo-50/40">
@@ -74,7 +71,7 @@
 
                 @unless ($esSandbox)
                     <div class="px-4 py-2.5 text-xs text-gray-500">
-                        El secreto solo lo tiene el cliente. Si lo perdió, hay que generarle una credencial nueva.
+                        El secreto solo lo tiene el cliente: no se guarda de forma que se pueda leer. Si lo perdió, dale uno nuevo con «Nuevo secret» —su X-Api-Key no cambia—.
                     </div>
                 @endunless
             </div>

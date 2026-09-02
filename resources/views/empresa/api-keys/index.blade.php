@@ -6,8 +6,6 @@
 <div class="space-y-5"
      x-data="{
         copiado: null,
-        visible: null,
-        secretos: {},
         copiar(valor, id) {
             /* navigator.clipboard solo existe en HTTPS o en localhost, y el
                panel corre en un dominio .test: ahi el boton no hacia nada.
@@ -34,25 +32,6 @@
                 aMano();
             }
         },
-        /* El secret no se escribe en la pagina: se pide solo cuando lo pulsas,
-           para que no quede a la vista de quien mire el codigo fuente. */
-        async alternar(id, url) {
-            if (this.visible === id) { this.visible = null; return; }
-            if (! this.secretos[id]) {
-                try {
-                    const r = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                    if (! r.ok) throw new Error();
-                    this.secretos[id] = (await r.json()).secret || '(no disponible)';
-                } catch (e) {
-                    this.secretos[id] = '(no se pudo obtener)';
-                }
-            }
-            this.visible = id;
-        },
-        async copiarSecreto(id, url) {
-            if (! this.secretos[id]) { await this.alternar(id, url); }
-            this.copiar(this.secretos[id], 's' + id);
-        }
      }">
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -73,11 +52,9 @@
         </div>
     </div>
 
-    {{-- Un solo aviso: "guarda las credenciales" ya implica que se creó. --}}
-    @if(session('api_key_nueva'))
-        <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            Copia ahora las credenciales de «{{ session('api_key_nueva') }}» y guárdalas en un sitio seguro.
-        </div>
+    {{-- Un solo aviso: las credenciales ya dicen que se creo. --}}
+    @if(session('credenciales_nuevas'))
+        @include('_credenciales_nuevas', ['credenciales' => session('credenciales_nuevas')])
     @elseif(session('success'))
         <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('success') }}</div>
     @endif
@@ -136,24 +113,16 @@
                         </button>
                     </div>
 
-                    @if($apiKey->plain_secret)
-                        <div class="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-                            <span class="w-24 shrink-0 font-mono text-xs text-gray-500">X-Api-Secret</span>
-                            <code class="min-w-0 flex-1 truncate font-mono text-xs text-gray-800"
-                                  x-text="visible === {{ $apiKey->id }} ? (secretos[{{ $apiKey->id }}] ?? 'cargando…') : '••••••••••••••••'"></code>
-                            <button type="button" @click="alternar({{ $apiKey->id }}, '{{ route('empresa.api-keys.show-secret', $apiKey) }}')"
-                                    class="shrink-0 rounded px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-200"
-                                    x-text="visible === {{ $apiKey->id }} ? 'Ocultar' : 'Mostrar'"></button>
-                            <button type="button" @click="copiarSecreto({{ $apiKey->id }}, '{{ route('empresa.api-keys.show-secret', $apiKey) }}')"
-                                    class="shrink-0 rounded px-2 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-50">
-                                <span x-text="copiado === 's{{ $apiKey->id }}' ? 'Copiado' : 'Copiar'"></span>
-                            </button>
-                        </div>
-                    @else
-                        <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                            Secret antiguo, no recuperable. Regenéralo para obtener uno nuevo.
-                        </div>
-                    @endif
+                    {{-- El secret no se enseña porque ya no se puede: se guarda
+                         de una forma que no se puede revertir, asi que solo
+                         existe en tu copia. Antes se guardaba tambien
+                         descifrable para poder mostrarlo aqui, y eso lo dejaba
+                         al alcance de cualquiera que llegara a la base. --}}
+                    <div class="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                        <span class="w-24 shrink-0 font-mono text-xs text-gray-500">X-Api-Secret</span>
+                        <code class="min-w-0 flex-1 truncate font-mono text-xs text-gray-400">••••••••••••••••</code>
+                        <span class="shrink-0 text-xs text-gray-500">solo lo tienes tú</span>
+                    </div>
                 </div>
             </div>
         @empty
