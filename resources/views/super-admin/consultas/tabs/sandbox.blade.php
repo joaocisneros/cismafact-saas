@@ -483,26 +483,37 @@ El historial no se puede recuperar.
                              que el sistema puede leerlo, pero no viaja con la
                              pagina: solo se trae el que se pulsa. --}}
                         <div class="flex items-center gap-3 px-4 py-2"
-                             x-data="{ visible: false, valor: null, cargando: false,
+                             x-data="{ visible: false, valor: null, cargando: false, id: null,
+                                 /* Se pide al abrir la ficha, no al pulsar «Mostrar»: asi la
+                                    espera se va con el rato que se pasa leyendo el nombre y la
+                                    clave, y al pulsar ya esta. Sigue sin salir con el listado,
+                                    solo viaja el de la llave abierta.
+
+                                    Recibe el id por parametro y no lo lee del estado: dentro de
+                                    x-effect, leer lo que luego se escribe deja el efecto
+                                    llamandose a si mismo. */
+                                 async precargar(id) {
+                                     if (! id) return;
+                                     this.cargando = true;
+                                     try {
+                                         const r = await fetch('{{ url('super-admin/consultas/llaves') }}/' + id + '/secreto', {
+                                             headers: { 'Accept': 'application/json' },
+                                         });
+                                         this.valor = (await r.json()).secreto;
+                                     } catch (e) {
+                                         this.valor = null;
+                                     } finally {
+                                         this.cargando = false;
+                                     }
+                                 },
                                  async mostrar() {
                                      if (this.visible) { this.visible = false; return; }
-                                     if (! this.valor) {
-                                         this.cargando = true;
-                                         try {
-                                             const r = await fetch('{{ url('super-admin/consultas/llaves') }}/' + detalle.id + '/secreto', {
-                                                 headers: { 'Accept': 'application/json' },
-                                             });
-                                             this.valor = (await r.json()).secreto;
-                                         } catch (e) {
-                                             this.valor = null;
-                                         } finally {
-                                             this.cargando = false;
-                                         }
-                                     }
+                                     // Ya suele estar; si la precarga fallo, se reintenta.
+                                     if (! this.valor) await this.precargar(this.id);
                                      this.visible = !! this.valor;
                                  },
                              }"
-                             x-effect="detalle; visible = false; valor = null">
+                             x-effect="visible = false; valor = null; id = detalle?.id; precargar(detalle?.id)">
                             <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">X-Api-Secret</span>
 
                             <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs ring-1 ring-indigo-100"
