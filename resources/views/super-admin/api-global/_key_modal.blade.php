@@ -9,9 +9,10 @@
 @endphp
 
 <div>
+    {{-- El nombre del token ya va en la barra de la ventana: aqui, de quien
+         es y si sirve. --}}
     <x-ficha-credencial :suelta="false">
-        <x-slot:titulo>{{ $apiKey->name }}</x-slot:titulo>
-        <x-slot:subtitulo>{{ $apiKey->company->razon_social ?? 'Sin empresa' }}</x-slot:subtitulo>
+        <x-slot:titulo>{{ $apiKey->company->razon_social ?? 'Sin empresa' }}</x-slot:titulo>
 
         @php
             // La empresa manda por encima de la credencial: si esta parada, la

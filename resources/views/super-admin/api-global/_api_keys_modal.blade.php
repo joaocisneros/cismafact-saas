@@ -22,9 +22,10 @@
         @forelse($apiKeys as $apiKey)
             @php $esSandbox = (bool) $apiKey->company?->es_demo; @endphp
 
+            {{-- El nombre de la empresa ya va en la barra de la ventana: aqui
+                 solo cual de sus credenciales es y si sirve. --}}
             <x-ficha-credencial :suelta="false">
-                <x-slot:titulo>{{ $apiKey->company->razon_social ?? 'Sin empresa' }}</x-slot:titulo>
-                <x-slot:subtitulo>{{ $apiKey->name }}</x-slot:subtitulo>
+                <x-slot:titulo>{{ $apiKey->name ?: 'Credencial' }}</x-slot:titulo>
 
                 @php
                     // Una credencial activa de una empresa inactiva no sirve: la

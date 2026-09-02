@@ -36,7 +36,9 @@
         @endisset
 
         <div class="min-w-0 flex-1">
-            <h3 class="truncate text-lg font-semibold tracking-tight text-gray-900">{{ $titulo }}</h3>
+            {{-- Dentro de una ventana el titulo grande de la ficha pesaba mas que
+                 el de la barra de arriba, y el de arriba es el principal. --}}
+            <h3 class="truncate font-semibold tracking-tight text-gray-900 {{ $suelta ? 'text-lg' : 'text-base' }}">{{ $titulo }}</h3>
             @isset($subtitulo)
                 <p class="mt-0.5 truncate text-sm text-gray-500">{{ $subtitulo }}</p>
             @endisset

@@ -180,7 +180,7 @@
                                 <td class="px-4 py-3">
                                     <div class="flex items-center gap-1.5">
                                         <x-icon-action icon="ver" label="Ver credenciales de esta empresa" color="blue" type="button"
-                                                       onclick="window.openAdminModal('{{ route('super-admin.api-global.api-keys', ['company_id' => $empresa->id]) }}', 'Credenciales de la empresa')" />
+                                                       onclick="window.openAdminModal('{{ route('super-admin.api-global.api-keys', ['company_id' => $empresa->id]) }}', @js($empresa->razon_social))" />
 
                                         {{-- Generar el secret sin entrar, cuando la empresa
                                              tiene una sola credencial: es el caso normal y
@@ -190,7 +190,7 @@
                                         @if($e['unica'])
                                             <form method="POST" action="{{ route('super-admin.api-global.regenerate-key', $e['unica']) }}"
                                                   data-success-message="Secret regenerado. Ábrelo con «Mostrar» y pásaselo al cliente."
-                                                  @submit.prevent="if (confirm('Se genera un Secret nuevo para ' + @js($empresa->razon_social) + '. El actual deja de funcionar al instante, así que hay que pasarle el nuevo. La X-Api-Key no cambia. ¿Seguir?')) window.enviarYAbrirModal($el, '{{ route('super-admin.api-global.api-keys', ['company_id' => $empresa->id]) }}', 'Credenciales de la empresa')">
+                                                  @submit.prevent="if (confirm('Se genera un Secret nuevo para ' + @js($empresa->razon_social) + '. El actual deja de funcionar al instante, así que hay que pasarle el nuevo. La X-Api-Key no cambia. ¿Seguir?')) window.enviarYAbrirModal($el, '{{ route('super-admin.api-global.api-keys', ['company_id' => $empresa->id]) }}', @js($empresa->razon_social))">
                                                 @csrf
                                                 <x-icon-action icon="renovar" label="Generar un Secret nuevo" color="amber" />
                                             </form>

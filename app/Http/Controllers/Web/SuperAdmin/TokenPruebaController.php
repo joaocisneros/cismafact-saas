@@ -101,6 +101,7 @@ class TokenPruebaController extends Controller
         // credenciales que hay que copiar, y el siguiente paso siempre es
         // ese. Sin esto habia que buscar el token en la lista y abrirlo.
         session()->flash('abrir_ficha', $apiKey->id);
+        session()->flash('abrir_ficha_nombre', $apiKey->name);
 
         return back()->with('success', "Token de «{$validated['dev_name']}» generado. Copia su Secret: no se vuelve a mostrar solo.");
     }

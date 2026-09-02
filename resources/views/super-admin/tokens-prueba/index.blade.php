@@ -13,11 +13,12 @@
     // Se lee y se olvida en el acto: si se quedara, la ficha volveria a
     // abrirse cada vez que se recargue la pagina.
     $fichaNueva = session('abrir_ficha');
-    session()->forget('abrir_ficha');
+    $fichaNombre = session('abrir_ficha_nombre');
+    session()->forget(['abrir_ficha', 'abrir_ficha_nombre']);
 @endphp
 
 @if($fichaNueva)
-    <div x-data x-init="$nextTick(() => window.openAdminModal('{{ url('super-admin/api-global/api-keys/' . $fichaNueva) }}', 'Credenciales del token'))"></div>
+    <div x-data x-init="$nextTick(() => window.openAdminModal('{{ url('super-admin/api-global/api-keys/' . $fichaNueva) }}', @js($fichaNombre ?: 'Credenciales del token')))"></div>
 @endif
 <div class="space-y-5">
 
@@ -126,7 +127,7 @@
                                 <td class="px-4 py-3">
                                     <div class="flex items-center gap-1.5">
                                         <x-icon-action icon="ver" label="Ver credenciales" color="blue" type="button"
-                                                       onclick="window.openAdminModal('{{ route('super-admin.api-global.show-key', $token) }}', 'Credenciales del token')" />
+                                                       onclick="window.openAdminModal('{{ route('super-admin.api-global.show-key', $token) }}', @js($token->name))" />
 
                                         {{-- Genera el secret y abre la ficha con el resultado.
 
@@ -135,7 +136,7 @@
                                              delante de la pantalla, y lejos de donde se consulta. --}}
                                         <form method="POST" action="{{ route('super-admin.tokens-prueba.regenerar', $token) }}"
                                               data-success-message="Secret regenerado. Ábrelo con «Mostrar» y pásaselo al programador."
-                                              @submit.prevent="if (confirm('Se genera un Secret nuevo para «' + @js($token->name) + '». El actual deja de funcionar al instante, así que hay que pasarle el nuevo al programador. La X-Api-Key no cambia. ¿Seguir?')) window.enviarYAbrirModal($el, '{{ route('super-admin.api-global.show-key', $token) }}', 'Credenciales del token')">
+                                              @submit.prevent="if (confirm('Se genera un Secret nuevo para «' + @js($token->name) + '». El actual deja de funcionar al instante, así que hay que pasarle el nuevo al programador. La X-Api-Key no cambia. ¿Seguir?')) window.enviarYAbrirModal($el, '{{ route('super-admin.api-global.show-key', $token) }}', @js($token->name))">
                                             @csrf
                                             <x-icon-action icon="renovar" label="Generar un Secret nuevo" color="amber" />
                                         </form>
