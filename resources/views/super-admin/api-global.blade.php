@@ -71,8 +71,9 @@
                             <th class="px-5 py-3">Empresa</th>
                             <th class="px-4 py-3">Plan</th>
                             <th class="w-64 px-4 py-3">Consumo del mes</th>
+                            <th class="px-4 py-3">Llamadas hoy</th>
+                            <th class="px-4 py-3">Último uso</th>
                             <th class="px-4 py-3">Credenciales</th>
-                            <th class="px-4 py-3">Acceso</th>
                             <th class="px-4 py-3"></th>
                         </tr>
                     </thead>
@@ -110,17 +111,46 @@
                                     @endif
                                 </td>
 
-                                <td class="px-4 py-3 text-gray-600">
-                                    {{ $e['activas'] }} <span class="text-gray-400">de {{ $e['credenciales'] }}</span>
+                                {{-- Las de hoy, no las del mes: el consumo del mes ya
+                                     sale en la columna de al lado con su barra, y
+                                     repetirlo dejaba dos columnas con el mismo numero.
+                                     Lo que no se veia es si hoy hay movimiento.
+
+                                     Los errores del mes van aqui tambien: es donde se
+                                     mira cuando algo va mal. --}}
+                                <td class="px-4 py-3">
+                                    <span class="font-medium text-gray-900">{{ number_format($e['hoy']) }}</span>
+                                    @if($e['errores'] > 0)
+                                        <span class="ml-1 text-xs font-semibold text-red-600">{{ number_format($e['errores']) }} con error</span>
+                                    @endif
                                 </td>
 
+                                {{-- Una credencial habilitada que no se usa nunca es
+                                     una integracion que no arranco. No se veia. --}}
+                                <td class="px-4 py-3 text-gray-600">
+                                    @if($e['ultimo_uso'])
+                                        <span title="{{ \Carbon\Carbon::parse($e['ultimo_uso'])->format('d/m/Y H:i') }}">
+                                            {{ \Carbon\Carbon::parse($e['ultimo_uso'])->diffForHumans(short: true) }}
+                                        </span>
+                                    @elseif($e['credenciales'] > 0)
+                                        <span class="text-xs text-amber-600">nunca</span>
+                                    @else
+                                        <span class="text-gray-300">—</span>
+                                    @endif
+                                </td>
+
+                                {{-- Credenciales y acceso eran dos columnas que decian
+                                     lo mismo: el acceso se calcula de si hay alguna
+                                     activa, asi que «1 de 1» ya implicaba «Habilitado». --}}
                                 <td class="px-4 py-3">
                                     @if($e['credenciales'] === 0)
-                                        <span class="text-xs text-gray-400">Sin credenciales</span>
-                                    @else
-                                        <span class="rounded-full px-2 py-0.5 text-xs font-medium {{ $tieneAcceso ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600' }}">
-                                            {{ $tieneAcceso ? 'Habilitado' : 'Cortado' }}
+                                        <span class="text-xs text-gray-400">sin credenciales</span>
+                                    @elseif($tieneAcceso)
+                                        <span class="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                                            {{ $e['activas'] }} activa{{ $e['activas'] > 1 ? 's' : '' }}
                                         </span>
+                                    @else
+                                        <span class="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">cortada{{ $e['credenciales'] > 1 ? 's' : '' }}</span>
                                     @endif
                                 </td>
 

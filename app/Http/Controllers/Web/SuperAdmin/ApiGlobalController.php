@@ -20,7 +20,17 @@ class ApiGlobalController extends Controller
         $endOfMonth = now()->copy()->endOfMonth();
 
         $data = Cache::remember('api_global_index', 60, function () use ($startOfToday, $endOfToday, $startOfMonth, $endOfMonth) {
-            $stats = ApiUsage::selectRaw("
+            /*
+             * Sin el sandbox: esas cifras son de este modulo, y este modulo
+             * lista empresas reales.
+             *
+             * Contandolo, la cabecera decia «5 errores hoy» y ninguna fila de
+             * abajo tenia ninguno, porque eran todos de la empresa demo. Un
+             * numero que no se puede rastrear no sirve para nada, y lo del
+             * sandbox se mira en Sandbox Facturacion.
+             */
+            $stats = ApiUsage::whereHas('company', fn ($q) => $q->where('es_demo', false))
+                ->selectRaw("
                 SUM(CASE WHEN created_at BETWEEN ? AND ? THEN 1 ELSE 0 END) as hoy,
                 SUM(CASE WHEN created_at BETWEEN ? AND ? THEN 1 ELSE 0 END) as mes,
                 SUM(CASE WHEN created_at BETWEEN ? AND ? AND status_code >= 400 THEN 1 ELSE 0 END) as errores_hoy,
@@ -38,7 +48,8 @@ class ApiGlobalController extends Controller
                 'consumoHoy' => (int)($stats->hoy ?? 0),
                 'consumoMes' => (int)($stats->mes ?? 0),
                 'erroresHoy' => (int)($stats->errores_hoy ?? 0),
-                'apiKeyActivas' => ApiKey::where('active', true)->count(),
+                'apiKeyActivas' => ApiKey::where('active', true)
+                    ->whereHas('company', fn ($q) => $q->where('es_demo', false))->count(),
                 'tiempoPromedio' => round((float)($stats->tiempo_promedio_hoy ?? 0), 2),
             ];
         });
@@ -55,12 +66,20 @@ class ApiGlobalController extends Controller
         // sueltas, que no dicen quien esta cerca de pasarse.
         $inicioMes = now()->startOfMonth();
 
-        $llamadasPorEmpresa = ApiUsage::selectRaw('company_id, COUNT(*) as total')
+        // Las llamadas del mes y cuantas fallaron, de una vez: son la misma
+            // tabla y el mismo recorrido.
+        $consumoPorEmpresa = ApiUsage::selectRaw(
+                'company_id, COUNT(*) as total,
+                 SUM(status_code >= 400) as errores,
+                 SUM(created_at >= ?) as hoy', [now()->startOfDay()])
             ->where('created_at', '>=', $inicioMes)
             ->groupBy('company_id')
-            ->pluck('total', 'company_id');
+            ->get()
+            ->keyBy('company_id');
 
-        $empresas = Company::with(['plan:id,name,api_request_limit', 'apiKeys:id,company_id,name'])
+        $llamadasPorEmpresa = $consumoPorEmpresa->map(fn ($f) => (int) $f->total);
+
+        $empresas = Company::with(['plan:id,name,api_request_limit', 'apiKeys:id,company_id,name,last_used_at'])
             ->where('es_demo', false)
             ->withCount([
                 'apiKeys',
@@ -68,7 +87,7 @@ class ApiGlobalController extends Controller
             ])
             ->orderBy('razon_social')
             ->get()
-            ->map(function ($company) use ($llamadasPorEmpresa) {
+            ->map(function ($company) use ($llamadasPorEmpresa, $consumoPorEmpresa) {
                 $limite = (int) ($company->plan->api_request_limit ?? 0);
                 $usado = (int) ($llamadasPorEmpresa[$company->id] ?? 0);
 
@@ -80,6 +99,17 @@ class ApiGlobalController extends Controller
                     'ilimitado' => $limite <= 0,
                     'porcentaje' => $limite > 0 ? min(100, (int) round($usado * 100 / $limite)) : 0,
                     'credenciales' => (int) $company->api_keys_count,
+                    // Las que fallaron este mes: un cliente con errores necesita
+                    // una llamada, y ese es el dato por el que se mira aqui.
+                    'errores' => (int) ($consumoPorEmpresa[$company->id]->errores ?? 0),
+                    // Las de hoy. El consumo del mes ya sale al lado, asi que
+                    // repetirlo no añadia nada: lo que no se veia es si hoy hay
+                    // movimiento.
+                    'hoy' => (int) ($consumoPorEmpresa[$company->id]->hoy ?? 0),
+                    // Cuando llamo por ultima vez. Una credencial habilitada que
+                    // no se usa nunca es una integracion que no arranco, y eso no
+                    // se veia en ningun sitio.
+                    'ultimo_uso' => $company->apiKeys->max('last_used_at'),
                     // Cual es, cuando solo hay una: asi se le puede generar el
                     // secret desde la propia fila. Con varias no se sabria a
                     // cual se refiere el boton, y hay que entrar a elegir.
