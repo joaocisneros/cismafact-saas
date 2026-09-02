@@ -6,7 +6,7 @@
      Aquí puede haber varias en la misma ventana, así que van una debajo de
      otra sin la cabecera de la ficha —el nombre ya lo pone cada bloque—. --}}
 
-<div class="p-5">
+<div class="px-6 py-5">
 
     <p class="mb-3 text-sm text-gray-500">
         {{ $apiKeys->count() }} {{ Str::plural('credencial', $apiKeys->count()) }} registrada{{ $apiKeys->count() === 1 ? '' : 's' }}.
