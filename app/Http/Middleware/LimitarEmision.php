@@ -24,6 +24,20 @@ class LimitarEmision
     /** Emisiones por minuto y credencial. */
     private const POR_MINUTO = 20;
 
+    /**
+     * Emisiones por minuto en todo el sistema.
+     *
+     * El limite por credencial no basta: son veinte por minuto CADA UNO, asi
+     * que con ocho clientes a tope el servidor se llena igual y el panel deja
+     * de responder para todos.
+     *
+     * Sesenta por minuto, con los noventa segundos que tarda SUNAT de media,
+     * son unos noventa procesos ocupados a la vez. De los doscientos
+     * cincuenta que hay, dejan mas de la mitad libres para el panel pase lo
+     * que pase.
+     */
+    private const GLOBAL_POR_MINUTO = 60;
+
     public function handle(Request $request, Closure $next): Response
     {
         $llave = $request->attributes->get('api_key');
@@ -32,6 +46,20 @@ class LimitarEmision
         // api.key, que rechaza antes de llegar.
         if (! $llave) {
             return $next($request);
+        }
+
+        // El tope general va primero: si el sistema esta saturado da igual
+        // quien pregunte, y asi el que llega no gasta su cupo propio en una
+        // peticion que no se va a atender.
+        if (RateLimiter::tooManyAttempts('emision:sistema', self::GLOBAL_POR_MINUTO)) {
+            $faltan = RateLimiter::availableIn('emision:sistema');
+
+            return response()->json([
+                'success' => false,
+                'message' => 'El sistema está atendiendo muchas emisiones ahora mismo. '
+                    . "Vuelve a intentarlo en {$faltan} segundos.",
+                'reintentar_en' => $faltan,
+            ], 429)->header('Retry-After', $faltan);
         }
 
         $cubo = 'emision:' . $llave->id;
@@ -48,6 +76,7 @@ class LimitarEmision
         }
 
         RateLimiter::hit($cubo, 60);
+        RateLimiter::hit('emision:sistema', 60);
 
         $respuesta = $next($request);
 
