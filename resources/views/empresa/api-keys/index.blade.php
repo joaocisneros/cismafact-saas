@@ -110,15 +110,47 @@
                         </button>
                     </div>
 
-                    {{-- El secret no se enseña porque ya no se puede: se guarda
-                         de una forma que no se puede revertir, asi que solo
-                         existe en tu copia. Antes se guardaba tambien
-                         descifrable para poder mostrarlo aqui, y eso lo dejaba
-                         al alcance de cualquiera que llegara a la base. --}}
-                    <div class="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                    {{-- Tapado hasta que se pide: no sale con la pagina, que con
+                         varias credenciales irian todos los secretos en cada
+                         carga. Se trae al abrir la pantalla, asi que al pulsar
+                         «Mostrar» ya esta puesto. --}}
+                    <div class="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2"
+                         x-data="{ visible: false, valor: null, cargando: false,
+                             async traer() {
+                                 this.cargando = true;
+                                 try {
+                                     const r = await fetch('{{ route('empresa.api-keys.show-secret', $apiKey) }}', {
+                                         headers: { 'Accept': 'application/json' },
+                                     });
+                                     this.valor = (await r.json()).secret;
+                                 } catch (e) {
+                                     this.valor = null;
+                                 } finally {
+                                     this.cargando = false;
+                                 }
+                             },
+                             async mostrar() {
+                                 if (this.visible) { this.visible = false; return; }
+                                 if (! this.valor) await this.traer();
+                                 this.visible = !! this.valor;
+                             },
+                         }"
+                         x-init="traer()">
                         <span class="w-24 shrink-0 font-mono text-xs text-gray-500">X-Api-Secret</span>
-                        <code class="min-w-0 flex-1 truncate font-mono text-xs text-gray-400">••••••••••••••••</code>
-                        <span class="shrink-0 text-xs text-gray-500">solo lo tienes tú</span>
+
+                        <code class="min-w-0 flex-1 truncate font-mono text-xs" :class="visible ? 'text-gray-800' : 'text-gray-400'">
+                            <span x-show="! visible">••••••••••••••••</span>
+                            <span x-show="visible" x-text="valor"></span>
+                        </code>
+
+                        <button type="button" @click="mostrar()" :disabled="cargando"
+                                class="shrink-0 rounded px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-200 disabled:opacity-50"
+                                x-text="cargando ? '…' : (visible ? 'Ocultar' : 'Mostrar')"></button>
+
+                        <button type="button" x-show="visible" x-cloak @click="copiar(valor, 's{{ $apiKey->id }}')"
+                                class="shrink-0 rounded px-2 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-50">
+                            <span x-text="copiado === 's{{ $apiKey->id }}' ? 'Copiado' : 'Copiar'"></span>
+                        </button>
                     </div>
                 </div>
             </div>

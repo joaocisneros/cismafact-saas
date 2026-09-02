@@ -299,6 +299,9 @@ Route::prefix('empresa')
         Route::put('/company', [EmpresaCompanyController::class, 'update'])->name('company.update');
 
         Route::resource('api-keys', ApiKeyController::class)->only(['index', 'create', 'store', 'destroy']);
+        // El secret, solo al pulsarlo: con la pagina irian todos los de la
+        // empresa en cada carga.
+        Route::get('/api-keys/{apiKey}/secret', [ApiKeyController::class, 'showSecret'])->name('api-keys.show-secret');
         Route::post('/api-keys/{apiKey}/regenerate', [ApiKeyController::class, 'regenerate'])->name('api-keys.regenerate');
         Route::post('/api-keys/{apiKey}/toggle', [ApiKeyController::class, 'toggle'])->name('api-keys.toggle');
         Route::get('/api-keys/docs', [ApiKeyController::class, 'documentation'])->name('api-keys.documentation');

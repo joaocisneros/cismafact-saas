@@ -79,6 +79,23 @@ class ApiKeyController extends Controller
         return back()->with('success', "API Key {$status}.");
     }
 
+    /**
+     * El secret de una credencial, solo cuando se pide.
+     *
+     * No viaja con la pagina: con varias credenciales saldrian todos los
+     * secretos en cada carga, a la vista de quien mire el codigo fuente o
+     * pase por delante de la pantalla.
+     */
+    public function showSecret(ApiKey $apiKey)
+    {
+        // Cada empresa solo ve lo suyo.
+        if ($apiKey->company_id !== Auth::user()->company_id) {
+            abort(403);
+        }
+
+        return response()->json(['secret' => $apiKey->secret]);
+    }
+
     public function regenerate(ApiKey $apiKey)
     {
         if ($apiKey->company_id !== Auth::user()->company_id) {
