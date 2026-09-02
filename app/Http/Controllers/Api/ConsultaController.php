@@ -198,7 +198,20 @@ class ConsultaController extends Controller
             'api_id' => $api,
             'origen' => 'externo',
             'tipo' => $tipo,
-            'numero' => $numero,
+            /*
+             * Solo los digitos, y recortado a lo que cabe.
+             *
+             * Se anotaba el numero tal como venia. Un RUC copiado con
+             * guiones —«2060-1030-013», que es como se pega de cualquier
+             * sitio— pasa de once caracteres, y la columna tiene once: la
+             * consulta se resolvia bien y luego reventaba al apuntarla, asi
+             * que el cliente recibia un 500 por un numero que el servicio
+             * habia entendido perfectamente.
+             *
+             * Se guarda igual que se consulto: el servicio tambien se queda
+             * con los digitos.
+             */
+            'numero' => mb_substr(preg_replace('/\D/', '', $numero), 0, 11),
             // De donde salio: sirve para saber cuanto se esta yendo al
             // proveedor de verdad y cuanto se resuelve en casa.
             'fuente' => $fuente,
