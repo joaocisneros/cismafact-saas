@@ -39,7 +39,7 @@
                             <span class="rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Datos reales</span>
                         </div>
                         <div class="divide-y divide-indigo-100">
-                            @foreach(['URL base' => url('/api/consultas'), 'X-Api-Key' => $creada['clave'], 'X-Api-Secret' => $creada['secreto']] as $etiqueta => $valor)
+                            @foreach(['URL base' => url('/api'), 'X-Api-Key' => $creada['clave'], 'X-Api-Secret' => $creada['secreto']] as $etiqueta => $valor)
                                 <div class="flex items-center gap-3 px-4 py-2">
                                     <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">{{ $etiqueta }}</span>
                                     <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100">{{ $valor }}</code>
@@ -275,7 +275,7 @@ El historial no se puede recuperar.
 
         <div class="border-t border-gray-200 px-5 py-3 text-xs text-gray-500">
             Dirección que necesita el programador:
-            <code class="ml-1 rounded bg-gray-100 px-2 py-0.5 font-mono text-gray-700">{{ url('/api/consultas') }}</code>
+            <code class="ml-1 rounded bg-gray-100 px-2 py-0.5 font-mono text-gray-700">{{ url('/api') }}</code>
             · Consultan de verdad, con tope: sirven para que el cliente compruebe el servicio antes de contratar.
         </div>
     </div>
@@ -469,8 +469,8 @@ El historial no se puede recuperar.
                     <div class="divide-y divide-indigo-100">
                         <div class="flex items-center gap-3 px-4 py-2">
                             <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">URL base</span>
-                            <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100">{{ url('/api/consultas') }}</code>
-                            <button type="button" onclick="window.copyCompanyCredential(this, @js(url('/api/consultas')))"
+                            <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100">{{ url('/api') }}</code>
+                            <button type="button" onclick="window.copyCompanyCredential(this, @js(url('/api')))"
                                     class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
                         </div>
                         <div class="flex items-center gap-3 px-4 py-2">

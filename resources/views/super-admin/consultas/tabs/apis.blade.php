@@ -27,7 +27,7 @@
                             <span class="text-xs font-semibold uppercase tracking-wide text-indigo-700">Credenciales</span>
                         </div>
                         <div class="divide-y divide-indigo-100">
-                            @foreach(['URL base' => url('/api/consultas'), 'X-Api-Key' => $nueva['clave'], 'X-Api-Secret' => $nueva['secreto']] as $etiqueta => $valor)
+                            @foreach(['URL base' => url('/api'), 'X-Api-Key' => $nueva['clave'], 'X-Api-Secret' => $nueva['secreto']] as $etiqueta => $valor)
                                 <div class="flex items-center gap-3 px-4 py-2.5">
                                     <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">{{ $etiqueta }}</span>
                                     <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100">{{ $valor }}</code>
@@ -562,8 +562,8 @@
                     <div class="divide-y divide-indigo-100">
                         <div class="flex items-center gap-3 px-4 py-2.5">
                             <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">URL base</span>
-                            <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100">{{ url('/api/consultas') }}</code>
-                            <button type="button" onclick="window.copyCompanyCredential(this, @js(url('/api/consultas')))"
+                            <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100">{{ url('/api') }}</code>
+                            <button type="button" onclick="window.copyCompanyCredential(this, @js(url('/api')))"
                                     class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
                         </div>
 

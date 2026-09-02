@@ -70,10 +70,23 @@
                     <li>Pruebas con una llave de sandbox, gratis y con un tope de consultas al mes.</li>
                     <li>Cambias las credenciales por las de producción y ya estás consultando de verdad.</li>
                 </ol>
+                {{-- La base es el servidor y nada mas.
+
+                     Antes aqui salia una que ya incluia /consultas, y la de
+                     emitir termina en /api: quien usa las dos APIs se
+                     encontraba con dos direcciones distintas del mismo sitio y
+                     pegaba la que no tocaba. --}}
                 <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
                     <p class="text-sm font-medium text-gray-700">Dirección base</p>
-                    <pre class="mt-1 overflow-x-auto text-sm text-gray-800"><code>{{ url('/api/consultas') }}</code></pre>
-                    <p class="mt-2 text-xs text-gray-500">Todas las peticiones son <code class="rounded bg-gray-200 px-1">GET</code> y responden en JSON.</p>
+                    <pre class="mt-1 overflow-x-auto text-sm text-gray-800"><code>{{ url('/api') }}</code></pre>
+                    <p class="mt-2 text-xs text-gray-500">
+                        La misma que para emitir. Las consultas cuelgan de
+                        <code class="rounded bg-gray-200 px-1">/consultas</code>:
+                        <code class="rounded bg-gray-200 px-1">/consultas/ruc/{numero}</code>,
+                        <code class="rounded bg-gray-200 px-1">/consultas/dni/{numero}</code> y
+                        <code class="rounded bg-gray-200 px-1">/consultas/cuota</code>.
+                        Todas son <code class="rounded bg-gray-200 px-1">GET</code> y responden en JSON.
+                    </p>
                 </div>
             </section>
 

@@ -32,7 +32,7 @@
          copiado: null,
          llaves: @js($paraEntregar),
          enlaceDocs: @js(route('docs.consultas')),
-         base: @js(url('/api/consultas')),
+         base: @js(url('/api')),
 
          llave() {
              return this.llaves.find(l => String(l.id) === String(this.llaveId)) ?? null;
