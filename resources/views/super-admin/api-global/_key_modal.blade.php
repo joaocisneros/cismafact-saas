@@ -1,110 +1,87 @@
+{{-- La ficha de un token de prueba.
+
+     Es la misma que en las otras tres pantallas donde salen credenciales: antes
+     cada una colocaba lo mismo a su manera —otro ancho, otros colores, la clave
+     repetida arriba y abajo— y se parecían lo justo para despistar. --}}
+
+@php
+    $esSandbox = (bool) $apiKey->company?->es_demo;
+@endphp
+
 <div class="p-5">
+    <x-ficha-credencial :suelta="false">
+        <x-slot:titulo>{{ $apiKey->name }}</x-slot:titulo>
+        <x-slot:subtitulo>{{ $apiKey->company->razon_social ?? 'Sin empresa' }}</x-slot:subtitulo>
 
-    {{-- Cabecera: de quién es y si sirve --}}
-    <div class="flex flex-wrap items-start justify-between gap-3">
-        <div class="min-w-0">
-            <h4 class="truncate text-lg font-semibold text-gray-900">{{ $apiKey->name }}</h4>
-            <p class="truncate text-sm text-gray-500">{{ $apiKey->company->razon_social ?? 'Sin empresa' }}</p>
-        </div>
-        <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium {{ $apiKey->active ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700' }}">
-            <span class="h-1.5 w-1.5 rounded-full {{ $apiKey->active ? 'bg-emerald-500' : 'bg-red-500' }}"></span>
-            {{ $apiKey->active ? 'Activa' : 'Bloqueada' }}
-        </span>
-    </div>
+        @php
+            // La empresa manda por encima de la credencial: si esta parada, la
+            // API responde 403 aunque la credencial figure como activa.
+            $empresaParada = ! ($apiKey->company?->activo ?? true);
+        @endphp
 
-    {{-- Lo que se le entrega al programador. Es a lo que se viene, así que va
-         primero y ocupa el sitio principal. La Key salía además arriba, en el
-         resumen: repetida y a nadie le servía dos veces. --}}
-    @php
-        // El secreto en claro solo se guarda para los tokens de prueba, que es
-        // el dueno quien los reparte. En una empresa real lo tiene su cliente y
-        // aqui no se ensena: se muestran URL y Key, que son lo que hace falta
-        // para identificar y depurar.
-        $esSandbox = (bool) $apiKey->company?->es_demo;
-
-        $credenciales = ['URL base' => url('/api'), 'X-Api-Key' => $apiKey->key];
-    @endphp
-
-        <div class="mt-5 overflow-hidden rounded-lg border border-indigo-200 bg-indigo-50/40">
-            <div class="flex items-center justify-between border-b border-indigo-200 bg-indigo-50 px-4 py-2.5">
-                <span class="text-xs font-semibold uppercase tracking-wide text-indigo-700">Credenciales</span>
-                <span class="rounded px-2 py-0.5 text-xs font-medium {{ $esSandbox ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700' }}">
-                    {{ $esSandbox ? 'SUNAT beta' : 'Empresa real' }}
+        <x-slot:estado>
+            @if($empresaParada)
+                <span class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700"
+                      title="La credencial está activa, pero su empresa no: la API responde 403">
+                    Empresa inactiva
                 </span>
-            </div>
+            @else
+                <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium {{ $apiKey->active ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700' }}">
+                    <span class="h-1.5 w-1.5 rounded-full {{ $apiKey->active ? 'bg-emerald-500' : 'bg-red-500' }}"></span>
+                    {{ $apiKey->active ? 'Activa' : 'Bloqueada' }}
+                </span>
+            @endif
+        </x-slot:estado>
 
-            <div class="divide-y divide-indigo-100">
-                @foreach ($credenciales as $label => $valor)
-                    <div class="flex items-center gap-3 px-4 py-3">
-                        <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">{{ $label }}</span>
-                        <code class="min-w-0 flex-1 break-all rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100">{{ $valor ?: '—' }}</code>
-                        @if ($valor)
-                            {{-- navigator.clipboard solo existe en HTTPS o en localhost, y el
-                                 panel corre en un dominio .test: ahi el boton no hacia nada. Se
-                                 intenta primero y, si no esta, se copia con un textarea
-                                 temporal, que funciona en cualquier sitio. --}}
-                            <button type="button"
-                                    onclick="(function (b, t) {
-                                        function ok() {
-                                            b.textContent = 'Copiado';
-                                            b.className = b.dataset.ok;
-                                            setTimeout(function () { b.textContent = 'Copiar'; b.className = b.dataset.normal; }, 1500);
-                                        }
-                                        function alternativa() {
-                                            var c = document.createElement('textarea');
-                                            c.value = t; c.style.position = 'fixed'; c.style.opacity = '0';
-                                            document.body.appendChild(c); c.select();
-                                            try { document.execCommand('copy'); ok(); }
-                                            catch (e) { b.textContent = 'Copia a mano'; }
-                                            document.body.removeChild(c);
-                                        }
-                                        var moderno = navigator.clipboard ? window.isSecureContext : false;
-                                        if (moderno) { navigator.clipboard.writeText(t).then(ok).catch(alternativa); }
-                                        else { alternativa(); }
-                                    })(this, @js($valor))"
-                                    data-normal="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700"
-                                    data-ok="shrink-0 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm"
-                                    class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
-                        @endif
-                    </div>
-                @endforeach
+        <x-slot:etiqueta>
+            <span class="rounded px-2 py-0.5 text-xs font-medium {{ $esSandbox ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700' }}">
+                {{ $esSandbox ? 'SUNAT beta' : 'Empresa real' }}
+            </span>
+        </x-slot:etiqueta>
 
-                    {{-- Tapado hasta que se pide, como en RUC y DNI.
+        <x-slot:credenciales>
+            <x-fila-credencial etiqueta="URL base">
+                {{ url('/api') }}
+                <x-slot:boton>
+                    <button type="button" onclick="window.copyCompanyCredential(this, @js(url('/api')))"
+                            class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
+                </x-slot:boton>
+            </x-fila-credencial>
 
-                         Se pide al abrir la ficha y no al pulsar «Mostrar»: asi la
-                         espera se va con el rato que se pasa leyendo la key, y al
-                         pulsar ya esta. Con el listado no viaja: ahi saldria el de
-                         todas las credenciales en cada carga. --}}
-                    <div class="flex items-center gap-3 px-4 py-2.5"
-                         x-data="{ visible: false, valor: null, cargando: false,
-                             async traer() {
-                                 this.cargando = true;
-                                 try {
-                                     const r = await fetch('{{ route('super-admin.api-global.secret-key', $apiKey) }}', {
-                                         headers: { 'Accept': 'application/json' },
-                                     });
-                                     this.valor = (await r.json()).secret;
-                                 } catch (e) {
-                                     this.valor = null;
-                                 } finally {
-                                     this.cargando = false;
-                                 }
-                             },
-                             async mostrar() {
-                                 if (this.visible) { this.visible = false; return; }
-                                 if (! this.valor) await this.traer();
-                                 this.visible = !! this.valor;
-                             },
-                         }"
-                         x-init="traer()">
-                        <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">X-Api-Secret</span>
+            <x-fila-credencial etiqueta="X-Api-Key">
+                {{ $apiKey->key }}
+                <x-slot:boton>
+                    <button type="button" onclick="window.copyCompanyCredential(this, @js($apiKey->key))"
+                            class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
+                </x-slot:boton>
+            </x-fila-credencial>
 
-                        <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs ring-1 ring-indigo-100"
-                              :class="visible ? 'text-gray-800' : 'text-gray-400'">
-                            <span x-show="! visible">··················</span>
-                            <span x-show="visible" x-text="valor"></span>
-                        </code>
-
+            {{-- Se pide al abrir la ficha, no con la página: en un listado
+                 saldría el secret de todas las credenciales en cada carga. --}}
+            <div x-data="{ visible: false, valor: null, cargando: false,
+                     async traer() {
+                         this.cargando = true;
+                         try {
+                             const r = await fetch('{{ route('super-admin.api-global.secret-key', $apiKey) }}', {
+                                 headers: { 'Accept': 'application/json' },
+                             });
+                             this.valor = (await r.json()).secret;
+                         } catch (e) {
+                             this.valor = null;
+                         } finally {
+                             this.cargando = false;
+                         }
+                     },
+                     async mostrar() {
+                         if (this.visible) { this.visible = false; return; }
+                         if (! this.valor) await this.traer();
+                         this.visible = !! this.valor;
+                     },
+                 }" x-init="traer()">
+                <x-fila-credencial etiqueta="X-Api-Secret">
+                    <span x-show="! visible" class="text-gray-400">··················</span>
+                    <span x-show="visible" x-text="valor"></span>
+                    <x-slot:boton>
                         <button type="button" @click="mostrar()" :disabled="cargando"
                                 class="shrink-0 rounded-md border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50"
                                 x-text="cargando ? '…' : (visible ? 'Ocultar' : 'Mostrar')"></button>
@@ -112,41 +89,33 @@
                         <button type="button" x-show="visible" x-cloak
                                 @click="window.copyCompanyCredential($el, valor)"
                                 class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
-                    </div>
-
-                    <div class="px-4 py-2 text-xs text-gray-500">
-                        No sale con la página: se pide solo al abrir esta ficha.
-                    </div>
+                    </x-slot:boton>
+                </x-fila-credencial>
             </div>
-        </div>
+        </x-slot:credenciales>
 
-    {{-- Consumo, en una línea: son datos de apoyo, no el motivo de abrir esto --}}
-    <dl class="mt-5 grid grid-cols-3 gap-px overflow-hidden rounded-lg bg-gray-200 text-center">
-        @foreach ([
-            'Llamadas' => number_format($totalUsage),
-            'Último uso' => $apiKey->last_used_at?->diffForHumans() ?? 'Nunca',
-            'Creada' => $apiKey->created_at->format('d/m/Y'),
-        ] as $label => $valor)
-            <div class="bg-white px-3 py-2.5">
-                <dt class="text-xs text-gray-500">{{ $label }}</dt>
-                <dd class="mt-0.5 truncate text-sm font-semibold text-gray-900">{{ $valor }}</dd>
-            </div>
-        @endforeach
-    </dl>
+        <x-slot:nota>
+            No sale con la página: se pide solo al abrir esta ficha.
+        </x-slot:nota>
 
-    {{-- La advertencia de qué pasa al bloquear ya la da el confirm; repetirla
-         aquí en un párrafo solo alargaba la ventana. --}}
-    <div class="mt-5 flex justify-end border-t border-gray-200 pt-4">
-        <form method="POST"
-              action="{{ route('super-admin.api-global.toggle-key', $apiKey) }}"
-              data-success-message="API Key {{ $apiKey->active ? 'bloqueada' : 'activada' }} correctamente."
-              onsubmit="return confirm('{{ $apiKey->active ? 'Se rechazarán todas las peticiones con esta credencial. ¿Bloquearla?' : '¿Activar esta credencial?' }}')">
-            @csrf
-            <button type="submit"
-                    class="rounded-md px-4 py-2 text-sm font-medium text-white {{ $apiKey->active ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700' }}">
-                {{ $apiKey->active ? 'Bloquear' : 'Activar' }}
-            </button>
-        </form>
-    </div>
+        <x-slot:metricas>
+            <x-metrica-credencial titulo="Llamadas">{{ number_format($totalUsage) }}</x-metrica-credencial>
+            <x-metrica-credencial titulo="Último uso">{{ $apiKey->last_used_at?->diffForHumans(short: true) ?? 'Nunca' }}</x-metrica-credencial>
+            <x-metrica-credencial titulo="Creada">{{ $apiKey->created_at->format('d/m/Y') }}</x-metrica-credencial>
+            <x-metrica-credencial titulo="Caduca">{{ $apiKey->expires_at?->format('d/m/Y') ?? 'Nunca' }}</x-metrica-credencial>
+        </x-slot:metricas>
 
+        <x-slot:acciones>
+            <form method="POST"
+                  action="{{ route('super-admin.api-global.toggle-key', $apiKey) }}"
+                  data-success-message="API Key {{ $apiKey->active ? 'bloqueada' : 'activada' }} correctamente."
+                  onsubmit="return confirm('{{ $apiKey->active ? 'Se rechazarán todas las peticiones con esta credencial. ¿Bloquearla?' : '¿Activar esta credencial?' }}')">
+                @csrf
+                <button type="submit"
+                        class="rounded-md px-4 py-2 text-sm font-medium text-white {{ $apiKey->active ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700' }}">
+                    {{ $apiKey->active ? 'Bloquear' : 'Activar' }}
+                </button>
+            </form>
+        </x-slot:acciones>
+    </x-ficha-credencial>
 </div>

@@ -439,129 +439,138 @@ El historial no se puede recuperar.
     </div>
 
     {{-- Detalle, con el mismo panel que el resto del sistema. --}}
-    <div x-show="detalle" x-cloak @keydown.escape.window="detalle = null"
+    {{-- La ficha de la llave de prueba, con el mismo diseño y ancho que las de
+         Mis APIs, API Facturación y Sandbox Facturación: son lo mismo —una credencial
+         que se entrega— y hasta ahora cada una lo colocaba a su manera. --}}
+    <div x-show="detalle" x-cloak
+         @keydown.escape.window="detalle = null"
          class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
-        <div @click.outside="detalle = null" class="my-auto w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
-            <div class="flex items-start justify-between gap-3 border-b border-gray-200 px-5 py-4">
-                <div class="min-w-0">
-                    <h3 class="truncate text-base font-semibold text-gray-900" x-text="detalle?.nombre"></h3>
-                    <p class="mt-0.5 truncate text-xs text-gray-500">
-                        <span x-text="detalle?.titular"></span> · <span x-text="detalle?.servicios"></span>
-                    </p>
-                </div>
-                <span class="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-                    <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span> Sandbox
-                </span>
-                <button type="button" @click="detalle = null" aria-label="Cerrar"
-                        class="shrink-0 rounded-md p-2 text-gray-500 hover:bg-gray-100">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
+        <div @click.outside="detalle = null" class="my-auto w-full max-w-4xl">
+            <x-ficha-credencial ancho="w-full">
+                <x-slot:titulo><span x-text="detalle?.nombre"></span></x-slot:titulo>
 
-            <div class="p-4">
-                <div class="overflow-hidden rounded-lg border border-indigo-200 bg-indigo-50/40">
-                    <div class="flex items-center justify-between border-b border-indigo-200 bg-indigo-50 px-4 py-2.5">
-                        <span class="text-xs font-semibold uppercase tracking-wide text-indigo-700">Credenciales</span>
-                        <span class="rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Datos reales</span>
+                <x-slot:subtitulo>
+                    <span x-text="detalle?.titular"></span> · <span x-text="detalle?.servicios"></span>
+                </x-slot:subtitulo>
+
+                <x-slot:estado>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+                              :class="{
+                                  'bg-emerald-50 text-emerald-700': detalle?.estado === 'activa',
+                                  'bg-blue-50 text-blue-700': detalle?.estado === 'sandbox',
+                                  'bg-amber-50 text-amber-700': detalle?.estado === 'vencida',
+                                  'bg-red-50 text-red-700': detalle?.estado === 'bloqueada',
+                              }">
+                            <span class="h-1.5 w-1.5 rounded-full"
+                                  :class="{
+                                      'bg-emerald-500': detalle?.estado === 'activa',
+                                      'bg-blue-500': detalle?.estado === 'sandbox',
+                                      'bg-amber-500': detalle?.estado === 'vencida',
+                                      'bg-red-500': detalle?.estado === 'bloqueada',
+                                  }"></span>
+                            <span x-text="{ activa: 'Activa', sandbox: 'Sandbox', vencida: 'Vencida', bloqueada: 'Bloqueada' }[detalle?.estado] ?? ''"></span>
+                        </span>
+
+                        <button type="button" @click="detalle = null" aria-label="Cerrar"
+                                class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
                     </div>
-                    <div class="divide-y divide-indigo-100">
-                        <div class="flex items-center gap-3 px-4 py-2">
-                            <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">URL base</span>
-                            <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100">{{ url('/api') }}</code>
+                </x-slot:estado>
+
+                <x-slot:etiqueta>
+                    {{-- Siempre datos reales: es lo que separa este sandbox del de
+                         antes, que devolvia ejemplos inventados. --}}
+                    <span class="rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Datos reales</span>
+                </x-slot:etiqueta>
+
+                <x-slot:credenciales>
+                    <x-fila-credencial etiqueta="URL base">
+                        {{ url('/api') }}
+                        <x-slot:boton>
                             <button type="button" onclick="window.copyCompanyCredential(this, @js(url('/api')))"
                                     class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
-                        </div>
-                        <div class="flex items-center gap-3 px-4 py-2">
-                            <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">X-Api-Key</span>
-                            <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-indigo-100" x-text="detalle?.clave"></code>
+                        </x-slot:boton>
+                    </x-fila-credencial>
+
+                    <x-fila-credencial etiqueta="X-Api-Key">
+                        <span x-text="detalle?.clave"></span>
+                        <x-slot:boton>
                             <button type="button" @click="window.copyCompanyCredential($el, detalle?.clave)"
                                     class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
-                        </div>
-                        {{-- Tapado hasta que se pide. Se guarda cifrado, asi
-                             que el sistema puede leerlo, pero no viaja con la
-                             pagina: solo se trae el que se pulsa. --}}
-                        <div class="flex items-center gap-3 px-4 py-2"
-                             x-data="{ visible: false, valor: null, cargando: false, id: null,
-                                 /* Se pide al abrir la ficha, no al pulsar «Mostrar»: asi la
-                                    espera se va con el rato que se pasa leyendo el nombre y la
-                                    clave, y al pulsar ya esta. Sigue sin salir con el listado,
-                                    solo viaja el de la llave abierta.
+                        </x-slot:boton>
+                    </x-fila-credencial>
 
-                                    Recibe el id por parametro y no lo lee del estado: dentro de
-                                    x-effect, leer lo que luego se escribe deja el efecto
-                                    llamandose a si mismo. */
-                                 async precargar(id) {
-                                     if (! id) return;
-                                     this.cargando = true;
-                                     try {
-                                         const r = await fetch('{{ url('super-admin/consultas/llaves') }}/' + id + '/secreto', {
-                                             headers: { 'Accept': 'application/json' },
-                                         });
-                                         this.valor = (await r.json()).secreto;
-                                     } catch (e) {
-                                         this.valor = null;
-                                     } finally {
-                                         this.cargando = false;
-                                     }
-                                 },
-                                 async mostrar() {
-                                     if (this.visible) { this.visible = false; return; }
-                                     // Ya suele estar; si la precarga fallo, se reintenta.
-                                     if (! this.valor) await this.precargar(this.id);
-                                     this.visible = !! this.valor;
-                                 },
-                             }"
-                             x-effect="visible = false; valor = null; id = detalle?.id; precargar(detalle?.id)">
-                            <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">X-Api-Secret</span>
+                    {{-- Se pide al abrir la ficha y no al pulsar «Mostrar»: así la
+                         espera se va con el rato que se pasa leyendo la clave, y
+                         con el listado no viaja, que ahí saldría el de todas. --}}
+                    <div x-data="{ visible: false, valor: null, cargando: false, id: null,
+                             async precargar(id) {
+                                 if (! id) return;
+                                 this.cargando = true;
+                                 try {
+                                     const r = await fetch('{{ url('super-admin/consultas/llaves') }}/' + id + '/secreto', {
+                                         headers: { 'Accept': 'application/json' },
+                                     });
+                                     this.valor = (await r.json()).secreto;
+                                 } catch (e) {
+                                     this.valor = null;
+                                 } finally {
+                                     this.cargando = false;
+                                 }
+                             },
+                             async mostrar() {
+                                 if (this.visible) { this.visible = false; return; }
+                                 if (! this.valor) await this.precargar(this.id);
+                                 this.visible = !! this.valor;
+                             },
+                         }"
+                         x-effect="visible = false; valor = null; id = detalle?.id; precargar(detalle?.id)">
+                        <x-fila-credencial etiqueta="X-Api-Secret">
+                            <span x-show="! visible" class="text-gray-400">··················<span x-text="detalle?.pista"></span></span>
+                            <span x-show="visible" x-text="valor"></span>
+                            <x-slot:boton>
+                                <button type="button" @click="mostrar()" :disabled="cargando"
+                                        class="shrink-0 rounded-md border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50"
+                                        x-text="cargando ? '…' : (visible ? 'Ocultar' : 'Mostrar')"></button>
 
-                            <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs ring-1 ring-indigo-100"
-                                  :class="visible ? 'text-gray-800' : 'text-gray-400'">
-                                <span x-show="! visible">··················<span x-text="detalle?.pista"></span></span>
-                                <span x-show="visible" x-text="valor"></span>
-                            </code>
-
-                            <button type="button" @click="mostrar()" :disabled="cargando"
-                                    class="shrink-0 rounded-md border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50"
-                                    x-text="cargando ? '…' : (visible ? 'Ocultar' : 'Mostrar')"></button>
-
-                            <button type="button" x-show="visible" x-cloak
-                                    @click="window.copyCompanyCredential($el, valor)"
-                                    class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
-                        </div>
-                        <div class="px-4 py-2 text-xs text-gray-500">
-                            No sale con la página: se pide solo al pulsar «Mostrar».
-                        </div>
+                                <button type="button" x-show="visible" x-cloak
+                                        @click="window.copyCompanyCredential($el, valor)"
+                                        class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
+                            </x-slot:boton>
+                        </x-fila-credencial>
                     </div>
-                </div>
+                </x-slot:credenciales>
 
-                <dl class="mt-4 grid grid-cols-4 gap-px overflow-hidden rounded-lg bg-gray-200 text-center">
-                    <div class="bg-white px-3 py-2.5">
-                        <dt class="text-xs text-gray-500">Llamadas</dt>
-                        <dd class="mt-0.5 truncate text-sm font-semibold text-gray-900" x-text="(detalle?.llamadas ?? 0).toLocaleString('es-PE')"></dd>
-                    </div>
-                    <div class="bg-white px-3 py-2.5">
-                        <dt class="text-xs text-gray-500">Último uso</dt>
-                        <dd class="mt-0.5 truncate text-sm font-semibold text-gray-900" x-text="detalle?.ultimo_uso ?? 'Nunca'"></dd>
-                    </div>
-                    <div class="bg-white px-3 py-2.5">
-                        <dt class="text-xs text-gray-500">Creada</dt>
-                        <dd class="mt-0.5 truncate text-sm font-semibold text-gray-900" x-text="detalle?.creada"></dd>
-                    </div>
-                    <div class="bg-white px-3 py-2.5">
-                        <dt class="text-xs text-gray-500">Caduca</dt>
-                        <dd class="mt-0.5 truncate text-sm font-semibold text-gray-900" x-text="detalle?.expira ?? 'No caduca'"></dd>
-                    </div>
-                </dl>
-            </div>
+                <x-slot:nota>
+                    No sale con la página: se pide solo al abrir esta ficha.
+                </x-slot:nota>
 
-            <div class="flex justify-end border-t border-gray-200 px-5 py-4">
-                <button type="button" @click="detalle = null"
-                        class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                    Cerrar
-                </button>
-            </div>
+                <x-slot:metricas>
+                    <x-metrica-credencial titulo="Llamadas">
+                        <span x-text="(detalle?.llamadas ?? 0).toLocaleString('es-PE')"></span>
+                    </x-metrica-credencial>
+                    <x-metrica-credencial titulo="Último uso">
+                        <span x-text="detalle?.ultimo_uso ?? 'Nunca'"></span>
+                    </x-metrica-credencial>
+                    <x-metrica-credencial titulo="Creada">
+                        <span x-text="detalle?.creada"></span>
+                    </x-metrica-credencial>
+                    <x-metrica-credencial titulo="Caduca">
+                        <span x-text="detalle?.expira ?? 'No caduca'"></span>
+                    </x-metrica-credencial>
+                </x-slot:metricas>
+
+                <x-slot:acciones>
+                    <button type="button" @click="detalle = null"
+                            class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        Cerrar
+                    </button>
+                </x-slot:acciones>
+            </x-ficha-credencial>
         </div>
     </div>
 
