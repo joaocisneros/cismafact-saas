@@ -38,7 +38,7 @@ class ApiKeyController extends Controller
             'company_id' => Auth::user()->company_id,
             'name' => $request->name,
             'key' => ApiKey::generateKey(),
-            'secret' => Hash::make($plainSecret),
+            'secret' => $plainSecret,
             'abilities' => ['*'],
             'active' => true,
         ]);
@@ -101,7 +101,7 @@ class ApiKeyController extends Controller
 
         $plainSecret = ApiKey::generateSecret();
 
-        $apiKey->update(['secret' => Hash::make($plainSecret)]);
+        $apiKey->update(['secret' => $plainSecret]);
 
         // La key no cambia: quien la use solo tiene que cambiar el secret.
         /* En sesion y no en flash: el modal envia por fetch, ese fetch

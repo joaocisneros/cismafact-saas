@@ -37,7 +37,7 @@ class AuthenticateApiKey
             ->where('active', true)
             ->first();
 
-        if (! $apiKey || ! Hash::check($apiSecretValue, $apiKey->secret)) {
+        if (! $apiKey || ! hash_equals((string) $apiKey->secret, (string) $apiSecretValue)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Credenciales API invalidas.',

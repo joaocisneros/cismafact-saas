@@ -223,7 +223,7 @@ class ApiGlobalController extends Controller
             'company_id' => $demo->id,
             'name' => 'Sandbox - ' . $validated['dev_name'],
             'key' => ApiKey::generateKey(),
-            'secret' => \Illuminate\Support\Facades\Hash::make($plainSecret),
+            'secret' => $plainSecret,
             'abilities' => ['*'],
             'active' => true,
             'expires_at' => isset($validated['expires_in_days'])
@@ -262,6 +262,17 @@ class ApiGlobalController extends Controller
     }
 
     /**
+     * El secret de una credencial, solo cuando se pide.
+     *
+     * No viaja con el listado: ahi saldria el de todas las credenciales en
+     * cada carga de la pagina. Se trae el de la que se abre.
+     */
+    public function secretoApiKey(ApiKey $apiKey)
+    {
+        return response()->json(['secret' => $apiKey->secret]);
+    }
+
+    /**
      * Un secret nuevo para una credencial que ya existe.
      *
      * La key no se toca: el cliente solo tiene que cambiar el secret en su
@@ -277,7 +288,7 @@ class ApiGlobalController extends Controller
     {
         $plainSecret = ApiKey::generateSecret();
 
-        $apiKey->update(['secret' => \Illuminate\Support\Facades\Hash::make($plainSecret)]);
+        $apiKey->update(['secret' => $plainSecret]);
 
         Cache::forget('api_global_index');
 

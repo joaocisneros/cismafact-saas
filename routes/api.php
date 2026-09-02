@@ -63,7 +63,10 @@ Route::match(['get', 'post'], '/empresa', function (Request $request) {
         ->where('active', true)
         ->first();
 
-    if (! $apiKey || ! \Illuminate\Support\Facades\Hash::check($apiSecretValue, $apiKey->secret)) {
+    // Mismo criterio que el middleware: el secret se guarda cifrado, no
+    // hasheado, asi que se compara el valor. Con Hash::check ademas
+    // reventaba, porque bcrypt no reconoce lo que recibe como hash suyo.
+    if (! $apiKey || ! hash_equals((string) $apiKey->secret, (string) $apiSecretValue)) {
         return response()->json([
             'success' => false,
             'message' => 'Credenciales API invalidas.',

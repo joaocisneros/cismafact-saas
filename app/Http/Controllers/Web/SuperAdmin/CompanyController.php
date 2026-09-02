@@ -144,7 +144,7 @@ class CompanyController extends Controller
                 'company_id' => $company->id,
                 'name' => 'API Key Principal',
                 'key' => ApiKey::generateKey(),
-                'secret' => Hash::make($plainSecret),
+                'secret' => $plainSecret,
                 'abilities' => ['*'],
                 'active' => true,
             ]);

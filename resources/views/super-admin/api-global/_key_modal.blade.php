@@ -93,11 +93,53 @@
                         <p class="mt-1.5 text-xs text-amber-800">El anterior ya no funciona. La X-Api-Key no ha cambiado.</p>
                     </div>
                 @else
-                    {{-- Vale para los dos: el secret se guarda como hash, asi que
-                         tampoco un token de pruebas puede volver a enseñarlo. --}}
-                    <div class="px-4 py-2.5 text-xs text-gray-500">
-                        El Secret no se guarda de forma que se pueda leer: solo lo tiene quien lo recibió.
-                        Si lo perdió, dale uno nuevo aquí abajo —su X-Api-Key no cambia—.
+                    {{-- Tapado hasta que se pide, como en RUC y DNI.
+
+                         Se pide al abrir la ficha y no al pulsar «Mostrar»: asi la
+                         espera se va con el rato que se pasa leyendo la key, y al
+                         pulsar ya esta. Con el listado no viaja: ahi saldria el de
+                         todas las credenciales en cada carga. --}}
+                    <div class="flex items-center gap-3 px-4 py-2.5"
+                         x-data="{ visible: false, valor: null, cargando: false,
+                             async traer() {
+                                 this.cargando = true;
+                                 try {
+                                     const r = await fetch('{{ route('super-admin.api-global.secret-key', $apiKey) }}', {
+                                         headers: { 'Accept': 'application/json' },
+                                     });
+                                     this.valor = (await r.json()).secret;
+                                 } catch (e) {
+                                     this.valor = null;
+                                 } finally {
+                                     this.cargando = false;
+                                 }
+                             },
+                             async mostrar() {
+                                 if (this.visible) { this.visible = false; return; }
+                                 if (! this.valor) await this.traer();
+                                 this.visible = !! this.valor;
+                             },
+                         }"
+                         x-init="traer()">
+                        <span class="w-24 shrink-0 text-xs font-medium text-indigo-900/70">X-Api-Secret</span>
+
+                        <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs ring-1 ring-indigo-100"
+                              :class="visible ? 'text-gray-800' : 'text-gray-400'">
+                            <span x-show="! visible">··················</span>
+                            <span x-show="visible" x-text="valor"></span>
+                        </code>
+
+                        <button type="button" @click="mostrar()" :disabled="cargando"
+                                class="shrink-0 rounded-md border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50"
+                                x-text="cargando ? '…' : (visible ? 'Ocultar' : 'Mostrar')"></button>
+
+                        <button type="button" x-show="visible" x-cloak
+                                @click="window.copyCompanyCredential($el, valor)"
+                                class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
+                    </div>
+
+                    <div class="px-4 py-2 text-xs text-gray-500">
+                        No sale con la página: se pide solo al abrir esta ficha.
                     </div>
                 @endif
             </div>

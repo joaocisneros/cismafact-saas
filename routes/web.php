@@ -211,6 +211,8 @@ Route::prefix('super-admin')
         Route::post('/api-global/empresas/{company}/toggle', [SuperAdminApiGlobalController::class, 'toggleCompanyApi'])->name('api-global.toggle-company');
         Route::post('/api-global/api-keys/{apiKey}/extend', [SuperAdminApiGlobalController::class, 'extendApiKey'])->name('api-global.extend-key');
         // Cambia el secret y deja la key: el cliente no rehace su integracion.
+        // El secret, solo al pulsarlo: con el listado saldria el de todas.
+        Route::get('/api-global/api-keys/{apiKey}/secret', [SuperAdminApiGlobalController::class, 'secretoApiKey'])->name('api-global.secret-key');
         Route::post('/api-global/api-keys/{apiKey}/regenerar', [SuperAdminApiGlobalController::class, 'regenerateApiKey'])->name('api-global.regenerate-key');
         Route::delete('/api-global/api-keys/{apiKey}', [SuperAdminApiGlobalController::class, 'destroyApiKey'])->name('api-global.delete-key');
 

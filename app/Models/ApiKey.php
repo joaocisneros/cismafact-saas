@@ -30,6 +30,9 @@ class ApiKey extends Model
     protected function casts(): array
     {
         return [
+            // Cifrado y no hash: la credencial se entrega a mano y quien la
+            // entrega tiene que poder leerla. Igual que en RUC y DNI.
+            'secret' => 'encrypted',
             'abilities' => 'array',
             'active' => 'boolean',
             'last_used_at' => 'datetime',
