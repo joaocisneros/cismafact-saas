@@ -108,25 +108,41 @@ class ConsultaController extends Controller
             ? $this->consultas->ruc($numero)
             : $this->consultas->dni($numero);
 
+        /*
+         * Aqui manda si se trajo la ficha, no si el numero era correcto.
+         *
+         * El servicio da por valido un numero bien formado aunque vuelva sin
+         * datos, y para el formulario de emitir esta bien: un proveedor caido
+         * no debe impedir facturar. Pero por la API eso salia como un 200 con
+         * «success: true» y sin nombre dentro, se apuntaba como acertada y
+         * descontaba una consulta. Quien la pedia pagaba por una respuesta
+         * vacia y en el panel figuraba como Exito con el titular en blanco.
+         *
+         * Sin ficha es un 422 con el porque en «message», que es lo que dice
+         * el manual y lo que el codigo de quien integra puede distinguir.
+         */
+        $hayFicha = (bool) ($r['valido'] ?? false)
+            && ($r['fuente'] ?? 'ninguna') !== 'ninguna';
+
         // Se anota siempre, salga bien o mal: los errores son justo lo que se
-        // busca en un historial. Lo que NO cuenta para la cuota es lo fallido,
-        // porque un numero mal escrito no ha costado nada resolverlo.
+        // busca en un historial. Lo que NO cuenta para la cuota es lo que no
+        // llego a entregar una ficha.
         $this->anotar(
             $llave,
             $api->id,
             $slug,
             $numero,
             $r['valido'] ? ($r['fuente'] ?? 'ninguna') : 'invalido',
-            (bool) $r['valido'],
+            $hayFicha,
             (int) round((microtime(true) - $empezo) * 1000),
-            $r['valido'] ? null : ($r['motivo'] ?? null),
+            $hayFicha ? null : ($r['motivo'] ?? null),
         );
 
         return response()->json([
-            'success' => $r['valido'],
-            'data' => $r['valido'] ? $r : null,
+            'success' => $hayFicha,
+            'data' => $hayFicha ? $r : null,
             'message' => $r['motivo'] ?? null,
-        ], $r['valido'] ? 200 : 422);
+        ], $hayFicha ? 200 : 422);
     }
 
     private function llave(Request $request): ConsultaLlave
