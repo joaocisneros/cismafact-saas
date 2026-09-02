@@ -61,6 +61,10 @@ class TokenPruebaController extends Controller
         Cache::forget('api_global_index');
 
         session()->put('credenciales_nuevas', [
+            // La pantalla donde se enseña: sin esto el aviso se iba con el
+            // usuario a la siguiente que visitara, y aparecia en un modulo
+            // que no tiene nada que ver con la credencial que se genero.
+            'pantalla' => 'super-admin.tokens-prueba.index',
             'nombre' => $apiKey->name,
             'key' => $apiKey->key,
             'secret' => $plainSecret,
@@ -117,6 +121,10 @@ class TokenPruebaController extends Controller
          * recargue.
          */
         session()->put('credenciales_nuevas', [
+            // La pantalla donde se enseña: sin esto el aviso se iba con el
+            // usuario a la siguiente que visitara, y aparecia en un modulo
+            // que no tiene nada que ver con la credencial que se genero.
+            'pantalla' => 'super-admin.tokens-prueba.index',
             'nombre' => $apiKey->name,
             'key' => $apiKey->key,
             'secret' => $plainSecret,

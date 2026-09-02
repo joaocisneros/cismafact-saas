@@ -222,6 +222,22 @@
                       try {
                           sessionStorage.setItem('adminSuccessMessage', form.dataset.successMessage || fallback);
                       } catch (e) {}
+
+                      /* Con data-recargar-modal, la respuesta se ve en el propio
+                         modal en vez de recargar la pagina detras.
+
+                         Hace falta cuando lo que devuelve la accion es justo lo
+                         que se estaba mirando: al generar un secret nuevo, cerrar
+                         la ventana y dejarlo en un aviso al fondo de la pagina
+                         obliga a buscarlo, y no se entiende que sea la respuesta
+                         a lo que se acaba de pulsar. */
+                      const recargarModal = form.dataset.recargarModal;
+
+                      if (recargarModal) {
+                          this.loadAdminModal(recargarModal, this.adminModalTitle);
+                          return;
+                      }
+
                       window.location.reload();
                   })
                   .catch(error => {

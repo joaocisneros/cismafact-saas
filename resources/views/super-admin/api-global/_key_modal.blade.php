@@ -69,11 +69,37 @@
                     </div>
                 @endforeach
 
-                @unless ($esSandbox)
-                    <div class="px-4 py-2.5 text-xs text-gray-500">
-                        El secreto solo lo tiene el cliente: no se guarda de forma que se pueda leer. Si lo perdió, dale uno nuevo con «Nuevo secret» —su X-Api-Key no cambia—.
+                @php
+                    // El secret recien generado se enseña aqui, no en un aviso al
+                    // fondo de la pagina: es la respuesta a lo que se acaba de
+                    // pulsar y tiene que salir donde se pulso. Se comprueba la key
+                    // para no enseñar el de otra credencial.
+                    $recien = session('credenciales_nuevas');
+                    $recien = ($recien['key'] ?? null) === $apiKey->key ? $recien : null;
+
+                    if ($recien) {
+                        session()->forget('credenciales_nuevas');
+                    }
+                @endphp
+
+                @if($recien)
+                    <div class="border-t border-amber-200 bg-amber-50 px-4 py-3">
+                        <p class="text-xs font-semibold text-amber-900">X-Api-Secret nuevo — cópialo ahora, no se vuelve a mostrar</p>
+                        <div class="mt-1.5 flex items-center gap-2">
+                            <code class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 ring-1 ring-amber-200">{{ $recien['secret'] }}</code>
+                            <button type="button" onclick="window.copyCompanyCredential(this, @js($recien['secret']))"
+                                    class="shrink-0 rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700">Copiar</button>
+                        </div>
+                        <p class="mt-1.5 text-xs text-amber-800">El anterior ya no funciona. La X-Api-Key no ha cambiado.</p>
                     </div>
-                @endunless
+                @else
+                    {{-- Vale para los dos: el secret se guarda como hash, asi que
+                         tampoco un token de pruebas puede volver a enseñarlo. --}}
+                    <div class="px-4 py-2.5 text-xs text-gray-500">
+                        El Secret no se guarda de forma que se pueda leer: solo lo tiene quien lo recibió.
+                        Si lo perdió, dale uno nuevo aquí abajo —su X-Api-Key no cambia—.
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -93,7 +119,24 @@
 
     {{-- La advertencia de qué pasa al bloquear ya la da el confirm; repetirla
          aquí en un párrafo solo alargaba la ventana. --}}
-    <div class="mt-5 flex justify-end border-t border-gray-200 pt-4">
+    <div class="mt-5 flex items-center justify-end gap-2 border-t border-gray-200 pt-4">
+        {{-- Cada modulo regenera por su ruta: la que se use decide en que
+             pantalla aparece luego el recuadro con el secret nuevo, y tiene
+             que ser en la que estas. --}}
+        <form method="POST"
+              action="{{ $esSandbox
+                  ? route('super-admin.tokens-prueba.regenerar', $apiKey)
+                  : route('super-admin.api-global.regenerate-key', $apiKey) }}"
+              data-success-message="Secret regenerado. Pásaselo a quien la use."
+              data-recargar-modal="{{ route('super-admin.api-global.show-key', $apiKey) }}"
+              onsubmit="return confirm('Se genera un Secret nuevo para «{{ $apiKey->name }}».{{ chr(10) }}{{ chr(10) }}El actual deja de funcionar al instante, así que hay que pasarle el nuevo. La X-Api-Key no cambia.{{ chr(10) }}{{ chr(10) }}¿Seguir?')">
+            @csrf
+            <button type="submit"
+                    class="rounded-md border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50">
+                Nuevo Secret
+            </button>
+        </form>
+
         <form method="POST"
               action="{{ route('super-admin.api-global.toggle-key', $apiKey) }}"
               data-success-message="API Key {{ $apiKey->active ? 'bloqueada' : 'activada' }} correctamente."

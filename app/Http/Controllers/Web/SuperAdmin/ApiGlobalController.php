@@ -249,6 +249,10 @@ class ApiGlobalController extends Controller
                llegue a recargarse. Asi el secreto sobrevive hasta que se
                pinta, y la vista lo borra en cuanto lo enseña. */
         session()->put('credenciales_nuevas', [
+            // La pantalla donde se enseña: sin esto el aviso se iba con el
+            // usuario a la siguiente que visitara, y aparecia en un modulo
+            // que no tiene nada que ver con la credencial que se genero.
+            'pantalla' => 'super-admin.api-global.api-keys',
                 'nombre' => $apiKey->name,
                 'key' => $apiKey->key,
                 'secret' => $plainSecret,
@@ -282,6 +286,10 @@ class ApiGlobalController extends Controller
                llegue a recargarse. Asi el secreto sobrevive hasta que se
                pinta, y la vista lo borra en cuanto lo enseña. */
         session()->put('credenciales_nuevas', [
+            // La pantalla donde se enseña: sin esto el aviso se iba con el
+            // usuario a la siguiente que visitara, y aparecia en un modulo
+            // que no tiene nada que ver con la credencial que se genero.
+            'pantalla' => 'super-admin.api-global.api-keys',
                 'nombre' => $apiKey->name,
                 'key' => $apiKey->key,
                 'secret' => $plainSecret,
