@@ -29,27 +29,50 @@
         <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ session('error') }}</div>
     @endif
 
-    {{-- Cifras del servicio, en un solo bloque. --}}
-    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <dl class="grid grid-cols-2 divide-gray-200 sm:grid-cols-4 sm:divide-x">
-            @foreach([
-                ['Solicitudes hoy', number_format($consumoHoy), false],
-                ['Solicitudes del mes', number_format($consumoMes), false],
-                ['Errores hoy', number_format($erroresHoy), $erroresHoy > 0],
-                ['Tiempo de respuesta', number_format($tiempoPromedio, 0) . ' ms', false],
-            ] as [$titulo, $valor, $alerta])
-                <div class="px-5 py-4">
-                    <dt class="text-xs font-medium uppercase text-gray-500">{{ $titulo }}</dt>
-                    <dd class="mt-1 text-2xl font-semibold {{ $alerta ? 'text-red-600' : 'text-gray-900' }}">{{ $valor }}</dd>
-                </div>
-            @endforeach
-        </dl>
-        <div class="flex flex-wrap items-center gap-x-4 border-t border-gray-100 bg-gray-50 px-5 py-2.5 text-xs text-gray-600">
-            <span class="flex items-center gap-1.5">
-                <span class="h-2 w-2 rounded-full bg-green-500"></span> Servicio disponible
-            </span>
-            <span>{{ number_format($apiKeyActivas) }} credenciales activas</span>
-        </div>
+    {{-- Las mismas tarjetas del Dashboard: es el mismo panel y hasta ahora
+         este modulo tenia las suyas, con otro aspecto, para decir lo mismo. --}}
+    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <x-stat-card title="Solicitudes hoy" :value="number_format($consumoHoy)" color="blue">
+            <x-slot:icon>
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+            </x-slot:icon>
+        </x-stat-card>
+
+        <x-stat-card title="Solicitudes del mes" :value="number_format($consumoMes)" color="indigo">
+            <x-slot:icon>
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </x-slot:icon>
+        </x-stat-card>
+
+        {{-- En rojo solo cuando hay alguno: en verde llama la atencion sobre
+             una cifra que no pide hacer nada. --}}
+        <x-stat-card title="Errores hoy" :value="number_format($erroresHoy)"
+                     :color="$erroresHoy > 0 ? 'red' : 'green'">
+            <x-slot:icon>
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </x-slot:icon>
+        </x-stat-card>
+
+        <x-stat-card title="Tiempo de respuesta" :value="number_format($tiempoPromedio, 0) . ' ms'" color="green">
+            <x-slot:icon>
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </x-slot:icon>
+        </x-stat-card>
+    </section>
+
+    <div class="flex flex-wrap items-center gap-x-4 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-xs text-gray-600">
+        <span class="flex items-center gap-1.5">
+            <span class="h-2 w-2 rounded-full bg-green-500"></span> Servicio disponible
+        </span>
+        <span>{{ number_format($apiKeyActivas) }} credenciales activas</span>
     </div>
 
     {{-- Consumo por empresa: quién está cerca de su tope y a quién cortar. --}}
