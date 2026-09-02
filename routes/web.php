@@ -218,6 +218,9 @@ Route::prefix('super-admin')
         // propio: repartir accesos no es lo mismo que vigilar el servicio.
         Route::get('/tokens-prueba', [\App\Http\Controllers\Web\SuperAdmin\TokenPruebaController::class, 'index'])->name('tokens-prueba.index');
         Route::post('/tokens-prueba', [\App\Http\Controllers\Web\SuperAdmin\TokenPruebaController::class, 'store'])->name('tokens-prueba.store');
+        // Un secret nuevo sin tocar la key: el secret no se puede releer,
+        // asi que es la unica salida para el que lo pierde.
+        Route::post('/tokens-prueba/{apiKey}/regenerar', [\App\Http\Controllers\Web\SuperAdmin\TokenPruebaController::class, 'regenerar'])->name('tokens-prueba.regenerar');
 
         // Consultas de RUC y DNI: proveedor, cache y padron.
         Route::get('/consultas', [SuperAdminConsultaController::class, 'index'])->name('consultas');

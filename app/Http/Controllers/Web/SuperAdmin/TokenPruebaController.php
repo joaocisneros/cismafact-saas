@@ -45,6 +45,30 @@ class TokenPruebaController extends Controller
         ]);
     }
 
+    /**
+     * Un secret nuevo para un token de prueba que ya existe.
+     *
+     * El secret no se puede releer, asi que un programador que lo pierda
+     * —o un token de los que se crearon sin llegar a enseñarlo— no tiene
+     * otra salida. La key no cambia: solo hay que pasarle el secret.
+     */
+    public function regenerar(ApiKey $apiKey)
+    {
+        $plainSecret = ApiKey::generateSecret();
+
+        $apiKey->update(['secret' => Hash::make($plainSecret)]);
+
+        Cache::forget('api_global_index');
+
+        session()->put('credenciales_nuevas', [
+            'nombre' => $apiKey->name,
+            'key' => $apiKey->key,
+            'secret' => $plainSecret,
+        ]);
+
+        return back()->with('success', "Secret de «{$apiKey->name}» regenerado. El anterior ya no funciona.");
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -79,8 +103,25 @@ class TokenPruebaController extends Controller
 
         Cache::forget('api_global_index');
 
-        // El secreto no se repite aquí: queda guardado y se consulta con «Ver».
-        return back()->with('success',
-            "Token de «{$validated['dev_name']}» generado. Ábrelo con «Ver» para copiar sus credenciales.");
+        /*
+         * El secreto viaja aqui porque es la unica vez que se puede ver.
+         *
+         * Antes se guardaba una copia descifrable y este mensaje mandaba a
+         * leerla con «Ver». Al pasar el secret a hash esa copia dejo de
+         * existir, y como aqui no se devolvia, el token salia sin que nadie
+         * pudiera saber con que se usa: inservible desde el momento de
+         * crearlo.
+         *
+         * En sesion y no en flash: el formulario va por fetch, y ese fetch
+         * sigue el redirect y consume el flash antes de que la pagina se
+         * recargue.
+         */
+        session()->put('credenciales_nuevas', [
+            'nombre' => $apiKey->name,
+            'key' => $apiKey->key,
+            'secret' => $plainSecret,
+        ]);
+
+        return back()->with('success', "Token de «{$validated['dev_name']}» generado.");
     }
 }
