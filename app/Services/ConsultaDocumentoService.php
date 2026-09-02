@@ -225,7 +225,18 @@ class ConsultaDocumentoService
         }
 
         try {
-            $peticion = Http::timeout(8)->acceptJson();
+            /*
+             * Dos esperas, no una.
+             *
+             * timeout() cuenta la peticion entera, pero abrir la conexion va
+             * aparte y sin limite propio: una consulta que pedia ocho segundos
+             * se quedo dieciseis colgada del proveedor, y eso es tiempo que el
+             * cliente espera con la pantalla parada.
+             *
+             * Cuatro para conectar bastan: si el proveedor esta ahi, responde
+             * al saludo enseguida; lo que puede tardar es la consulta en si.
+             */
+            $peticion = Http::connectTimeout(4)->timeout(8)->acceptJson();
 
             if ($token !== '') {
                 $peticion = $peticion->withToken($token);
