@@ -37,31 +37,57 @@
         <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ session('error') }}</div>
     @endif
 
-    <section class="grid gap-3 sm:grid-cols-3">
-        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <p class="text-xs text-gray-500">RUC en el padrón local</p>
-            <p class="mt-1 text-2xl font-semibold {{ $filas ? 'text-gray-900' : 'text-gray-400' }}"
-               x-text="filas.toLocaleString('es-PE')">{{ number_format($filas) }}</p>
-            <p class="mt-1 text-xs text-gray-500">{{ $filas ? 'Responde sin salir a internet' : 'Sin importar todavía' }}</p>
+    {{-- Las mismas tarjetas del Dashboard: es el mismo panel, y aqui tenian su
+         propio aspecto para decir lo mismo. --}}
+    <section class="grid gap-4 sm:grid-cols-3">
+        <x-stat-card title="RUC en el padrón local"
+                     :value="number_format($filas)"
+                     :subtitle="$filas ? 'Responde sin salir a internet' : 'Sin importar todavía'"
+                     :color="$filas ? 'blue' : 'slate'">
+            <x-slot:icon>
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+                </svg>
+            </x-slot:icon>
+        </x-stat-card>
+
+        {{-- En rojo cuando no cabe: es lo unico de aqui que impide importar. --}}
+        <x-stat-card title="Espacio libre en disco"
+                     :value="$espacio['libre'] !== null ? $espacio['libre'] . ' GB' : '—'"
+                     :subtitle="'Hacen falta unos ' . $espacio['necesario'] . ' GB'"
+                     :color="($espacio['libre'] ?? 0) >= $espacio['necesario'] ? 'green' : 'red'">
+            <x-slot:icon>
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.858 5.858A9 9 0 1118.142 18.142 9 9 0 015.858 5.858zM12 8v4l3 3"/>
+                </svg>
+            </x-slot:icon>
+        </x-stat-card>
+
+        {{-- Se pinta con Alpine porque cambia sola mientras corre la importacion. --}}
+        <div x-show="!enMarcha">
+            <x-stat-card title="Estado"
+                         :value="$filas ? 'Al día' : 'Vacío'"
+                         :subtitle="$filas ? 'El padrón está cargado' : 'Todavía no se ha importado'"
+                         :color="$filas ? 'green' : 'slate'">
+                <x-slot:icon>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </x-slot:icon>
+            </x-stat-card>
         </div>
 
-        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <p class="text-xs text-gray-500">Espacio libre en disco</p>
-            <p class="mt-1 text-2xl font-semibold {{ ($espacio['libre'] ?? 0) >= $espacio['necesario'] ? 'text-gray-900' : 'text-red-700' }}">
-                {{ $espacio['libre'] !== null ? $espacio['libre'] . ' GB' : '—' }}
-            </p>
-            <p class="mt-1 text-xs text-gray-500">Hacen falta unos {{ $espacio['necesario'] }} GB</p>
-        </div>
-
-        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <p class="text-xs text-gray-500">Estado</p>
-            <p class="mt-1 text-sm font-semibold" :class="enMarcha ? 'text-blue-700' : 'text-gray-900'">
-                <span x-show="!enMarcha">{{ $filas ? '● Al día' : '○ Vacío' }}</span>
-                <span x-show="enMarcha" x-cloak>● En marcha</span>
-            </p>
-            <p class="mt-1 text-xs text-gray-500" x-show="enMarcha" x-cloak>
-                <span x-text="importadas.toLocaleString('es-PE')"></span> importados
-            </p>
+        <div x-show="enMarcha" x-cloak>
+            <x-stat-card title="Estado" value="En marcha" color="indigo">
+                <x-slot:subtitle>
+                    <span x-text="importadas.toLocaleString('es-PE')"></span> importados
+                </x-slot:subtitle>
+                <x-slot:icon>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                </x-slot:icon>
+            </x-stat-card>
         </div>
     </section>
 
