@@ -84,6 +84,14 @@
                         <td class="py-3 px-4">
                             <div class="flex flex-wrap items-center gap-2">
                                 <button type="button" onclick="window.openAdminModal('{{ route('super-admin.api-global.show-key', $apiKey) }}', 'Detalle de API Key')" class="text-blue-600 hover:text-blue-800 text-sm">Ver</button>
+                                {{-- Genera el secret y abre la ficha con el resultado:
+                                     ahi es donde se consulta, y no queda a la vista de
+                                     quien este mirando la pantalla. --}}
+                                <form method="POST" action="{{ route('super-admin.api-global.regenerate-key', $apiKey) }}"
+                                      @submit.prevent="if (confirm('Se genera un Secret nuevo para «{{ $apiKey->name }}».{{ chr(10) }}{{ chr(10) }}El actual deja de funcionar al instante, así que hay que pasarle el nuevo al cliente. La X-Api-Key no cambia.{{ chr(10) }}{{ chr(10) }}¿Seguir?')) window.enviarYAbrirModal($el, '{{ route('super-admin.api-global.show-key', $apiKey) }}', 'Detalle de API Key')">
+                                    @csrf
+                                    <button type="submit" class="text-sm text-amber-600 hover:text-amber-800">Nuevo Secret</button>
+                                </form>
                                 <form method="POST" action="{{ route('super-admin.api-global.toggle-key', $apiKey) }}" onsubmit="return confirm('Cambiar estado de la API Key?')">
                                     @csrf
                                     <button type="submit" class="text-{{ $apiKey->active ? 'red' : 'green' }}-600 hover:text-{{ $apiKey->active ? 'red' : 'green' }}-800 text-sm">

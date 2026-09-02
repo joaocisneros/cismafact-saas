@@ -136,24 +136,7 @@
 
     {{-- La advertencia de qué pasa al bloquear ya la da el confirm; repetirla
          aquí en un párrafo solo alargaba la ventana. --}}
-    <div class="mt-5 flex items-center justify-end gap-2 border-t border-gray-200 pt-4">
-        {{-- Cada modulo regenera por su ruta: la que se use decide en que
-             pantalla aparece luego el recuadro con el secret nuevo, y tiene
-             que ser en la que estas. --}}
-        <form method="POST"
-              action="{{ $esSandbox
-                  ? route('super-admin.tokens-prueba.regenerar', $apiKey)
-                  : route('super-admin.api-global.regenerate-key', $apiKey) }}"
-              data-success-message="Secret regenerado. Pásaselo a quien la use."
-              data-recargar-modal="{{ route('super-admin.api-global.show-key', $apiKey) }}"
-              onsubmit="return confirm('Se genera un Secret nuevo para «{{ $apiKey->name }}».{{ chr(10) }}{{ chr(10) }}El actual deja de funcionar al instante, así que hay que pasarle el nuevo. La X-Api-Key no cambia.{{ chr(10) }}{{ chr(10) }}¿Seguir?')">
-            @csrf
-            <button type="submit"
-                    class="rounded-md border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50">
-                Nuevo Secret
-            </button>
-        </form>
-
+    <div class="mt-5 flex justify-end border-t border-gray-200 pt-4">
         <form method="POST"
               action="{{ route('super-admin.api-global.toggle-key', $apiKey) }}"
               data-success-message="API Key {{ $apiKey->active ? 'bloqueada' : 'activada' }} correctamente."
