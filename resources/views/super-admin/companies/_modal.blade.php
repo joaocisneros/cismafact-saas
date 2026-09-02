@@ -71,11 +71,35 @@
                             <div>
                                 <p class="text-[11px] font-semibold uppercase text-gray-500">X-Api-Secret</p>
                                 <div class="mt-1 flex items-center gap-2 rounded bg-white px-2 py-1">
-                                    {{-- El secret no se guarda de forma legible: solo
-                                         lo tiene el cliente. Si lo perdio, se le
-                                         genera otro y la key no cambia. --}}
-                                    <code class="min-w-0 flex-1 truncate font-mono text-xs text-gray-400">••••••••••••••••</code>
-                                    <span class="shrink-0 text-xs text-gray-500">solo lo tiene el cliente</span>
+                                    {{-- Tapado hasta que se pide: no viaja con la pagina,
+                                         que aqui saldria el de cada credencial de la
+                                         empresa en cada carga. --}}
+                                    <span x-data="{ visible: false, valor: null, cargando: false,
+                                              async traer() {
+                                                  this.cargando = true;
+                                                  try {
+                                                      const r = await fetch('{{ route('super-admin.api-global.secret-key', $key) }}', { headers: { 'Accept': 'application/json' } });
+                                                      this.valor = (await r.json()).secret;
+                                                  } catch (e) { this.valor = null; }
+                                                  finally { this.cargando = false; }
+                                              },
+                                              async mostrar() {
+                                                  if (this.visible) { this.visible = false; return; }
+                                                  if (! this.valor) await this.traer();
+                                                  this.visible = !! this.valor;
+                                              },
+                                          }" x-init="traer()" class="flex min-w-0 flex-1 items-center gap-2">
+                                        <code class="min-w-0 flex-1 truncate font-mono text-xs" :class="visible ? 'text-gray-800' : 'text-gray-400'">
+                                            <span x-show="! visible">••••••••••••••••</span>
+                                            <span x-show="visible" x-text="valor"></span>
+                                        </code>
+                                        <button type="button" @click="mostrar()" :disabled="cargando"
+                                                class="shrink-0 text-xs font-semibold text-gray-600 hover:text-gray-800 disabled:opacity-50"
+                                                x-text="cargando ? '…' : (visible ? 'Ocultar' : 'Mostrar')"></button>
+                                        <button type="button" x-show="visible" x-cloak
+                                                @click="window.copyCompanyCredential($el, valor)"
+                                                class="shrink-0 text-xs font-semibold text-blue-600 hover:text-blue-800">Copiar</button>
+                                    </span>
                                 </div>
                             </div>
                         </div>
