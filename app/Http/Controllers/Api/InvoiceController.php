@@ -9,6 +9,7 @@ use App\Services\FileService;
 use App\Models\Invoice;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\IndexInvoiceRequest;
+use App\Jobs\EnviarDocumentoASunat;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -75,6 +76,29 @@ class InvoiceController extends Controller
 
             // Crear la factura
             $invoice = $this->documentService->createInvoice($validated);
+
+            /*
+             * Con «async» se responde sin esperar a SUNAT.
+             *
+             * Esperar deja el proceso ocupado lo que tarde SUNAT —de cero
+             * segundos a media hora, segun el dia— y son los mismos procesos
+             * que sirven el panel: un cliente cargando su dia entero los ocupa
+             * todos y el resto se queda sin servicio.
+             *
+             * No se cambia por las buenas para todos: quien ya integro espera
+             * el CDR en esta misma respuesta y se le romperia. Lo pide quien
+             * quiere, y si no, todo sigue igual.
+             */
+            if ($request->boolean('async')) {
+                EnviarDocumentoASunat::dispatch('invoice', $invoice->id);
+
+                return response()->json([
+                    'success' => true,
+                    'data' => $invoice->load(['company', 'branch', 'client']),
+                    'message' => 'Factura registrada. Se está enviando a SUNAT; consulta su estado en unos segundos.',
+                ], 202);
+            }
+
             $sendResult = $this->documentService->sendToSunat($invoice, 'invoice');
             $invoice = $sendResult['document'];
 

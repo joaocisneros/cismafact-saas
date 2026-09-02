@@ -21,6 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'llave.consulta' => \App\Http\Middleware\AutenticarLlaveConsulta::class,
             'audit.admin' => \App\Http\Middleware\AuditAdminActions::class,
             'setup.token' => \App\Http\Middleware\EnsureSetupToken::class,
+            // Cuantos comprobantes por minuto admite cada credencial: emitir
+            // deja el proceso esperando a SUNAT y son los mismos que sirven
+            // el panel. Ver el middleware.
+            'emision' => \App\Http\Middleware\LimitarEmision::class,
         ]);
 
         // Cabeceras de seguridad en todas las respuestas web.

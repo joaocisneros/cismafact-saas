@@ -121,7 +121,19 @@ Route::middleware('api.key')->group(function () {
     });
 });
 
-Route::middleware('api.key')->prefix('boletas')->group(function () {
+/*
+ * Emitir tiene su propio limite.
+ *
+ * Cada emision se queda esperando a SUNAT, que tarda entre nada y media
+ * hora, y mientras tanto ocupa uno de los procesos del servidor. Sin limite,
+ * un solo cliente que suelte su carga del dia de golpe se lleva todos los
+ * procesos y el panel deja de responder para los demas.
+ *
+ * El limite es por credencial, asi que un cliente pasado de vueltas se frena
+ * a si mismo y no al resto. Consultar y descargar no llevan limite: se
+ * resuelven en casa y no bloquean nada.
+ */
+Route::middleware(['api.key', 'emision'])->prefix('boletas')->group(function () {
     Route::get('/', [BoletaController::class, 'index']);
     Route::post('/', [BoletaController::class, 'store']);
     Route::get('/{id}', [BoletaController::class, 'show']);
@@ -132,7 +144,7 @@ Route::middleware('api.key')->prefix('boletas')->group(function () {
     Route::post('/{id}/generate-pdf', [BoletaController::class, 'generatePdf']);
 });
 
-Route::middleware('api.key')->prefix('facturas')->group(function () {
+Route::middleware(['api.key', 'emision'])->prefix('facturas')->group(function () {
     Route::get('/', [InvoiceController::class, 'index']);
     Route::post('/', [InvoiceController::class, 'store']);
     Route::get('/{id}', [InvoiceController::class, 'show']);
@@ -142,7 +154,7 @@ Route::middleware('api.key')->prefix('facturas')->group(function () {
     Route::get('/{id}/download-pdf', [InvoiceController::class, 'downloadPdf']);
 });
 
-Route::middleware('api.key')->prefix('notas-credito')->group(function () {
+Route::middleware(['api.key', 'emision'])->prefix('notas-credito')->group(function () {
     Route::get('/', [CreditNoteController::class, 'index']);
     Route::post('/', [CreditNoteController::class, 'store']);
     Route::get('/{id}', [CreditNoteController::class, 'show']);
@@ -152,7 +164,7 @@ Route::middleware('api.key')->prefix('notas-credito')->group(function () {
     Route::get('/{id}/download-pdf', [CreditNoteController::class, 'downloadPdf']);
 });
 
-Route::middleware('api.key')->prefix('notas-debito')->group(function () {
+Route::middleware(['api.key', 'emision'])->prefix('notas-debito')->group(function () {
     Route::get('/', [DebitNoteController::class, 'index']);
     Route::post('/', [DebitNoteController::class, 'store']);
     Route::get('/{id}', [DebitNoteController::class, 'show']);
@@ -162,7 +174,7 @@ Route::middleware('api.key')->prefix('notas-debito')->group(function () {
     Route::get('/{id}/download-pdf', [DebitNoteController::class, 'downloadPdf']);
 });
 
-Route::middleware('api.key')->prefix('guias-remision')->group(function () {
+Route::middleware(['api.key', 'emision'])->prefix('guias-remision')->group(function () {
     Route::get('/', [DispatchGuideController::class, 'index']);
     Route::post('/', [DispatchGuideController::class, 'store']);
     Route::get('/{id}', [DispatchGuideController::class, 'show']);
@@ -173,7 +185,7 @@ Route::middleware('api.key')->prefix('guias-remision')->group(function () {
     Route::get('/{id}/download-pdf', [DispatchGuideController::class, 'downloadPdf']);
 });
 
-Route::middleware('api.key')->prefix('resumenes')->group(function () {
+Route::middleware(['api.key', 'emision'])->prefix('resumenes')->group(function () {
     Route::get('/', [DailySummaryController::class, 'index']);
     Route::post('/', [DailySummaryController::class, 'store']);
     Route::get('/pendientes/boletas', [DailySummaryController::class, 'pendingBoletas']);
@@ -187,7 +199,7 @@ Route::middleware('api.key')->prefix('resumenes')->group(function () {
     Route::get('/{id}/cdr', [DailySummaryController::class, 'downloadCdr']);
 });
 
-Route::middleware('api.key')->prefix('anulaciones')->group(function () {
+Route::middleware(['api.key', 'emision'])->prefix('anulaciones')->group(function () {
     Route::get('/', [VoidedDocumentController::class, 'index']);
     Route::post('/', [VoidedDocumentController::class, 'store']);
     Route::get('/documentos/disponibles', [VoidedDocumentController::class, 'documentsForVoiding']);
