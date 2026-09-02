@@ -127,7 +127,7 @@
                                 <td class="px-4 py-3">
                                     <div class="flex items-center gap-1.5">
                                         <x-icon-action icon="ver" label="Ver credenciales" color="blue" type="button"
-                                                       onclick="window.openAdminModal('{{ route('super-admin.api-global.show-key', $token) }}', @js($token->name))" />
+                                                       onclick="window.openAdminModal('{{ route('super-admin.api-global.show-key', $token) }}', '{{ addslashes($token->name) }}')" />
 
                                         {{-- Genera el secret y abre la ficha con el resultado.
 

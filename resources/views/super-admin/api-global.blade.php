@@ -180,7 +180,7 @@
                                 <td class="px-4 py-3">
                                     <div class="flex items-center gap-1.5">
                                         <x-icon-action icon="ver" label="Ver credenciales de esta empresa" color="blue" type="button"
-                                                       onclick="window.openAdminModal('{{ route('super-admin.api-global.api-keys', ['company_id' => $empresa->id]) }}', @js($empresa->razon_social))" />
+                                                       onclick="window.openAdminModal('{{ route('super-admin.api-global.api-keys', ['company_id' => $empresa->id]) }}', '{{ addslashes($empresa->razon_social) }}')" />
 
                                         {{-- Generar el secret sin entrar, cuando la empresa
                                              tiene una sola credencial: es el caso normal y
