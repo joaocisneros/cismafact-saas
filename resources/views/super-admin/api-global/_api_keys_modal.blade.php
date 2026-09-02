@@ -120,7 +120,7 @@
                                     class="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">Copiar</button>
                         </div>
 
-                        <p class="text-xs text-gray-500">Si el cliente lo perdió, dale uno nuevo con «Nuevo secret» —su X-Api-Key no cambia—.</p>
+                        <p class="text-xs text-gray-500">Si el cliente lo perdió, genérale uno nuevo con el botón de renovar de su fila —su X-Api-Key no cambia—.</p>
                     </div>
 
                     <div class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 pt-3">
@@ -132,21 +132,6 @@
                             <button type="button"
                                     onclick="window.openAdminModal('{{ route('super-admin.api-global.key-actividad', $apiKey) }}', 'Actividad de la credencial')"
                                     class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">Ver actividad</button>
-
-                            {{-- Cambia el secret y deja la key: al cliente solo le
-                                 toca cambiar una linea, no rehacer su integracion. --}}
-                            <form method="POST" action="{{ route('super-admin.api-global.regenerate-key', $apiKey) }}"
-                                  data-success-message="Secret regenerado. Pásaselo al cliente."
-                                  onsubmit="return confirm('Se genera un secret nuevo para «{{ $apiKey->name }}».
-
-El actual dejará de funcionar en cuanto se guarde, así que hay que pasarle el nuevo al cliente. La X-Api-Key no cambia.
-
-¿Seguir?')">
-                                @csrf
-                                <button type="submit" class="rounded-md border border-amber-300 bg-white px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-50">
-                                    Nuevo secret
-                                </button>
-                            </form>
 
                             <form method="POST" action="{{ route('super-admin.api-global.toggle-key', $apiKey) }}"
                                   data-success-message="Credencial {{ $apiKey->active ? 'bloqueada' : 'activada' }} correctamente."
