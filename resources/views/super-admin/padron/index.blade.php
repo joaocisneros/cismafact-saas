@@ -338,6 +338,7 @@
                         <th class="px-5 py-3">Descargado</th>
                         <th class="px-5 py-3">Empezó</th>
                         <th class="px-5 py-3">Terminó</th>
+                        <th class="px-5 py-3">Tardó</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -364,9 +365,23 @@
                             <td class="px-5 py-3 text-gray-600">
                                 {{ $i->terminada_en ? \Illuminate\Support\Carbon::parse($i->terminada_en)->format('d/m/Y H:i') : '—' }}
                             </td>
+
+                            {{-- Cuanto tardo de verdad. «Tarda horas» es lo unico
+                                 que se sabia antes de lanzarla; con el historial
+                                 se sabe que esperar en este servidor. --}}
+                            <td class="px-5 py-3 text-gray-600">
+                                @if($i->iniciada_en && $i->terminada_en)
+                                    @php($minutos = \Illuminate\Support\Carbon::parse($i->iniciada_en)->diffInMinutes($i->terminada_en))
+                                    {{ $minutos >= 60 ? intdiv($minutos, 60) . ' h ' . ($minutos % 60) . ' min' : $minutos . ' min' }}
+                                @elseif($i->iniciada_en)
+                                    <span class="text-blue-600">en marcha</span>
+                                @else
+                                    —
+                                @endif
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="px-5 py-8 text-center text-gray-500">Todavía no se ha importado nunca.</td></tr>
+                        <tr><td colspan="6" class="px-5 py-8 text-center text-gray-500">Todavía no se ha importado nunca.</td></tr>
                     @endforelse
                 </tbody>
             </table>
