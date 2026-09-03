@@ -304,6 +304,15 @@ class ApiGlobalController extends Controller
      */
     public function regenerateApiKey(ApiKey $apiKey)
     {
+        // Aqui solo las de empresa. Los tokens de sandbox no salen en la lista,
+        // pero la ruta seguia aceptando su id: se le podia cortar la conexion
+        // a un programador desde el modulo equivocado y sin verlo.
+        if ($apiKey->origen !== 'empresa') {
+            return back()->with('error',
+                'Ese es un token de sandbox. Su secret se cambia desde Sandbox Facturación, '
+                . 'que es donde se ve a qué programador se le entregó.');
+        }
+
         $plainSecret = ApiKey::generateSecret();
 
         $apiKey->update(['secret' => $plainSecret]);
