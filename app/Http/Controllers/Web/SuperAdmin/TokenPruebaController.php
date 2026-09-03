@@ -55,6 +55,12 @@ class TokenPruebaController extends Controller
      */
     public function regenerar(ApiKey $apiKey)
     {
+        if (! $apiKey->company?->es_demo) {
+            return back()->with('error',
+                'Esa credencial es de una empresa real, no de sandbox. Su secret se cambia desde '
+                . 'API Facturación, que es donde se ve a quién afecta.');
+        }
+
         $plainSecret = ApiKey::generateSecret();
 
         $apiKey->update(['secret' => $plainSecret]);

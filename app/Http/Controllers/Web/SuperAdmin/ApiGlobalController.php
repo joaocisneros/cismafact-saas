@@ -329,6 +329,12 @@ class ApiGlobalController extends Controller
      */
     public function destroyApiKey(ApiKey $apiKey)
     {
+        if (! $apiKey->company?->es_demo) {
+            return back()->with('error',
+                'Esa credencial es de una empresa real. Borrarla no se puede deshacer: el cliente '
+                . 'pierde su key y hay que rehacerle la integración. Usa «Bloquear», que sí se deshace.');
+        }
+
         $nombre = $apiKey->name;
         $apiKey->delete();
         Cache::forget('api_global_index');
