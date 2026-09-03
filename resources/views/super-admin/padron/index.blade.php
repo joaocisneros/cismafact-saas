@@ -506,7 +506,7 @@
                      x-bind:style="'left: calc(' + (importando ? porcentaje : 0) + '% - 1.4rem)'">
                     {{-- Va por piezas para que se muevan las piernas: un emoji
                          solo puede botar entero. --}}
-                    <svg class="corredor h-14 w-14" viewBox="0 0 60 56" fill="none"
+                    <svg class="corredor h-14 w-14" viewBox="0 0 60 58" fill="none"
                          stroke-linecap="round" role="img" aria-label="avanzando">
                         {{-- Rayas de velocidad, que se quedan atras. --}}
                         <g stroke="#93c5fd" stroke-width="2.6">
@@ -515,35 +515,50 @@
                             <path class="estela estela-3" d="M16 36h-9" opacity=".4"/>
                         </g>
 
-                        {{-- Piernas: pantalon oscuro y zapatilla al final. La de
-                             atras va primero para que la de delante la tape. --}}
-                        <g class="pierna-b">
-                            <path d="M30 34 L21 45" stroke="#334155" stroke-width="5"/>
-                            <ellipse cx="19" cy="46.5" rx="4.4" ry="2.6" fill="#2563eb" transform="rotate(-18 19 46.5)"/>
-                        </g>
-                        <g class="pierna-a">
-                            <path d="M30 34 L40 44" stroke="#1e293b" stroke-width="5"/>
-                            <ellipse cx="42" cy="45.5" rx="4.4" ry="2.6" fill="#3b82f6" transform="rotate(12 42 45.5)"/>
+                        {{-- Pierna de atras: muslo desde la cadera, pantorrilla
+                             desde la rodilla. Va primero para que la de delante
+                             la tape. --}}
+                        <g class="muslo-b">
+                            <path d="M29 33 L29 41" stroke="#334155" stroke-width="5.4"/>
+                            <g class="rodilla-b">
+                                <path d="M29 41 L29 49" stroke="#334155" stroke-width="4.8"/>
+                                <ellipse cx="30.5" cy="50.5" rx="4.2" ry="2.4" fill="#2563eb"/>
+                            </g>
                         </g>
 
                         {{-- Brazo de atras. --}}
-                        <g class="brazo-b">
-                            <path d="M30 22 L21 26" stroke="#2563eb" stroke-width="4.6"/>
-                            <circle cx="19.5" cy="26.5" r="2.4" fill="#f8c9a4"/>
+                        <g class="hombro-b">
+                            <path d="M29 22 L29 28" stroke="#2563eb" stroke-width="4.4"/>
+                            <g class="codo-b">
+                                <path d="M29 28 L29 33" stroke="#f8c9a4" stroke-width="4"/>
+                                <circle cx="29" cy="34" r="2.3" fill="#f8c9a4"/>
+                            </g>
                         </g>
 
-                        {{-- Cuerpo: sudadera azul. --}}
-                        <path d="M31 18 L28.5 34" stroke="#3b82f6" stroke-width="9" stroke-linecap="round"/>
+                        {{-- Cuerpo: sudadera azul, inclinada hacia delante. --}}
+                        <path d="M30.5 19 L28.5 34" stroke="#3b82f6" stroke-width="9.5" stroke-linecap="round"/>
 
                         {{-- Cabeza, pelo y cara mirando a donde va. --}}
-                        <circle cx="36" cy="12" r="6.4" fill="#f8c9a4"/>
-                        <path d="M30.2 9.5a6.4 6.4 0 0 1 11.6 -.6 8 8 0 0 0 -11.6 .6Z" fill="#1e293b"/>
-                        <circle cx="39.4" cy="12" r="1.05" fill="#1e293b"/>
+                        <circle cx="36" cy="12.5" r="6.4" fill="#f8c9a4"/>
+                        <path d="M30.2 10a6.4 6.4 0 0 1 11.6 -.6 8 8 0 0 0 -11.6 .6Z" fill="#1e293b"/>
+                        <circle cx="39.4" cy="12.5" r="1.05" fill="#1e293b"/>
 
-                        {{-- Brazo de delante, encima de todo. --}}
-                        <g class="brazo-a">
-                            <path d="M30 22 L40 25" stroke="#60a5fa" stroke-width="4.6"/>
-                            <circle cx="41.6" cy="25.4" r="2.4" fill="#f8c9a4"/>
+                        {{-- Pierna de delante, encima del cuerpo. --}}
+                        <g class="muslo-a">
+                            <path d="M29 33 L29 41" stroke="#1e293b" stroke-width="5.4"/>
+                            <g class="rodilla-a">
+                                <path d="M29 41 L29 49" stroke="#1e293b" stroke-width="4.8"/>
+                                <ellipse cx="30.5" cy="50.5" rx="4.2" ry="2.4" fill="#3b82f6"/>
+                            </g>
+                        </g>
+
+                        {{-- Brazo de delante, lo ultimo. --}}
+                        <g class="hombro-a">
+                            <path d="M29 22 L29 28" stroke="#60a5fa" stroke-width="4.4"/>
+                            <g class="codo-a">
+                                <path d="M29 28 L29 33" stroke="#f8c9a4" stroke-width="4"/>
+                                <circle cx="29" cy="34" r="2.3" fill="#f8c9a4"/>
+                            </g>
                         </g>
                     </svg>
                 </div>

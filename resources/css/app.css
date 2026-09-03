@@ -99,56 +99,76 @@
 }
 
 /*
- * El corredor, articulado.
+ * El ciclo de carrera.
  *
- * El emoji solo podia botar entero: se le voltea y se le sacude, pero las
- * piernas siguen quietas y se lee como un muñeco en un muelle. Este va por
- * piezas —dos piernas, dos brazos y el cuerpo—, y cada una gira sobre su
- * articulacion con el mismo ciclo desfasado, que es como se camina de verdad.
+ * Con la pierna de una pieza solo cabia abrir y cerrar como un compas, y por
+ * eso el movimiento se veia siempre igual: lo era. Al correr la rodilla se
+ * dobla mucho cuando el pie va detras —el talon sube hacia el gluteo— y se
+ * estira al llegar delante. Ese contraste es la zancada.
  *
- * Sin imagenes ni librerias: son cinco trazos y cinco animaciones.
+ * Muslo y pantorrilla llevan el mismo ciclo pero desfasados; la pierna de
+ * atras va media vuelta por detras de la de delante.
  */
-@keyframes pierna-delante {
-    0%, 100% { transform: rotate(28deg); }
-    50%      { transform: rotate(-32deg); }
+@keyframes muslo-ciclo {
+    0%   { transform: rotate(26deg); }   /* apoya delante */
+    25%  { transform: rotate(-2deg); }   /* pasa bajo el cuerpo */
+    50%  { transform: rotate(-30deg); }  /* impulsa detras */
+    75%  { transform: rotate(6deg); }    /* recoge */
+    100% { transform: rotate(26deg); }
 }
 
-@keyframes pierna-detras {
-    0%, 100% { transform: rotate(-32deg); }
-    50%      { transform: rotate(28deg); }
+@keyframes rodilla-ciclo {
+    0%   { transform: rotate(-6deg); }   /* casi estirada al apoyar */
+    25%  { transform: rotate(-14deg); }
+    50%  { transform: rotate(-52deg); }  /* el talon sube al empujar */
+    75%  { transform: rotate(-88deg); }  /* recogida, rodilla al pecho */
+    100% { transform: rotate(-6deg); }
 }
 
-@keyframes brazo-delante {
-    0%, 100% { transform: rotate(-38deg); }
-    50%      { transform: rotate(30deg); }
+/* Los brazos van al contrario que la pierna del mismo lado, con el codo
+   siempre algo doblado, que es como se corre. */
+@keyframes hombro-ciclo {
+    0%   { transform: rotate(-34deg); }
+    50%  { transform: rotate(30deg); }
+    100% { transform: rotate(-34deg); }
 }
 
-@keyframes brazo-detras {
-    0%, 100% { transform: rotate(30deg); }
-    50%      { transform: rotate(-38deg); }
+@keyframes codo-ciclo {
+    0%   { transform: rotate(-58deg); }
+    50%  { transform: rotate(-88deg); }
+    100% { transform: rotate(-58deg); }
 }
 
-/* El cuerpo sube en la zancada y baja al apoyar: dos botes por ciclo, uno
-   por pierna. */
+/* El cuerpo sube en el impulso y baja al apoyar: dos botes por ciclo. */
 @keyframes bote {
     0%, 50%, 100% { transform: translateY(0); }
-    25%, 75%      { transform: translateY(-.14rem); }
+    25%, 75%      { transform: translateY(-.16rem); }
 }
 
-.corredor { animation: bote .5s ease-in-out infinite; }
-/* El giro sale de la cadera y del hombro, no del centro del dibujo: con el
-   origen mal puesto la pierna no gira, se desliza. */
-.corredor .pierna-a { animation: pierna-delante .5s ease-in-out infinite; transform-origin: 29px 33px; transform-box: view-box; }
-.corredor .pierna-b { animation: pierna-detras  .5s ease-in-out infinite; transform-origin: 29px 33px; transform-box: view-box; }
-.corredor .brazo-a  { animation: brazo-delante  .5s ease-in-out infinite; transform-origin: 29px 21px; transform-box: view-box; }
-.corredor .brazo-b  { animation: brazo-detras   .5s ease-in-out infinite; transform-origin: 29px 21px; transform-box: view-box; }
-
-/* Rayas de velocidad detras, que salen y se desvanecen. */
+/* Rayas de velocidad, que salen y se desvanecen hacia atras. */
 @keyframes estela {
-    0%   { opacity: .5; transform: translateX(0); }
+    0%   { opacity: .6; transform: translateX(0); }
     100% { opacity: 0;  transform: translateX(-.9rem); }
 }
 
-.corredor .estela { animation: estela .5s linear infinite; }
-.corredor .estela-2 { animation-delay: .17s; }
-.corredor .estela-3 { animation-delay: .34s; }
+.corredor { animation: bote .62s ease-in-out infinite; }
+
+/* El giro sale de la articulacion, no del centro del dibujo: con el origen
+   mal puesto la pierna no gira, se desliza. Las coordenadas son las del
+   viewBox, de ahi el transform-box. */
+.corredor g { transform-box: view-box; }
+
+.corredor .muslo-a   { transform-origin: 29px 33px; animation: muslo-ciclo   .62s ease-in-out infinite; }
+.corredor .rodilla-a { transform-origin: 29px 41px; animation: rodilla-ciclo .62s ease-in-out infinite; }
+.corredor .hombro-a  { transform-origin: 29px 22px; animation: hombro-ciclo  .62s ease-in-out infinite; }
+.corredor .codo-a    { transform-origin: 29px 28px; animation: codo-ciclo    .62s ease-in-out infinite; }
+
+/* La otra mitad del cuerpo, media zancada por detras. */
+.corredor .muslo-b   { transform-origin: 29px 33px; animation: muslo-ciclo   .62s ease-in-out infinite; animation-delay: -.31s; }
+.corredor .rodilla-b { transform-origin: 29px 41px; animation: rodilla-ciclo .62s ease-in-out infinite; animation-delay: -.31s; }
+.corredor .hombro-b  { transform-origin: 29px 22px; animation: hombro-ciclo  .62s ease-in-out infinite; animation-delay: -.31s; }
+.corredor .codo-b    { transform-origin: 29px 28px; animation: codo-ciclo    .62s ease-in-out infinite; animation-delay: -.31s; }
+
+.corredor .estela   { animation: estela .62s linear infinite; }
+.corredor .estela-2 { animation-delay: .2s; }
+.corredor .estela-3 { animation-delay: .4s; }
