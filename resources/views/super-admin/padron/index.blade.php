@@ -324,6 +324,49 @@
     </section>
     </div>
 
+    {{-- Mientras dura, y tambien al volver a entrar: el estado se pregunta al
+         servidor, asi que la ventana reaparece aunque se recargue la pagina. --}}
+    <div x-show="enMarcha" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4">
+        <div class="w-full max-w-md rounded-xl bg-white p-6 text-center shadow-xl">
+
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
+                <svg class="h-7 w-7 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                </svg>
+            </div>
+
+            <h3 class="mt-4 text-lg font-semibold text-gray-900"
+                x-text="estado === 'importando' ? 'Importando el padrón…' : 'Descargando de SUNAT…'"></h3>
+
+            <p class="mt-1 text-sm text-gray-500"
+               x-text="estado === 'importando'
+                    ? 'Se está metiendo en la base, fila a fila.'
+                    : 'El archivo pesa unos 600 MB; esta parte va sola.'"></p>
+
+            {{-- Lo unico que se puede contar de verdad: cuantos RUC llevan
+                 entrando. En la descarga todavia es cero, y decirlo evita que
+                 parezca que no avanza. --}}
+            <div class="mt-5 rounded-lg bg-gray-50 px-4 py-3">
+                <p class="text-2xl font-bold tabular-nums text-gray-900"
+                   x-text="importadas ? importadas.toLocaleString('es-PE') : '—'"></p>
+                <p class="text-xs text-gray-500"
+                   x-text="importadas ? 'RUC importados' : 'aún no ha empezado a importar'"></p>
+            </div>
+
+            <p class="mt-4 text-xs text-gray-500">
+                Tarda horas. Puedes cerrar esto o irte de la página:
+                sigue en el servidor y al terminar se ve aquí.
+            </p>
+
+            <button type="button" @click="enMarcha = false"
+                    class="mt-4 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                Cerrar y dejarlo trabajando
+            </button>
+        </div>
+    </div>
+
     <section class="rounded-lg border border-gray-200 bg-white shadow-sm">
         <div class="border-b border-gray-200 px-5 py-4">
             <h2 class="text-base font-semibold text-gray-900">Últimas actualizaciones</h2>
