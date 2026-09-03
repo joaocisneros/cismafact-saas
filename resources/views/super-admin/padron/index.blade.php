@@ -493,9 +493,13 @@
             {{-- La animacion trae su propio fondo pintado, asi que va como
                  banner de la ventana y no suelta sobre la barra: ahi habria
                  salido un rectangulo morado flotando. --}}
-            <div class="-mx-2 -mt-2 mb-5 overflow-hidden rounded-xl">
+            {{-- Fondo del mismo morado que trae la imagen: asi se ve entera,
+                 sin recortarla para llenar el ancho, y las franjas de los
+                 lados no se distinguen del dibujo. --}}
+            <div class="-mx-2 -mt-2 mb-5 flex items-center justify-center overflow-hidden rounded-xl"
+                 style="background: #2c1d3e;">
                 <img src="{{ asset('assets/padron/importando.gif') }}" alt=""
-                     class="h-32 w-full object-cover" width="150" height="112">
+                     class="h-36 w-auto max-w-full" width="150" height="112">
             </div>
 
             <div class="text-center">
@@ -507,20 +511,23 @@
                         : 'El archivo pesa unos 600 MB; esta parte va sola.'"></p>
             </div>
 
-            <div class="mt-7 h-4 w-full overflow-hidden rounded-full bg-gray-100">
+            {{-- La cifra encima de la barra: es lo primero que se mira, y
+                 debajo quedaba por detras de todo lo demas. --}}
+            <p class="mt-6 text-center text-4xl font-bold tabular-nums text-blue-600"
+               x-text="importando ? porcentaje + '%' : '…'"></p>
+
+            <div class="mt-3 h-4 w-full overflow-hidden rounded-full bg-gray-100">
+                {{-- Al importar, lo que lleva de verdad. Al descargar, rayas:
+                     esa fase no sabe por donde va. --}}
                 <div x-show="importando"
                      class="h-full rounded-full bg-blue-600 transition-all duration-700 ease-out"
                      x-bind:style="'width: ' + porcentaje + '%'"></div>
                 <div x-show="!importando" class="barra-en-marcha h-full w-full rounded-full bg-blue-600"></div>
             </div>
 
-            <div class="mt-2 flex items-baseline justify-between gap-4">
-                <span class="text-3xl font-bold tabular-nums text-blue-600"
-                      x-text="importando ? porcentaje + '%' : '…'"></span>
-                <span class="text-right text-xs text-gray-500" x-show="importando && !referenciaExacta">
-                    aproximado: aún no hay una importación anterior con la que comparar
-                </span>
-            </div>
+            <p class="mt-2 text-center text-xs text-gray-500" x-show="importando && !referenciaExacta">
+                aproximado: aún no hay una importación anterior con la que comparar
+            </p>
 
             <dl class="mt-6 grid grid-cols-3 gap-3 text-center">
                 <div class="rounded-xl bg-gray-50 px-3 py-3">
