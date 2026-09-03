@@ -140,15 +140,26 @@
                     <code class="min-w-0 flex-1 truncate rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-700">{{ ($ajustes['consultas_url'] ?? '') ?: config('consultas.url') }}</code>
                 </div>
 
-                <form method="POST" action="{{ route('super-admin.padron.probar') }}" class="flex flex-wrap items-center gap-2">
+                <form method="POST" action="{{ route('super-admin.padron.probar') }}"
+                      class="flex flex-wrap items-center gap-2"
+                      x-data="{ tipo: '{{ old('tipo', 'ruc') }}' }">
                     @csrf
-                    <select name="tipo" class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="ruc" @selected(old('tipo') === 'ruc')>RUC</option>
-                        <option value="dni" @selected(old('tipo') === 'dni')>DNI</option>
+                    <select name="tipo" x-model="tipo"
+                            class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="ruc">RUC</option>
+                        <option value="dni">DNI</option>
                     </select>
+
+                    {{-- Cada documento tiene su medida: el campo no deja escribir
+                         de mas y el ejemplo dice cuantas cifras son. Antes ponia
+                         un RUC de verdad, el de una empresa real. --}}
                     <input type="text" name="numero" value="{{ old('numero') }}"
+                           inputmode="numeric"
+                           x-bind:maxlength="tipo === 'dni' ? 8 : 11"
+                           x-bind:placeholder="tipo === 'dni' ? '8 dígitos' : '11 dígitos'"
+                           x-on:input="$el.value = $el.value.replace(/\D/g, '')"
                            class="w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="20608251589">
+                           placeholder="11 dígitos">
                     <button type="submit" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
                         Probar
                     </button>

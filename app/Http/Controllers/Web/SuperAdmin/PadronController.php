@@ -41,7 +41,11 @@ class PadronController extends Controller
     {
         $datos = $request->validate([
             'tipo' => 'required|in:ruc,dni',
-            'numero' => 'required|string|max:11',
+            'numero' => ['required', $request->input('tipo') === 'dni' ? 'digits:8' : 'digits:11'],
+        ], [
+            'numero.digits' => $request->input('tipo') === 'dni'
+                ? 'El DNI son 8 dígitos.'
+                : 'El RUC son 11 dígitos.',
         ]);
 
         return back()->with('consulta_prueba', $datos['tipo'] === 'ruc'
