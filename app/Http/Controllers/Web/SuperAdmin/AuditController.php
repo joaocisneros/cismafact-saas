@@ -41,10 +41,23 @@ class AuditController extends Controller
         }
 
         if ($search = $request->string('search')->trim()->toString()) {
-            $query->where(function ($auditQuery) use ($search) {
+            // Tambien por lo que se lee en pantalla: la frase y el nombre de
+            // la pantalla se arman al pintarlos, asi que se traducen al reves
+            // y se buscan las rutas que los dicen. Sin esto, buscar «secret» o
+            // «Configuración» no daba ningun resultado.
+            $rutas = \App\Support\AccionAuditada::rutasQueDicen($search);
+            $piezas = collect($rutas)->filter(fn ($r) => str_starts_with($r, '__'))
+                ->map(fn ($r) => substr($r, 2));
+            $nombres = collect($rutas)->reject(fn ($r) => str_starts_with($r, '__'));
+
+            $query->where(function ($auditQuery) use ($search, $nombres, $piezas) {
                 $auditQuery->where('route_name', 'like', "%{$search}%")
                     ->orWhere('path', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->when($nombres->isNotEmpty(), fn ($q) => $q->orWhereIn('route_name', $nombres))
+                    ->when($piezas->isNotEmpty(), fn ($q) => $piezas->each(
+                        fn ($p) => $q->orWhere('route_name', 'like', "%{$p}%")
+                    ));
             });
         }
 
