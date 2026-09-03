@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\ApiKey;
 use App\Models\ApiUsage;
+use App\Models\Company;
 use App\Models\User;
 use App\Services\PlanLimitService;
 use App\Services\SubscriptionStatusService;
@@ -17,7 +18,38 @@ class AuthenticateApiKey
 {
     public function handle(Request $request, Closure $next): Response
     {
+        /*
+         * Con la sesion del panel abierta tambien se entra, pero la empresa la
+         * pone la sesion, no el cliente.
+         *
+         * Antes esto devolvia $next($request) sin mas y se saltaba el
+         * merge() de mas abajo, que es la unica pieza que ata cada peticion a
+         * una empresa. Con solo tener el panel abierto, un cliente podia pedir
+         * /api/v1/clients?company_id=OTRA y le respondian los clientes de esa
+         * otra empresa; los controladores leen $request->company_id dando por
+         * hecho que aqui ya viene forzado.
+         */
         if (Auth::check()) {
+            $usuario = Auth::user();
+            $empresa = $usuario->company;
+
+            // Sin empresa propia no hay a que atar la peticion (el Super Admin
+            // es el caso): que se identifique con credenciales, como todos.
+            if (! $empresa) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Debes enviar X-Api-Key y X-Api-Secret.',
+                ], 401);
+            }
+
+            $empresa->loadMissing(['branches' => fn ($query) => $query->where('activo', true)->oldest('id')]);
+
+            $request->attributes->set('api_company', $empresa);
+            $request->merge([
+                'company_id' => $empresa->id,
+                'branch_id' => $this->sucursalDeLaEmpresa($request, $empresa),
+            ]);
+
             return $next($request);
         }
 
@@ -121,7 +153,7 @@ class AuthenticateApiKey
         // otra empresa, gastandole su correlativo y firmando con su certificado.
         $request->merge([
             'company_id' => $apiKey->company_id,
-            'branch_id' => $this->sucursalDeLaEmpresa($request, $apiKey),
+            'branch_id' => $this->sucursalDeLaEmpresa($request, $apiKey->company),
         ]);
 
         $apiKey->forceFill(['last_used_at' => now()])->save();
@@ -162,9 +194,9 @@ class AuthenticateApiKey
      * token. Si el cliente pide una que no es suya, se ignora y se usa el
      * domicilio fiscal: no se le da pista de que existe.
      */
-    private function sucursalDeLaEmpresa(Request $request, ApiKey $apiKey): ?int
+    private function sucursalDeLaEmpresa(Request $request, Company $empresa): ?int
     {
-        $sucursales = $apiKey->company->branches;
+        $sucursales = $empresa->branches;
         $pedida = $request->input('branch_id');
 
         if ($pedida !== null && $sucursales->contains('id', (int) $pedida)) {
