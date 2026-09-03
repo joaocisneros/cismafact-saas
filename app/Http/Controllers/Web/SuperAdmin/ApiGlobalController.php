@@ -103,6 +103,9 @@ class ApiGlobalController extends Controller
                     'ilimitado' => $limite <= 0,
                     'porcentaje' => $limite > 0 ? min(100, (int) round($usado * 100 / $limite)) : 0,
                     'credenciales' => (int) $company->api_keys_count,
+                    // Como la llamo su dueño: «ERP», «tienda web»… Es lo unico
+                    // que dice para que la usa, y habia que abrir la ficha.
+                    'nombres' => $company->apiKeys->pluck('name'),
                     // Las que fallaron este mes: un cliente con errores necesita
                     // una llamada, y ese es el dato por el que se mira aqui.
                     'errores' => (int) ($consumoPorEmpresa[$company->id]->errores ?? 0),

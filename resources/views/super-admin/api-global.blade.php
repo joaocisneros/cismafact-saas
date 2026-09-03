@@ -92,6 +92,7 @@
                     <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
                         <tr>
                             <th class="px-5 py-3">Empresa</th>
+                            <th class="px-4 py-3">Nombre de la API</th>
                             <th class="px-4 py-3">Plan</th>
                             <th class="w-64 px-4 py-3">Consumo del mes</th>
                             <th class="px-4 py-3">Llamadas hoy</th>
@@ -111,6 +112,20 @@
                                 <td class="px-5 py-3">
                                     <p class="font-medium text-gray-900">{{ $empresa->razon_social }}</p>
                                     <p class="font-mono text-xs text-gray-400">{{ $empresa->ruc }}</p>
+                                </td>
+
+                                {{-- El nombre que le puso su dueño al crearla. Con varias,
+                                     la primera y cuantas mas hay: la lista entera no cabe
+                                     y se abre con «ver». --}}
+                                <td class="px-4 py-3">
+                                    @if($e['nombres']->isEmpty())
+                                        <span class="text-gray-300">—</span>
+                                    @else
+                                        <p class="text-gray-700">{{ $e['nombres']->first() }}</p>
+                                        @if($e['nombres']->count() > 1)
+                                            <p class="text-xs text-gray-400">y {{ $e['nombres']->count() - 1 }} más</p>
+                                        @endif
+                                    @endif
                                 </td>
 
                                 <td class="px-4 py-3 text-gray-600">{{ $e['plan'] }}</td>
