@@ -78,10 +78,12 @@
                             <div class="truncate text-xs text-gray-500">{{ \App\Support\AccionAuditada::panel($log) }}</div>
                         </td>
                         <td class="px-4 py-3 text-gray-600">{{ $log->company->razon_social ?? 'General' }}</td>
-                        <td class="px-4 py-3">
-                            <span class="{{ ($log->response_status ?? 500) < 400 ? 'text-green-700' : 'text-red-700' }}">
-                                HTTP {{ $log->response_status }}
-                            </span>
+                        {{-- «HTTP 302» era el codigo con el que el servidor devuelve
+                             a la pantalla despues de guardar: queria decir que salio
+                             bien, pero habia que saberlo. --}}
+                        @php($resultado = \App\Support\AccionAuditada::resultado($log))
+                        <td class="px-4 py-3" title="{{ $resultado['detalle'] }} (HTTP {{ $log->response_status }})">
+                            <span class="font-medium {{ $resultado['tono'] }}">{{ $resultado['texto'] }}</span>
                         </td>
                     </tr>
                 @empty

@@ -275,6 +275,42 @@ class AccionAuditada
     }
 
     /**
+     * Como acabo, en cristiano.
+     *
+     * La columna ponia «HTTP 302», que es el codigo con el que el servidor
+     * devuelve a la pantalla despues de guardar: quiere decir que salio bien,
+     * pero hay que saberlo. Y «HTTP 422» tampoco dice que lo que fallo fue lo
+     * que se escribio en el formulario, no el sistema.
+     *
+     * @return array{texto: string, tono: string, detalle: string}
+     */
+    public static function resultado(AuditLog $log): array
+    {
+        $codigo = (int) $log->response_status;
+
+        return match (true) {
+            $codigo === 0 => ['texto' => 'Sin registrar', 'tono' => 'text-gray-400',
+                'detalle' => 'No se anotó cómo acabó.'],
+            $codigo < 400 => ['texto' => 'Correcto', 'tono' => 'text-green-700',
+                'detalle' => 'La acción se completó y se guardó.'],
+            $codigo === 401 || $codigo === 403 => ['texto' => 'Sin permiso', 'tono' => 'text-amber-700',
+                'detalle' => 'No tenía permiso para hacerlo: no se hizo nada.'],
+            $codigo === 404 => ['texto' => 'No encontrado', 'tono' => 'text-amber-700',
+                'detalle' => 'Lo que se quería tocar ya no existe.'],
+            $codigo === 419 => ['texto' => 'Sesión caducada', 'tono' => 'text-amber-700',
+                'detalle' => 'La sesión había caducado y hubo que entrar de nuevo.'],
+            $codigo === 422 => ['texto' => 'Datos rechazados', 'tono' => 'text-amber-700',
+                'detalle' => 'Faltaba algo en el formulario o estaba mal escrito: no se guardó.'],
+            $codigo === 429 => ['texto' => 'Demasiados intentos', 'tono' => 'text-amber-700',
+                'detalle' => 'Se pidió demasiadas veces seguidas y el sistema cortó.'],
+            $codigo >= 500 => ['texto' => 'Error del sistema', 'tono' => 'text-red-700',
+                'detalle' => 'Falló el sistema, no la persona. Conviene mirarlo.'],
+            default => ['texto' => 'No se completó', 'tono' => 'text-red-700',
+                'detalle' => 'La acción no llegó a hacerse.'],
+        };
+    }
+
+    /**
      * Si la accion se hizo con una sesion de soporte abierta. Queda en la
      * descripcion, que es donde el middleware anota quien estaba detras.
      */
