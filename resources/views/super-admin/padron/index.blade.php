@@ -506,7 +506,7 @@
                      x-bind:style="'left: calc(' + (importando ? porcentaje : 0) + '% - 1.4rem)'">
                     {{-- Va por piezas para que se muevan las piernas: un emoji
                          solo puede botar entero. --}}
-                    <svg class="corredor h-14 w-14" viewBox="0 0 60 58" fill="none"
+                    <svg class="corredor h-16 w-16" viewBox="0 0 60 58" fill="none"
                          stroke-linecap="round" role="img" aria-label="avanzando">
                         {{-- Rayas de velocidad, que se quedan atras. --}}
                         <g stroke="#93c5fd" stroke-width="2.6">

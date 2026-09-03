@@ -109,28 +109,34 @@
  * Muslo y pantorrilla llevan el mismo ciclo pero desfasados; la pierna de
  * atras va media vuelta por detras de la de delante.
  */
+/* Los signos importan y no son intuitivos: en SVG el eje Y crece hacia abajo,
+   asi que un giro positivo lleva la pierna hacia la IZQUIERDA. El corredor
+   mira a la derecha, de modo que adelante es negativo. Con los signos al
+   reves parecia que andaba de espaldas. */
 @keyframes muslo-ciclo {
-    0%   { transform: rotate(26deg); }   /* apoya delante */
-    25%  { transform: rotate(-2deg); }   /* pasa bajo el cuerpo */
-    50%  { transform: rotate(-30deg); }  /* impulsa detras */
-    75%  { transform: rotate(6deg); }    /* recoge */
-    100% { transform: rotate(26deg); }
+    0%   { transform: rotate(-26deg); }  /* apoya delante */
+    25%  { transform: rotate(2deg); }    /* pasa bajo el cuerpo */
+    50%  { transform: rotate(30deg); }   /* impulsa detras */
+    75%  { transform: rotate(-6deg); }   /* recoge */
+    100% { transform: rotate(-26deg); }
 }
 
+/* La rodilla solo dobla hacia atras: llevaba el signo cambiado y la pierna se
+   partia hacia delante, que es lo que se veia torcido. */
 @keyframes rodilla-ciclo {
-    0%   { transform: rotate(-6deg); }   /* casi estirada al apoyar */
-    25%  { transform: rotate(-14deg); }
-    50%  { transform: rotate(-52deg); }  /* el talon sube al empujar */
-    75%  { transform: rotate(-88deg); }  /* recogida, rodilla al pecho */
-    100% { transform: rotate(-6deg); }
+    0%   { transform: rotate(6deg); }    /* casi estirada al apoyar */
+    25%  { transform: rotate(14deg); }
+    50%  { transform: rotate(52deg); }   /* el talon sube al empujar */
+    75%  { transform: rotate(88deg); }   /* recogida, talon al gluteo */
+    100% { transform: rotate(6deg); }
 }
 
 /* Los brazos van al contrario que la pierna del mismo lado, con el codo
    siempre algo doblado, que es como se corre. */
 @keyframes hombro-ciclo {
-    0%   { transform: rotate(-34deg); }
-    50%  { transform: rotate(30deg); }
-    100% { transform: rotate(-34deg); }
+    0%   { transform: rotate(34deg); }
+    50%  { transform: rotate(-30deg); }
+    100% { transform: rotate(34deg); }
 }
 
 @keyframes codo-ciclo {
