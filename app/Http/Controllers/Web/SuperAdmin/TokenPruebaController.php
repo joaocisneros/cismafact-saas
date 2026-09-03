@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApiKey;
 use App\Models\ApiUsage;
 use App\Models\Company;
+use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
@@ -66,7 +67,30 @@ class TokenPruebaController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'dev_name' => ['required', 'string', 'max:120'],
+            'dev_name' => [
+                'required', 'string', 'max:120',
+                /*
+                 * Sin esto se podian crear tres tokens llamados «JOAO», y el
+                 * nombre es lo unico que dice de quien es cada uno: si uno se
+                 * filtra y hay que bloquearlo, no se sabe cual de los tres es.
+                 *
+                 * Solo estorban los que siguen sirviendo. Uno bloqueado o
+                 * caducado ya no es de nadie, asi que su nombre se puede
+                 * reutilizar.
+                 */
+                function (string $atributo, mixed $valor, Closure $fallar) {
+                    $enUso = ApiKey::whereHas('company', fn ($q) => $q->where('es_demo', true))
+                        ->where('name', 'Sandbox - ' . trim((string) $valor))
+                        ->where('active', true)
+                        ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+                        ->exists();
+
+                    if ($enUso) {
+                        $fallar('Ya hay un token en uso con ese nombre. Ponle algo que lo distinga '
+                            . '(por ejemplo «' . trim((string) $valor) . ' - app movil») o bloquea el anterior.');
+                    }
+                },
+            ],
             'expires_in_days' => ['nullable', 'integer', 'min:1', 'max:365'],
         ], [], [
             'dev_name' => 'nombre del programador',
