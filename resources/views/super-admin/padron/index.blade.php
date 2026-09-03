@@ -490,6 +490,14 @@
          class="fixed inset-0 flex items-center justify-center bg-gray-900/60 p-4">
         <div class="w-full max-w-xl rounded-2xl bg-white p-8 shadow-2xl">
 
+            {{-- La animacion trae su propio fondo pintado, asi que va como
+                 banner de la ventana y no suelta sobre la barra: ahi habria
+                 salido un rectangulo morado flotando. --}}
+            <div class="-mx-2 -mt-2 mb-5 overflow-hidden rounded-xl">
+                <img src="{{ asset('assets/padron/importando.gif') }}" alt=""
+                     class="h-32 w-full object-cover" width="150" height="112">
+            </div>
+
             <div class="text-center">
                 <h3 class="text-xl font-bold text-gray-900"
                     x-text="importando ? 'Importando el padrón…' : 'Descargando de SUNAT…'"></h3>
