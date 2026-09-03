@@ -65,6 +65,7 @@ class ApiGlobalController extends Controller
                 'company_id, COUNT(*) as total,
                  SUM(status_code >= 400) as errores,
                  SUM(created_at >= ?) as hoy', [now()->startOfDay()])
+            ->whereHas('apiKey', fn ($q) => $q->where('origen', 'empresa'))
             ->where('created_at', '>=', $inicioMes)
             ->groupBy('company_id')
             ->get()
@@ -72,12 +73,22 @@ class ApiGlobalController extends Controller
 
         $llamadasPorEmpresa = $consumoPorEmpresa->map(fn ($f) => (int) $f->total);
 
-        $empresas = Company::with(['plan:id,name,api_request_limit', 'apiKeys:id,company_id,name,last_used_at'])
-            ->where('es_demo', false)
-            ->withCount([
-                'apiKeys',
-                'apiKeys as api_keys_activas_count' => fn ($q) => $q->where('active', true),
+        $deLaEmpresa = fn ($q) => $q->where('origen', 'empresa');
+
+        $empresas = Company::with([
+                'plan:id,name,api_request_limit',
+                'apiKeys' => fn ($q) => $q->where('origen', 'empresa')
+                    ->select('id', 'company_id', 'name', 'last_used_at'),
             ])
+            ->withCount([
+                'apiKeys as api_keys_count' => $deLaEmpresa,
+                'apiKeys as api_keys_activas_count' => fn ($q) => $q->where('origen', 'empresa')->where('active', true),
+            ])
+            // Los clientes, siempre. La empresa demo, solo cuando alguien le
+            // ha creado una credencial entrando a su panel: entonces es una
+            // credencial de empresa y hay que poder verla desde aqui.
+            ->where(fn ($q) => $q->where('es_demo', false)
+                ->orWhereHas('apiKeys', fn ($k) => $k->where('origen', 'empresa')))
             ->orderBy('razon_social')
             ->get()
             ->map(function ($company) use ($llamadasPorEmpresa, $consumoPorEmpresa) {
@@ -347,7 +358,7 @@ class ApiGlobalController extends Controller
         // Solo llaves de empresas reales. Los tokens de empresas demo/sandbox
         // se gestionan en su propia tabla (sección "Token Sandbox").
         $query = ApiKey::with('company:id,razon_social')
-            ->whereDoesntHave('company', fn ($q) => $q->where('es_demo', true));
+            ->where('origen', 'empresa');
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
