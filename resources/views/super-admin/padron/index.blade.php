@@ -116,7 +116,76 @@
         </div>
     </details>
 
-    <div class="grid gap-5 lg:grid-cols-2 lg:items-start">
+    {{-- Preguntar y ver la respuesta, uno al lado del otro: la respuesta
+         salia debajo del formulario y quedaba fuera de pantalla justo al
+         pulsar, que es cuando se quiere leer. --}}
+    <section class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div class="border-b border-gray-200 px-5 py-4">
+            <h2 class="text-base font-semibold text-gray-900">Proveedor externo</h2>
+            <p class="mt-0.5 text-xs text-gray-500">
+                @if($filas)
+                    Cubre lo que el padrón no tenga: los RUC inscritos después de la última descarga.
+                @else
+                    Mientras el padrón esté vacío, todo sale de aquí.
+                @endif
+            </p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 lg:divide-x lg:divide-gray-100">
+
+            {{-- Izquierda: a quién se pregunta y con qué. --}}
+            <div class="space-y-4 p-5">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-medium text-gray-500">Se pregunta a</span>
+                    <code class="min-w-0 flex-1 truncate rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-700">{{ ($ajustes['consultas_url'] ?? '') ?: config('consultas.url') }}</code>
+                </div>
+
+                <form method="POST" action="{{ route('super-admin.padron.probar') }}" class="flex flex-wrap items-center gap-2">
+                    @csrf
+                    <select name="tipo" class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="ruc" @selected(old('tipo') === 'ruc')>RUC</option>
+                        <option value="dni" @selected(old('tipo') === 'dni')>DNI</option>
+                    </select>
+                    <input type="text" name="numero" value="{{ old('numero') }}"
+                           class="w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="20608251589">
+                    <button type="submit" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
+                        Probar
+                    </button>
+                </form>
+
+                <p class="text-xs text-gray-500">Pregunta de verdad, sin usar lo guardado.</p>
+            </div>
+
+            {{-- Derecha: lo que contesta. --}}
+            <div class="bg-gray-50 p-5">
+                @if($r = session('consulta_prueba'))
+                    <div class="rounded-lg border bg-white px-4 py-3 text-sm {{ $r['valido'] ? 'border-green-200' : 'border-red-200' }}">
+                        <p class="font-semibold {{ $r['valido'] ? 'text-green-800' : 'text-red-800' }}">
+                            {{ $r['numero'] }} — {{ $r['valido'] ? 'válido' : 'no válido' }}
+                            @if(!empty($r['fuente']))
+                                <span class="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">{{ $r['fuente'] }}</span>
+                            @endif
+                        </p>
+                        <dl class="mt-2 space-y-1 text-xs">
+                            @foreach($r as $campo => $valor)
+                                @continue(in_array($campo, ['valido', 'numero', 'tipo', 'fuente'], true) || $valor === null)
+                                <div class="flex gap-2">
+                                    <dt class="w-24 shrink-0 text-gray-500">{{ str_replace('_', ' ', $campo) }}</dt>
+                                    <dd class="min-w-0 font-medium text-gray-800">{{ $valor }}</dd>
+                                </div>
+                            @endforeach
+                        </dl>
+                    </div>
+                @else
+                    <p class="flex h-full items-center justify-center text-center text-xs text-gray-400">
+                        Escribe un número y pulsa «Probar»:<br>aquí sale lo que conteste.
+                    </p>
+                @endif
+            </div>
+        </div>
+    </section>
+
 
     <section class="rounded-lg border border-gray-200 bg-white shadow-sm">
         <div class="border-b border-gray-200 px-5 py-4">
@@ -168,66 +237,6 @@
     {{-- La otra fuente del mismo dato. Mientras el padron este vacio es la
          unica; cuando se importe, pasa a cubrir solo lo que el padron no tenga
          (los RUC inscritos despues de la ultima descarga). --}}
-    <section class="rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div class="border-b border-gray-200 px-5 py-4">
-            <h2 class="text-base font-semibold text-gray-900">Proveedor externo</h2>
-            <p class="mt-0.5 text-xs text-gray-500">
-                @if($filas)
-                    Cubre lo que el padrón no tenga: los RUC inscritos después de la última descarga.
-                @else
-                    Mientras el padrón esté vacío, todo sale de aquí.
-                @endif
-            </p>
-        </div>
-
-        {{-- Ya no se configura aqui: la direccion viene en el sistema y el
-             token, si el proveedor lo pide, en el .env. Pedirlos en pantalla
-             obligaba a escribir a mano algo que es igual en todas las
-             instalaciones, y dejaba las consultas sin responder hasta que
-             alguien lo hacia. --}}
-        <div class="flex flex-wrap items-center gap-2 px-5 py-4">
-            <span class="text-xs font-medium text-gray-500">Se pregunta a</span>
-            <code class="min-w-0 flex-1 truncate rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-700">{{ ($ajustes['consultas_url'] ?? '') ?: config('consultas.url') }}</code>
-        </div>
-
-        <div class="border-t border-gray-100 bg-gray-50 px-5 py-4">
-            <form method="POST" action="{{ route('super-admin.padron.probar') }}" class="flex flex-wrap items-center gap-2">
-                @csrf
-                <select name="tipo" class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="ruc">RUC</option>
-                    <option value="dni">DNI</option>
-                </select>
-                <input type="text" name="numero" value="{{ old('numero') }}"
-                       class="w-44 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                       placeholder="20608251589">
-                <button type="submit" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
-                    Probar
-                </button>
-                <span class="text-xs text-gray-500">Pregunta de verdad, sin usar lo guardado.</span>
-            </form>
-
-            @if($r = session('consulta_prueba'))
-                <div class="mt-3 rounded-lg border bg-white px-4 py-3 text-sm {{ $r['valido'] ? 'border-green-200' : 'border-red-200' }}">
-                    <p class="font-semibold {{ $r['valido'] ? 'text-green-800' : 'text-red-800' }}">
-                        {{ $r['numero'] }} — {{ $r['valido'] ? 'válido' : 'no válido' }}
-                        @if(!empty($r['fuente']))
-                            <span class="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">{{ $r['fuente'] }}</span>
-                        @endif
-                    </p>
-                    <dl class="mt-2 grid gap-x-6 gap-y-1 text-xs sm:grid-cols-2">
-                        @foreach($r as $campo => $valor)
-                            @continue(in_array($campo, ['valido', 'numero', 'tipo', 'fuente'], true) || $valor === null)
-                            <div class="flex gap-2">
-                                <dt class="w-28 shrink-0 text-gray-500">{{ str_replace('_', ' ', $campo) }}</dt>
-                                <dd class="font-medium text-gray-800">{{ $valor }}</dd>
-                            </div>
-                        @endforeach
-                    </dl>
-                </div>
-            @endif
-        </div>
-    </section>
-
     </div>
 
     <section class="rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -279,5 +288,4 @@
         </div>
     </section>
 
-</div>
 @endsection
