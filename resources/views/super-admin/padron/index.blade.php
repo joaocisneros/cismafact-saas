@@ -135,9 +135,24 @@
 
             {{-- Izquierda: a quién se pregunta y con qué. --}}
             <div class="space-y-4 overflow-y-auto p-5">
-                <div class="flex flex-wrap items-center gap-2">
+                {{-- Tapada por defecto: esta ahi por si hace falta comprobarla,
+                     pero se mira una vez y luego solo estorba en una pantalla
+                     que se enseña a otros. --}}
+                <div class="flex flex-wrap items-center gap-2" x-data="{ verUrl: false }">
                     <span class="text-xs font-medium text-gray-500">Se pregunta a</span>
-                    <code class="min-w-0 flex-1 truncate rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-700">{{ ($ajustes['consultas_url'] ?? '') ?: config('consultas.url') }}</code>
+
+                    <code x-show="verUrl" x-cloak
+                          class="min-w-0 flex-1 truncate rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-700">{{ ($ajustes['consultas_url'] ?? '') ?: config('consultas.url') }}</code>
+                    <code x-show="!verUrl"
+                          class="min-w-0 flex-1 select-none truncate rounded bg-gray-50 px-2 py-1 font-mono text-xs tracking-widest text-gray-400">••••••••••••••••••••</code>
+
+                    <button type="button" @click="verUrl = !verUrl"
+                            class="shrink-0 rounded-md border border-gray-300 bg-white p-1.5 text-gray-500 hover:bg-gray-50"
+                            x-bind:title="verUrl ? 'Ocultar la dirección' : 'Ver la dirección'"
+                            x-bind:aria-label="verUrl ? 'Ocultar la dirección' : 'Ver la dirección'">
+                        <span x-show="!verUrl"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></span>
+                        <span x-show="verUrl" x-cloak><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.6 10.6a3 3 0 004.2 4.2M9.9 5.2A9.6 9.6 0 0112 5c4.5 0 8.3 2.9 9.5 7a10.6 10.6 0 01-4 5.2M6.6 6.6A10.6 10.6 0 002.5 12c1.3 4.1 5 7 9.5 7 1 0 1.9-.1 2.8-.4"/></svg></span>
+                    </button>
                 </div>
 
                 <form method="POST" action="{{ route('super-admin.padron.probar') }}"
@@ -171,10 +186,28 @@
             {{-- Derecha: lo que contesta. --}}
             <div class="min-h-0 p-5">
                 @if($r = session('consulta_prueba'))
-                    <div class="h-full overflow-y-auto rounded-lg border px-4 py-3 text-sm {{ $r['valido'] ? 'border-green-200 bg-green-50/30' : 'border-red-200 bg-red-50/30' }}">
-                        <p class="font-semibold {{ $r['valido'] ? 'text-green-800' : 'text-red-800' }}">
-                            {{ $r['numero'] }} — {{ $r['valido'] ? 'válido' : 'no válido' }}
-                            @if(!empty($r['fuente']))
+                    @php
+                        /*
+                         * «valido» dice que el numero esta bien escrito, no que
+                         * exista: un DNI inventado de ocho cifras es «valido».
+                         * Lo que importa aqui es si se trajo la ficha, y eso lo
+                         * dice la fuente. Antes salia «55555555 — válido» en
+                         * verde junto a «Ese DNI no figura en RENIEC».
+                         */
+                        $seEncontro = ($r['fuente'] ?? 'ninguna') !== 'ninguna';
+                        $malEscrito = ! ($r['valido'] ?? false);
+                    @endphp
+                    <div class="h-full overflow-y-auto rounded-lg border px-4 py-3 text-sm {{ $seEncontro ? 'border-green-200 bg-green-50/30' : ($malEscrito ? 'border-red-200 bg-red-50/30' : 'border-amber-200 bg-amber-50/30') }}">
+                        <p class="font-semibold {{ $seEncontro ? 'text-green-800' : ($malEscrito ? 'text-red-800' : 'text-amber-800') }}">
+                            {{ $r['numero'] }} —
+                            @if($seEncontro)
+                                encontrado
+                            @elseif($malEscrito)
+                                número mal escrito
+                            @else
+                                no se encontró
+                            @endif
+                            @if($seEncontro)
                                 <span class="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">{{ $r['fuente'] }}</span>
                             @endif
                         </p>
