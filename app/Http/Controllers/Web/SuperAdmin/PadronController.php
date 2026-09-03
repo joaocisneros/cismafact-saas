@@ -37,43 +37,6 @@ class PadronController extends Controller
         ]);
     }
 
-    public function proveedor(Request $request)
-    {
-        $datos = $request->validate([
-            /*
-             * La direccion lleva {tipo} y {numero}, que se sustituyen al
-             * consultar. La regla «url» los da por invalidos, asi que la
-             * pantalla pedia un formato que ella misma rechazaba: no habia
-             * forma de guardar el proveedor desde aqui.
-             *
-             * Se valida ya sustituidos, que es como va a salir de verdad.
-             */
-            'consultas_url' => ['nullable', 'string', 'max:255', function ($atributo, $valor, $fallar) {
-                $direccion = str_replace(['{tipo}', '{numero}'], ['ruc', '20000000001'], (string) $valor);
-
-                if (! filter_var($direccion, FILTER_VALIDATE_URL) || ! preg_match('#^https?://#i', $direccion)) {
-                    $fallar('La dirección debe empezar por http:// o https://');
-                }
-            }],
-            'consultas_token' => 'nullable|string|max:255',
-        ]);
-
-        foreach ($datos as $clave => $valor) {
-            // Un token vacio no borra el que hay: el formulario nunca lo
-            // muestra, asi que guardar en blanco seria perderlo sin querer.
-            if ($clave === 'consultas_token' && blank($valor)) {
-                continue;
-            }
-
-            Setting::updateOrCreate(
-                ['key' => $clave],
-                ['value' => $valor, 'type' => 'text', 'group' => 'consultas'],
-            );
-        }
-
-        return back()->with('success', 'Proveedor guardado.');
-    }
-
     public function probar(Request $request, ConsultaDocumentoService $consultas)
     {
         $datos = $request->validate([

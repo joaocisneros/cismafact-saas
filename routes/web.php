@@ -264,7 +264,6 @@ Route::prefix('super-admin')
         Route::get('/padron', [SuperAdminPadronController::class, 'index'])->name('padron');
         Route::post('/padron/actualizar', [SuperAdminPadronController::class, 'actualizar'])->name('padron.actualizar');
         Route::get('/padron/estado', [SuperAdminPadronController::class, 'estado'])->name('padron.estado');
-        Route::put('/padron/proveedor', [SuperAdminPadronController::class, 'proveedor'])->name('padron.proveedor');
         Route::post('/padron/probar', [SuperAdminPadronController::class, 'probar'])->name('padron.probar');
 
         Route::get('/settings', [SuperAdminSettingController::class, 'index'])->name('settings');

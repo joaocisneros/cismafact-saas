@@ -218,7 +218,7 @@ class ConsultaDocumentoService
         // Lo guardado manda; si no hay nada, el de siempre. Antes, hasta que
         // alguien escribia la direccion a mano, las consultas no respondian.
         $base = trim((string) ($this->ajuste('consultas_url') ?: config('consultas.url')));
-        $token = trim((string) $this->ajuste('consultas_token'));
+        $token = trim((string) ($this->ajuste('consultas_token') ?: config('consultas.token')));
 
         if ($base === '') {
             $this->porQueNoSeTrajo = 'no hay proveedor configurado';

@@ -18,4 +18,13 @@ return [
      */
     'url' => env('CONSULTAS_URL', 'https://api.apis.net.pe/v1/{tipo}?numero={numero}'),
 
+    /*
+     * Solo si el proveedor lo pide; va como Bearer. Vacio funciona: el
+     * proveedor por defecto responde sin token.
+     *
+     * Tampoco se pide en pantalla. Es una credencial: escrita en el .env no
+     * viaja al navegador ni queda en la base en claro, y se pone una vez.
+     */
+    'token' => env('CONSULTAS_TOKEN'),
+
 ];
