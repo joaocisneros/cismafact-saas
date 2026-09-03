@@ -9,7 +9,45 @@
          filas: {{ $filas }},
          importadas: 0,
          estado: null,
-         init() { if (this.enMarcha) this.vigilar(); },
+         empezo: {{ $empezo ? \Illuminate\Support\Carbon::parse($empezo)->timestamp : 'null' }},
+         referencia: {{ $referencia['filas'] }},
+         referenciaExacta: {{ $referencia['exacta'] ? 'true' : 'false' }},
+         transcurrido: '—',
+         restante: '—',
+         /* Solo hay avance que medir cuando ya esta metiendo filas. */
+         get importando() { return this.estado === 'importando' && this.importadas > 0; },
+         get porcentaje() {
+             if (! this.referencia) { return 0; }
+             return Math.min(99, Math.round(this.importadas * 100 / this.referencia));
+         },
+         init() {
+             if (this.enMarcha) { this.vigilar(); this.contarTiempo(); }
+         },
+         /* Cada segundo, no cada cinco: un reloj que salta de golpe se lee
+            como si la pagina se hubiera quedado colgada. */
+         contarTiempo() {
+             const enPalabras = (s) => {
+                 const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+                 return h ? h + ' h ' + m + ' min' : (m ? m + ' min' : Math.round(s) + ' s');
+             };
+             const pintar = () => {
+                 if (! this.empezo) { this.transcurrido = '—'; this.restante = '—'; return; }
+                 const s = Math.max(0, Math.floor(Date.now() / 1000) - this.empezo);
+                 this.transcurrido = enPalabras(s);
+
+                 /* Lo que queda, al ritmo que lleva. Sin filas todavia no hay
+                    ritmo del que tirar, y decir un tiempo seria inventarlo. */
+                 if (this.importando && s > 30) {
+                     const porSegundo = this.importadas / s;
+                     const faltan = Math.max(0, this.referencia - this.importadas);
+                     this.restante = porSegundo > 0 ? enPalabras(faltan / porSegundo) : '—';
+                 } else {
+                     this.restante = '—';
+                 }
+             };
+             pintar();
+             setInterval(pintar, 1000);
+         },
          vigilar() {
              setInterval(async () => {
                  try {
@@ -18,6 +56,9 @@
                      this.filas = d.filas;
                      this.importadas = d.importadas;
                      this.estado = d.estado;
+                     this.empezo = d.empezo;
+                     this.referencia = d.referencia.filas;
+                     this.referenciaExacta = d.referencia.exacta;
                      if (this.enMarcha && !d.en_marcha) location.reload();
                      this.enMarcha = d.en_marcha;
                  } catch (e) { /* si falla una vuelta, se reintenta en la siguiente */ }
@@ -322,48 +363,77 @@
             </dl>
         </div>
     </section>
-    </div>
-
     {{-- Mientras dura, y tambien al volver a entrar: el estado se pregunta al
-         servidor, asi que la ventana reaparece aunque se recargue la pagina. --}}
-    <div x-show="enMarcha" x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4">
-        <div class="w-full max-w-md rounded-xl bg-white p-6 text-center shadow-xl">
+         servidor, asi que la ventana reaparece aunque se recargue la pagina.
 
-            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
-                <svg class="h-7 w-7 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
-                </svg>
+         El z-index va a mano y por encima de todo: la barra lateral usa el 50,
+         que es lo que Tailwind da con z-50, y la ventana quedaba debajo. --}}
+    <div x-show="enMarcha" x-cloak style="z-index: 9999;"
+         class="fixed inset-0 flex items-center justify-center bg-gray-900/60 p-4">
+        <div class="w-full max-w-xl rounded-2xl bg-white p-8 shadow-2xl">
+
+            <div class="text-center">
+                <h3 class="text-xl font-bold text-gray-900"
+                    x-text="importando ? 'Importando el padrón…' : 'Descargando de SUNAT…'"></h3>
+                <p class="mt-1 text-sm text-gray-500"
+                   x-text="importando
+                        ? 'Se está metiendo en la base, fila a fila.'
+                        : 'El archivo pesa unos 600 MB; esta parte va sola.'"></p>
             </div>
 
-            <h3 class="mt-4 text-lg font-semibold text-gray-900"
-                x-text="estado === 'importando' ? 'Importando el padrón…' : 'Descargando de SUNAT…'"></h3>
-
-            <p class="mt-1 text-sm text-gray-500"
-               x-text="estado === 'importando'
-                    ? 'Se está metiendo en la base, fila a fila.'
-                    : 'El archivo pesa unos 600 MB; esta parte va sola.'"></p>
-
-            {{-- Lo unico que se puede contar de verdad: cuantos RUC llevan
-                 entrando. En la descarga todavia es cero, y decirlo evita que
-                 parezca que no avanza. --}}
-            <div class="mt-5 rounded-lg bg-gray-50 px-4 py-3">
-                <p class="text-2xl font-bold tabular-nums text-gray-900"
-                   x-text="importadas ? importadas.toLocaleString('es-PE') : '—'"></p>
-                <p class="text-xs text-gray-500"
-                   x-text="importadas ? 'RUC importados' : 'aún no ha empezado a importar'"></p>
+            {{-- El corredor va donde va la barra. Mientras descarga se queda al
+                 principio, porque todavia no hay nada que contar. --}}
+            <div class="relative mt-8 h-10">
+                <div class="absolute bottom-0 transition-all duration-700 ease-out"
+                     x-bind:style="'left: calc(' + (importando ? porcentaje : 0) + '% - 1rem)'">
+                    <span class="corre inline-block text-3xl" role="img" aria-label="avanzando">🏃</span>
+                </div>
             </div>
 
-            <p class="mt-4 text-xs text-gray-500">
-                Tarda horas. Puedes cerrar esto o irte de la página:
+            <div class="h-4 w-full overflow-hidden rounded-full bg-gray-100">
+                {{-- Al importar, lo que lleva de verdad. Al descargar, rayas:
+                     esa fase no sabe por donde va. --}}
+                <div x-show="importando"
+                     class="h-full rounded-full bg-blue-600 transition-all duration-700 ease-out"
+                     x-bind:style="'width: ' + porcentaje + '%'"></div>
+                <div x-show="!importando" class="barra-en-marcha h-full w-full rounded-full bg-blue-600"></div>
+            </div>
+
+            <div class="mt-2 flex items-baseline justify-between">
+                <span class="text-3xl font-bold tabular-nums text-blue-600"
+                      x-text="importando ? porcentaje + '%' : '…'"></span>
+                <span class="text-xs text-gray-500" x-show="importando && !referenciaExacta">
+                    aproximado: aún no hay una importación anterior con la que comparar
+                </span>
+            </div>
+
+            <dl class="mt-6 grid grid-cols-3 gap-3 text-center">
+                <div class="rounded-xl bg-gray-50 px-3 py-3">
+                    <dd class="text-lg font-bold tabular-nums text-gray-900"
+                        x-text="importadas.toLocaleString('es-PE')"></dd>
+                    <dt class="mt-0.5 text-xs text-gray-500">RUC importados</dt>
+                </div>
+                <div class="rounded-xl bg-gray-50 px-3 py-3">
+                    <dd class="text-lg font-bold tabular-nums text-gray-900" x-text="transcurrido"></dd>
+                    <dt class="mt-0.5 text-xs text-gray-500">lleva trabajando</dt>
+                </div>
+                <div class="rounded-xl bg-gray-50 px-3 py-3">
+                    <dd class="text-lg font-bold tabular-nums text-gray-900" x-text="restante"></dd>
+                    <dt class="mt-0.5 text-xs text-gray-500">puede quedar</dt>
+                </div>
+            </dl>
+
+            <p class="mt-5 text-center text-xs text-gray-500">
+                Puedes cerrar esto o irte de la página:
                 sigue en el servidor y al terminar se ve aquí.
             </p>
 
-            <button type="button" @click="enMarcha = false"
-                    class="mt-4 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                Cerrar y dejarlo trabajando
-            </button>
+            <div class="mt-4 text-center">
+                <button type="button" @click="enMarcha = false"
+                        class="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
+                    Cerrar y dejarlo trabajando
+                </button>
+            </div>
         </div>
     </div>
 
@@ -430,5 +500,6 @@
             </table>
         </div>
     </section>
+</div>
 
 @endsection

@@ -9,3 +9,58 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/*
+ * Lo que Alpine esconde, escondido tambien antes de que Alpine arranque.
+ *
+ * Sin esta regla, «x-cloak» no hace nada: los paneles y ventanas que deben
+ * salir solo al pulsar algo se ven de golpe mientras carga la pagina, y la
+ * ventana de progreso del padron no se enseñaba nunca porque quedaba fuera
+ * del bloque que la gobierna.
+ */
+[x-cloak] {
+    display: none !important;
+}
+
+/*
+ * Barra de avance para lo que no se puede medir.
+ *
+ * La importación del padrón no sabe cuánto le queda: no hay un total contra
+ * el que comparar hasta que termina. Una barra parada al 0% parecería
+ * colgada, así que las rayas se mueven para decir que sigue viva, que es lo
+ * único cierto.
+ */
+@keyframes rayas-en-marcha {
+    from { background-position: 0 0; }
+    to   { background-position: 2.5rem 0; }
+}
+
+.barra-en-marcha {
+    background-image: linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, .45) 25%, transparent 25%,
+        transparent 50%, rgba(255, 255, 255, .45) 50%,
+        rgba(255, 255, 255, .45) 75%, transparent 75%, transparent
+    );
+    background-size: 2.5rem 2.5rem;
+    animation: rayas-en-marcha 1s linear infinite;
+}
+
+/* El icono respira: en una espera de horas, algo tiene que moverse aunque no
+   haya nada nuevo que contar. */
+@keyframes respira {
+    0%, 100% { transform: scale(1);    opacity: 1;   }
+    50%      { transform: scale(1.08); opacity: .85; }
+}
+
+.respira { animation: respira 2s ease-in-out infinite; }
+
+/* El corredor da zancadas mientras avanza: quieto sobre la barra parecería
+   una pegatina, y lo que se quiere transmitir es que aquello sigue andando. */
+@keyframes zancada {
+    0%, 100% { transform: translateY(0)      rotate(0deg); }
+    25%      { transform: translateY(-.35rem) rotate(-6deg); }
+    75%      { transform: translateY(-.15rem) rotate(4deg); }
+}
+
+.corre { animation: zancada .6s ease-in-out infinite; }

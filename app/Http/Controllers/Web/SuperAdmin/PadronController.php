@@ -26,6 +26,8 @@ class PadronController extends Controller
             'filas' => DB::table('padron_ruc')->count(),
             'importaciones' => DB::table('padron_importaciones')->latest('id')->limit(5)->get(),
             'enMarcha' => $this->enMarcha(),
+            'empezo' => optional(DB::table('padron_importaciones')->latest('id')->first())->iniciada_en,
+            'referencia' => $this->referencia(),
             'espacio' => $this->espacio(),
             'puedeLanzar' => $this->puedeLanzar(),
             // El proveedor externo vive aqui, junto al padron: las dos son
@@ -97,6 +99,12 @@ class PadronController extends Controller
             'estado' => $ultima->estado ?? null,
             'importadas' => (int) ($ultima->filas ?? 0),
             'mensaje' => $ultima->mensaje ?? '',
+            // Para contar el tiempo que lleva: en una tarea de horas es lo que
+            // dice que sigue viva.
+            'empezo' => $ultima?->iniciada_en
+                ? \Illuminate\Support\Carbon::parse($ultima->iniciada_en)->timestamp
+                : null,
+            'referencia' => $this->referencia(),
         ]);
     }
 
@@ -118,6 +126,28 @@ class PadronController extends Controller
     }
 
     /** @return array{libre: float|null, necesario: int} En GB. */
+    /**
+     * Contra cuantos RUC se mide el avance.
+     *
+     * La importacion no sabe cuantos va a traer hasta que termina, asi que sin
+     * una referencia no hay porcentaje que enseñar. La mejor es lo que trajo la
+     * ultima vez que fue bien: el padron crece poco de un mes a otro. La
+     * primera vez no hay ninguna y se usa el tamaño habitual del padron, y ahi
+     * el porcentaje se enseña como aproximado.
+     *
+     * @return array{filas: int, exacta: bool}
+     */
+    private function referencia(): array
+    {
+        $ultimaBuena = (int) DB::table('padron_importaciones')
+            ->where('estado', 'completada')
+            ->max('filas');
+
+        return $ultimaBuena > 0
+            ? ['filas' => $ultimaBuena, 'exacta' => true]
+            : ['filas' => 11_500_000, 'exacta' => false];
+    }
+
     private function espacio(): array
     {
         $libre = @disk_free_space(base_path());
