@@ -164,17 +164,30 @@
    viewBox, de ahi el transform-box. */
 .corredor g { transform-box: view-box; }
 
-.corredor .muslo-a   { transform-origin: 29px 33px; animation: muslo-ciclo   .62s ease-in-out infinite; }
-.corredor .rodilla-a { transform-origin: 29px 41px; animation: rodilla-ciclo .62s ease-in-out infinite; }
-.corredor .hombro-a  { transform-origin: 29px 22px; animation: hombro-ciclo  .62s ease-in-out infinite; }
-.corredor .codo-a    { transform-origin: 29px 28px; animation: codo-ciclo    .62s ease-in-out infinite; }
+.corredor .muslo-a   { transform-origin: 30px 34px; animation: muslo-ciclo   .62s ease-in-out infinite; }
+.corredor .rodilla-a { transform-origin: 30px 43px; animation: rodilla-ciclo .62s ease-in-out infinite; }
+.corredor .hombro-a  { transform-origin: 30px 22px; animation: hombro-ciclo  .62s ease-in-out infinite; }
+.corredor .codo-a    { transform-origin: 30px 29px; animation: codo-ciclo    .62s ease-in-out infinite; }
 
 /* La otra mitad del cuerpo, media zancada por detras. */
-.corredor .muslo-b   { transform-origin: 29px 33px; animation: muslo-ciclo   .62s ease-in-out infinite; animation-delay: -.31s; }
-.corredor .rodilla-b { transform-origin: 29px 41px; animation: rodilla-ciclo .62s ease-in-out infinite; animation-delay: -.31s; }
-.corredor .hombro-b  { transform-origin: 29px 22px; animation: hombro-ciclo  .62s ease-in-out infinite; animation-delay: -.31s; }
-.corredor .codo-b    { transform-origin: 29px 28px; animation: codo-ciclo    .62s ease-in-out infinite; animation-delay: -.31s; }
+.corredor .muslo-b   { transform-origin: 30px 34px; animation: muslo-ciclo   .62s ease-in-out infinite; animation-delay: -.31s; }
+.corredor .rodilla-b { transform-origin: 30px 43px; animation: rodilla-ciclo .62s ease-in-out infinite; animation-delay: -.31s; }
+.corredor .hombro-b  { transform-origin: 30px 22px; animation: hombro-ciclo  .62s ease-in-out infinite; animation-delay: -.31s; }
+.corredor .codo-b    { transform-origin: 30px 29px; animation: codo-ciclo    .62s ease-in-out infinite; animation-delay: -.31s; }
 
 .corredor .estela   { animation: estela .62s linear infinite; }
 .corredor .estela-2 { animation-delay: .2s; }
 .corredor .estela-3 { animation-delay: .4s; }
+
+/* La sombra se encoge cuando el cuerpo esta arriba y se ensancha al apoyar:
+   es lo que ata la figura al suelo. */
+@keyframes sombra-zancada {
+    0%, 50%, 100% { transform: scaleX(1);   opacity: .13; }
+    25%, 75%      { transform: scaleX(.78); opacity: .09; }
+}
+
+.corredor .sombra {
+    transform-box: view-box;
+    transform-origin: 30px 56.5px;
+    animation: sombra-zancada .62s ease-in-out infinite;
+}
