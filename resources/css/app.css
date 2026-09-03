@@ -55,12 +55,98 @@
 
 .respira { animation: respira 2s ease-in-out infinite; }
 
-/* El corredor da zancadas mientras avanza: quieto sobre la barra parecería
-   una pegatina, y lo que se quiere transmitir es que aquello sigue andando. */
+/* El corredor.
+ *
+ * Mira a la derecha, que es hacia donde avanza: el emoji viene mirando a la
+ * izquierda y hay que voltearlo (scaleX(-1)), asi que todos los fotogramas lo
+ * llevan o el volteo se pierde al animar.
+ *
+ * Y corre en vez de saltar: sube y baja como quien da zancadas, se inclina
+ * hacia delante en el impulso y se endereza al caer. Solo botar parecia un
+ * muñeco en un muelle. */
 @keyframes zancada {
-    0%, 100% { transform: translateY(0)      rotate(0deg); }
-    25%      { transform: translateY(-.35rem) rotate(-6deg); }
-    75%      { transform: translateY(-.15rem) rotate(4deg); }
+    0%   { transform: scaleX(-1) translateY(0)       rotate(0deg); }
+    15%  { transform: scaleX(-1) translateY(-.45rem) rotate(-9deg); }
+    30%  { transform: scaleX(-1) translateY(-.2rem)  rotate(-4deg); }
+    50%  { transform: scaleX(-1) translateY(0)       rotate(2deg); }
+    65%  { transform: scaleX(-1) translateY(-.35rem) rotate(-7deg); }
+    85%  { transform: scaleX(-1) translateY(-.1rem)  rotate(3deg); }
+    100% { transform: scaleX(-1) translateY(0)       rotate(0deg); }
 }
 
-.corre { animation: zancada .6s ease-in-out infinite; }
+/* El polvo que deja detras: sale del pie y se queda atras mientras el
+   corredor sigue. Sin esto, el movimiento se lee como un salto en el sitio. */
+@keyframes polvo {
+    0%   { opacity: .55; transform: translateX(0)     scale(1); }
+    100% { opacity: 0;   transform: translateX(1.1rem) scale(.4); }
+}
+
+.corre {
+    position: relative;
+    animation: zancada .55s ease-in-out infinite;
+}
+
+.corre::after {
+    content: '';
+    position: absolute;
+    right: -.15rem;
+    bottom: .15rem;
+    width: .5rem;
+    height: .2rem;
+    border-radius: 9999px;
+    background: rgb(148 163 184 / .8);
+    animation: polvo .55s linear infinite;
+}
+
+/*
+ * El corredor, articulado.
+ *
+ * El emoji solo podia botar entero: se le voltea y se le sacude, pero las
+ * piernas siguen quietas y se lee como un muñeco en un muelle. Este va por
+ * piezas —dos piernas, dos brazos y el cuerpo—, y cada una gira sobre su
+ * articulacion con el mismo ciclo desfasado, que es como se camina de verdad.
+ *
+ * Sin imagenes ni librerias: son cinco trazos y cinco animaciones.
+ */
+@keyframes pierna-delante {
+    0%, 100% { transform: rotate(28deg); }
+    50%      { transform: rotate(-32deg); }
+}
+
+@keyframes pierna-detras {
+    0%, 100% { transform: rotate(-32deg); }
+    50%      { transform: rotate(28deg); }
+}
+
+@keyframes brazo-delante {
+    0%, 100% { transform: rotate(-38deg); }
+    50%      { transform: rotate(30deg); }
+}
+
+@keyframes brazo-detras {
+    0%, 100% { transform: rotate(30deg); }
+    50%      { transform: rotate(-38deg); }
+}
+
+/* El cuerpo sube en la zancada y baja al apoyar: dos botes por ciclo, uno
+   por pierna. */
+@keyframes bote {
+    0%, 50%, 100% { transform: translateY(0); }
+    25%, 75%      { transform: translateY(-.14rem); }
+}
+
+.corredor { animation: bote .5s ease-in-out infinite; }
+.corredor .pierna-a { animation: pierna-delante .5s ease-in-out infinite; transform-origin: 30px 34px; }
+.corredor .pierna-b { animation: pierna-detras  .5s ease-in-out infinite; transform-origin: 30px 34px; }
+.corredor .brazo-a  { animation: brazo-delante  .5s ease-in-out infinite; transform-origin: 30px 22px; }
+.corredor .brazo-b  { animation: brazo-detras   .5s ease-in-out infinite; transform-origin: 30px 22px; }
+
+/* Rayas de velocidad detras, que salen y se desvanecen. */
+@keyframes estela {
+    0%   { opacity: .5; transform: translateX(0); }
+    100% { opacity: 0;  transform: translateX(-.9rem); }
+}
+
+.corredor .estela { animation: estela .5s linear infinite; }
+.corredor .estela-2 { animation-delay: .17s; }
+.corredor .estela-3 { animation-delay: .34s; }

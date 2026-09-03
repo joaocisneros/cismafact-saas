@@ -739,6 +739,11 @@
         </div>
     </div>
 
+    {{-- Las ventanas emergentes de cada pantalla van aqui, al final del body y
+         fuera de los contenedores de la pagina: dentro del contenido el fondo
+         oscuro no llegaba al borde inferior. --}}
+    @stack('ventanas')
+
     <div x-show="toastMessage" x-cloak x-transition.opacity
          style="z-index: 10000;"
          class="fixed right-4 top-4 max-w-sm rounded-md border border-green-200 bg-white px-4 py-3 text-sm font-medium text-green-700 shadow-lg"
