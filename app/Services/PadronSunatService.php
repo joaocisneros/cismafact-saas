@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use ZipArchive;
@@ -121,7 +122,18 @@ class PadronSunatService
             );
         }
 
-        $this->marcar($id, ['bytes_descargados' => $bytes]);
+        /*
+         * De que dia son los datos. El padron es una foto que SUNAT publica
+         * cada cierto tiempo, y entre esa foto y la importacion pueden pasar
+         * dias: sin esto, el historial decia cuando se importo pero no si lo
+         * que hay en la base es de la semana pasada o de hace dos meses.
+         */
+        $publicado = $r->header('Last-Modified');
+
+        $this->marcar($id, [
+            'bytes_descargados' => $bytes,
+            'datos_de' => $publicado ? Carbon::parse($publicado)->toDateString() : null,
+        ]);
 
         return $destino;
     }

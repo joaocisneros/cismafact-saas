@@ -374,6 +374,7 @@
                     <tr>
                         <th class="px-5 py-3">Estado</th>
                         <th class="px-5 py-3">RUC importados</th>
+                        <th class="px-5 py-3">Datos de</th>
                         <th class="px-5 py-3">Descargado</th>
                         <th class="px-5 py-3">Empezó</th>
                         <th class="px-5 py-3">Terminó</th>
@@ -395,6 +396,17 @@
                                 @endif
                             </td>
                             <td class="px-5 py-3 text-gray-700">{{ number_format($i->filas) }}</td>
+
+                            {{-- De que dia es la foto, no cuando se importo:
+                                 entre una cosa y otra pueden pasar dias, y los
+                                 RUC inscritos en medio no estan. --}}
+                            <td class="px-5 py-3 text-gray-600">
+                                @if($i->datos_de)
+                                    {{ \Illuminate\Support\Carbon::parse($i->datos_de)->format('d/m/Y') }}
+                                @else
+                                    <span class="text-gray-300">—</span>
+                                @endif
+                            </td>
                             <td class="px-5 py-3 text-gray-600">
                                 {{ $i->bytes_descargados ? round($i->bytes_descargados / 1024 ** 2) . ' MB' : '—' }}
                             </td>
@@ -420,7 +432,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="px-5 py-8 text-center text-gray-500">Todavía no se ha importado nunca.</td></tr>
+                        <tr><td colspan="7" class="px-5 py-8 text-center text-gray-500">Todavía no se ha importado nunca.</td></tr>
                     @endforelse
                 </tbody>
             </table>
