@@ -136,10 +136,12 @@
 }
 
 .corredor { animation: bote .5s ease-in-out infinite; }
-.corredor .pierna-a { animation: pierna-delante .5s ease-in-out infinite; transform-origin: 30px 34px; }
-.corredor .pierna-b { animation: pierna-detras  .5s ease-in-out infinite; transform-origin: 30px 34px; }
-.corredor .brazo-a  { animation: brazo-delante  .5s ease-in-out infinite; transform-origin: 30px 22px; }
-.corredor .brazo-b  { animation: brazo-detras   .5s ease-in-out infinite; transform-origin: 30px 22px; }
+/* El giro sale de la cadera y del hombro, no del centro del dibujo: con el
+   origen mal puesto la pierna no gira, se desliza. */
+.corredor .pierna-a { animation: pierna-delante .5s ease-in-out infinite; transform-origin: 29px 33px; transform-box: view-box; }
+.corredor .pierna-b { animation: pierna-detras  .5s ease-in-out infinite; transform-origin: 29px 33px; transform-box: view-box; }
+.corredor .brazo-a  { animation: brazo-delante  .5s ease-in-out infinite; transform-origin: 29px 21px; transform-box: view-box; }
+.corredor .brazo-b  { animation: brazo-detras   .5s ease-in-out infinite; transform-origin: 29px 21px; transform-box: view-box; }
 
 /* Rayas de velocidad detras, que salen y se desvanecen. */
 @keyframes estela {

@@ -506,20 +506,45 @@
                      x-bind:style="'left: calc(' + (importando ? porcentaje : 0) + '% - 1.4rem)'">
                     {{-- Va por piezas para que se muevan las piernas: un emoji
                          solo puede botar entero. --}}
-                    <svg class="corredor h-11 w-11 text-blue-600" viewBox="0 0 60 52" fill="none"
-                         stroke="currentColor" stroke-width="3.4" stroke-linecap="round"
-                         role="img" aria-label="avanzando">
-                        <g class="estela" stroke-width="2.6" opacity=".5"><path d="M14 20h-9"/></g>
-                        <g class="estela estela-2" stroke-width="2.6" opacity=".4"><path d="M12 28h-11"/></g>
-                        <g class="estela estela-3" stroke-width="2.6" opacity=".3"><path d="M15 36h-8"/></g>
+                    <svg class="corredor h-14 w-14" viewBox="0 0 60 56" fill="none"
+                         stroke-linecap="round" role="img" aria-label="avanzando">
+                        {{-- Rayas de velocidad, que se quedan atras. --}}
+                        <g stroke="#93c5fd" stroke-width="2.6">
+                            <path class="estela" d="M15 18h-10" opacity=".7"/>
+                            <path class="estela estela-2" d="M12 27h-11" opacity=".55"/>
+                            <path class="estela estela-3" d="M16 36h-9" opacity=".4"/>
+                        </g>
 
-                        <circle cx="38" cy="11" r="6" fill="currentColor" stroke="none"/>
-                        <path d="M35 18 L30 34"/>
+                        {{-- Piernas: pantalon oscuro y zapatilla al final. La de
+                             atras va primero para que la de delante la tape. --}}
+                        <g class="pierna-b">
+                            <path d="M30 34 L21 45" stroke="#334155" stroke-width="5"/>
+                            <ellipse cx="19" cy="46.5" rx="4.4" ry="2.6" fill="#2563eb" transform="rotate(-18 19 46.5)"/>
+                        </g>
+                        <g class="pierna-a">
+                            <path d="M30 34 L40 44" stroke="#1e293b" stroke-width="5"/>
+                            <ellipse cx="42" cy="45.5" rx="4.4" ry="2.6" fill="#3b82f6" transform="rotate(12 42 45.5)"/>
+                        </g>
 
-                        <g class="brazo-b"><path d="M30 22 L20 27"/></g>
-                        <g class="pierna-b"><path d="M30 34 L22 46"/></g>
-                        <g class="pierna-a"><path d="M30 34 L40 45"/></g>
-                        <g class="brazo-a"><path d="M30 22 L41 26"/></g>
+                        {{-- Brazo de atras. --}}
+                        <g class="brazo-b">
+                            <path d="M30 22 L21 26" stroke="#2563eb" stroke-width="4.6"/>
+                            <circle cx="19.5" cy="26.5" r="2.4" fill="#f8c9a4"/>
+                        </g>
+
+                        {{-- Cuerpo: sudadera azul. --}}
+                        <path d="M31 18 L28.5 34" stroke="#3b82f6" stroke-width="9" stroke-linecap="round"/>
+
+                        {{-- Cabeza, pelo y cara mirando a donde va. --}}
+                        <circle cx="36" cy="12" r="6.4" fill="#f8c9a4"/>
+                        <path d="M30.2 9.5a6.4 6.4 0 0 1 11.6 -.6 8 8 0 0 0 -11.6 .6Z" fill="#1e293b"/>
+                        <circle cx="39.4" cy="12" r="1.05" fill="#1e293b"/>
+
+                        {{-- Brazo de delante, encima de todo. --}}
+                        <g class="brazo-a">
+                            <path d="M30 22 L40 25" stroke="#60a5fa" stroke-width="4.6"/>
+                            <circle cx="41.6" cy="25.4" r="2.4" fill="#f8c9a4"/>
+                        </g>
                     </svg>
                 </div>
             </div>
