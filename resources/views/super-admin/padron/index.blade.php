@@ -103,7 +103,7 @@
                 no sale a internet: se responde desde la propia base, sin límite y en milisegundos.
             </p>
             <p>
-                <strong class="text-gray-800">Trae lo mismo que un proveedor externo</strong> —nombre, estado,
+                <strong class="text-gray-800">Trae lo mismo que el servidor de consultas</strong> —nombre, estado,
                 condición y domicilio— y nada más. La fecha de inscripción, la actividad económica y el tipo de
                 contribuyente solo están en la ficha web de SUNAT, detrás de un captcha. Esto da independencia,
                 no información nueva.
@@ -111,7 +111,7 @@
             <p>
                 <strong class="text-gray-800">Y envejece.</strong> Es una foto del día en que SUNAT publicó el
                 archivo: un RUC inscrito después no figura, y uno dado de baja ayer sigue apareciendo como
-                activo. Por eso el proveedor externo no sobra: el padrón responde primero y él cubre lo que falte.
+                activo. Por eso el servidor de consultas no sobra: el padrón responde primero y él cubre lo que falte.
             </p>
         </div>
     </details>
@@ -121,7 +121,7 @@
          pulsar, que es cuando se quiere leer. --}}
     <section class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
         <div class="border-b border-gray-200 px-5 py-4">
-            <h2 class="text-base font-semibold text-gray-900">Proveedor externo</h2>
+            <h2 class="text-base font-semibold text-gray-900">Servidor de consultas</h2>
             <p class="mt-0.5 text-xs text-gray-500">
                 @if($filas)
                     Cubre lo que el padrón no tenga: los RUC inscritos después de la última descarga.
