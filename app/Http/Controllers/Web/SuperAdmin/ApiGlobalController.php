@@ -54,13 +54,6 @@ class ApiGlobalController extends Controller
             ];
         });
 
-        // Tokens sandbox = API keys de empresas marcadas como demo. Se listan
-        // bajo el formulario para verlos, extenderlos o bloquearlos ahí mismo.
-        $sandboxTokens = ApiKey::whereHas('company', fn ($q) => $q->where('es_demo', true))
-            ->with('company:id,razon_social')
-            ->latest()
-            ->get();
-
         // El eje de esta pantalla es la EMPRESA: cuanto consume de su cupo
         // mensual y si puedes cortarle el acceso. Antes listaba credenciales
         // sueltas, que no dicen quien esta cerca de pasarse.
@@ -118,14 +111,8 @@ class ApiGlobalController extends Controller
                 ];
             });
 
-        $logsRecientes = ApiUsage::with('company:id,razon_social')
-            ->latest()
-            ->limit(10)
-            ->get();
-
         return view('super-admin.api-global', $data + [
             'empresas' => $empresas,
-            'logsRecientes' => $logsRecientes,
         ]);
     }
 
@@ -456,7 +443,11 @@ class ApiGlobalController extends Controller
             ];
         });
 
-        return view('super-admin.api-global._performance_modal', $data);
+        if (request()->ajax() || request()->boolean('modal')) {
+            return view('super-admin.api-global._performance_modal', $data);
+        }
+
+        return view('super-admin.api-global.performance', $data);
     }
 
 }

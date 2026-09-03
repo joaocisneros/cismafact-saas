@@ -144,7 +144,7 @@
                                 <td class="px-4 py-3">
                                     <span class="font-medium text-gray-900">{{ number_format($e['hoy']) }}</span>
                                     @if($e['errores'] > 0)
-                                        <span class="ml-1 text-xs font-semibold text-red-600">{{ number_format($e['errores']) }} con error</span>
+                                        <p class="text-xs font-semibold text-red-600">{{ number_format($e['errores']) }} con error este mes</p>
                                     @endif
                                 </td>
 
@@ -168,6 +168,11 @@
                                 <td class="px-4 py-3">
                                     @if($e['credenciales'] === 0)
                                         <span class="text-xs text-gray-400">sin credenciales</span>
+                                    @elseif(! $empresa->activo)
+                                        <span class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700"
+                                              title="La empresa está inactiva: la API responde 403 aunque sus credenciales figuren activas">
+                                            empresa inactiva
+                                        </span>
                                     @elseif($tieneAcceso)
                                         <span class="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
                                             {{ $e['activas'] }} activa{{ $e['activas'] > 1 ? 's' : '' }}
