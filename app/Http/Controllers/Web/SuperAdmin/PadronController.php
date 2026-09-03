@@ -40,10 +40,22 @@ class PadronController extends Controller
     public function proveedor(Request $request)
     {
         $datos = $request->validate([
-            'consultas_url' => 'nullable|url:http,https|max:255',
+            /*
+             * La direccion lleva {tipo} y {numero}, que se sustituyen al
+             * consultar. La regla «url» los da por invalidos, asi que la
+             * pantalla pedia un formato que ella misma rechazaba: no habia
+             * forma de guardar el proveedor desde aqui.
+             *
+             * Se valida ya sustituidos, que es como va a salir de verdad.
+             */
+            'consultas_url' => ['nullable', 'string', 'max:255', function ($atributo, $valor, $fallar) {
+                $direccion = str_replace(['{tipo}', '{numero}'], ['ruc', '20000000001'], (string) $valor);
+
+                if (! filter_var($direccion, FILTER_VALIDATE_URL) || ! preg_match('#^https?://#i', $direccion)) {
+                    $fallar('La dirección debe empezar por http:// o https://');
+                }
+            }],
             'consultas_token' => 'nullable|string|max:255',
-        ], [
-            'consultas_url.url' => 'La dirección debe empezar por http:// o https://',
         ]);
 
         foreach ($datos as $clave => $valor) {

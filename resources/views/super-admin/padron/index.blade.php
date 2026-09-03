@@ -3,7 +3,7 @@
 @section('title', 'Padrón SUNAT')
 
 @section('content')
-<div class="space-y-6"
+<div class="space-y-5"
      x-data="{
          enMarcha: {{ $enMarcha ? 'true' : 'false' }},
          filas: {{ $filas }},
@@ -91,36 +91,40 @@
         </div>
     </section>
 
-    <section class="rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div class="border-b border-gray-200 px-5 py-4">
-            <h2 class="text-base font-semibold text-gray-900">Qué es esto</h2>
-        </div>
-        <div class="space-y-3 p-5 text-sm text-gray-700">
+    {{-- Se lee una vez y estorba siempre: cerrado ocupa una linea, y sigue
+         estando para quien lo necesite. --}}
+    <details class="rounded-lg border border-gray-200 bg-white px-5 py-3 text-sm">
+        <summary class="cursor-pointer font-medium text-gray-700 hover:text-gray-900">
+            Qué es el padrón y qué no cubre
+        </summary>
+        <div class="mt-3 space-y-2 border-t border-gray-100 pt-3 text-gray-600">
             <p>
                 Una copia del <strong>padrón reducido</strong> que SUNAT publica. Con ella, consultar un RUC
                 no sale a internet: se responde desde la propia base, sin límite y en milisegundos.
             </p>
-            <p class="text-gray-600">
+            <p>
                 <strong class="text-gray-800">Trae lo mismo que un proveedor externo</strong> —nombre, estado,
                 condición y domicilio— y nada más. La fecha de inscripción, la actividad económica y el tipo de
                 contribuyente solo están en la ficha web de SUNAT, detrás de un captcha. Esto da independencia,
                 no información nueva.
             </p>
-            <p class="text-gray-600">
+            <p>
                 <strong class="text-gray-800">Y envejece.</strong> Es una foto del día en que SUNAT publicó el
                 archivo: un RUC inscrito después no figura, y uno dado de baja ayer sigue apareciendo como
                 activo. Por eso el proveedor externo no sobra: el padrón responde primero y él cubre lo que falte.
             </p>
         </div>
-    </section>
+    </details>
+
+    <div class="grid gap-5 lg:grid-cols-2 lg:items-start">
 
     <section class="rounded-lg border border-gray-200 bg-white shadow-sm">
         <div class="border-b border-gray-200 px-5 py-4">
-            <h2 class="text-base font-semibold text-gray-900">Actualizar</h2>
-            <p class="mt-0.5 text-xs text-gray-500">
-                Se descarga de SUNAT y se importa a una tabla aparte; el padrón en uso solo se sustituye
-                al final, cuando la nueva está completa. Las consultas no se cortan en ningún momento.
-            </p>
+            <h2 class="text-base font-semibold text-gray-900"
+                title="Se descarga de SUNAT y se importa a una tabla aparte; el padrón en uso solo se sustituye al final, cuando la nueva está completa. Las consultas no se cortan en ningún momento.">
+                Actualizar
+            </h2>
+            <p class="mt-0.5 text-xs text-gray-500">Las consultas no se cortan mientras se importa.</p>
         </div>
 
         <div class="space-y-4 p-5">
@@ -243,6 +247,8 @@
             @endif
         </div>
     </section>
+
+    </div>
 
     <section class="rounded-lg border border-gray-200 bg-white shadow-sm">
         <div class="border-b border-gray-200 px-5 py-4">
