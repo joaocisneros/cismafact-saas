@@ -240,33 +240,51 @@
             <p class="mt-0.5 text-xs text-gray-500">Las consultas no se cortan mientras se importa.</p>
         </div>
 
-        <div class="space-y-4 p-5">
-            @if(($espacio['libre'] ?? 99) < $espacio['necesario'])
-                <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                    <p class="font-semibold">No hay espacio suficiente</p>
-                    <p class="mt-1 text-xs">
-                        Quedan {{ $espacio['libre'] }} GB libres y hacen falta unos {{ $espacio['necesario'] }}.
-                        La importación fallaría a mitad.
-                    </p>
-                </div>
-            @endif
+        @php($sinEspacio = ($espacio['libre'] ?? 99) < $espacio['necesario'])
+        @php($ultima = $importaciones->first())
 
-            @unless($puedeLanzar)
-                <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                    <p class="font-semibold">Este servidor no deja arrancar procesos</p>
-                    <p class="mt-1 text-xs">Hay que lanzarlo a mano por terminal o por cron.</p>
-                </div>
-            @endunless
+        {{-- Lo que impide lanzarlo va a todo el ancho: es lo primero que hay
+             que leer y asi no compite con nada. --}}
+        @if($sinEspacio || ! $puedeLanzar)
+            <div class="space-y-3 border-b border-gray-100 px-5 py-4">
+                @if($sinEspacio)
+                    <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                        <p class="font-semibold">No hay espacio suficiente</p>
+                        <p class="mt-1 text-xs">
+                            Quedan {{ $espacio['libre'] }} GB libres y hacen falta unos {{ $espacio['necesario'] }}.
+                            La importación fallaría a mitad.
+                        </p>
+                    </div>
+                @endif
 
-            <div class="flex flex-wrap items-center gap-3">
+                @unless($puedeLanzar)
+                    <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                        <p class="font-semibold">Este servidor no deja arrancar procesos</p>
+                        <p class="mt-1 text-xs">Hay que lanzarlo a mano por terminal o por cron.</p>
+                    </div>
+                @endunless
+            </div>
+        @endif
+
+        <div class="grid lg:grid-cols-2 lg:divide-x lg:divide-gray-100">
+
+            {{-- Izquierda: lanzarlo. --}}
+            <div class="space-y-3 p-5">
                 <form method="POST" action="{{ route('super-admin.padron.actualizar') }}"
                       onsubmit="return confirm('La descarga e importación tarda horas y ocupa unos 3 GB. ¿Continuar?')">
                     @csrf
                     <button type="submit"
                             :disabled="enMarcha"
-                            class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300">
-                        <span x-show="!enMarcha">{{ $filas ? 'Volver a descargar' : 'Descargar e importar' }}</span>
-                        <span x-show="enMarcha" x-cloak>En marcha…</span>
+                            class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300">
+                        <span x-show="!enMarcha" class="inline-flex items-center gap-2"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>{{ $filas ? 'Volver a descargar' : 'Descargar e importar' }}</span>
+                        <span x-show="enMarcha" x-cloak class="inline-flex items-center gap-2">
+                            <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                            </svg>
+                            <span>En marcha…</span>
+                            <span x-show="importadas" x-text="importadas.toLocaleString() + ' RUC'"></span>
+                        </span>
                     </button>
                 </form>
 
@@ -275,12 +293,35 @@
                     <code class="rounded bg-gray-100 px-1.5 py-0.5 font-mono">php artisan padron:actualizar</code>
                 </p>
             </div>
+
+            {{-- Derecha: lo que hay que saber antes de pulsar. Estaba solo en el
+                 aviso de confirmacion, que se lee cuando uno ya ha decidido. --}}
+            <dl class="space-y-2 p-5 text-sm">
+                <div class="flex gap-3">
+                    <dt class="w-32 shrink-0 text-gray-500">Ocupa</dt>
+                    <dd class="font-medium text-gray-800">unos {{ $espacio['necesario'] }} GB</dd>
+                </div>
+                <div class="flex gap-3">
+                    <dt class="w-32 shrink-0 text-gray-500">Tarda</dt>
+                    <dd class="font-medium text-gray-800">horas</dd>
+                </div>
+                <div class="flex gap-3">
+                    <dt class="w-32 shrink-0 text-gray-500">Espacio libre</dt>
+                    <dd class="font-medium {{ $sinEspacio ? 'text-red-700' : 'text-gray-800' }}">
+                        {{ $espacio['libre'] !== null ? $espacio['libre'] . ' GB' : 'no se pudo medir' }}
+                    </dd>
+                </div>
+                <div class="flex gap-3">
+                    <dt class="w-32 shrink-0 text-gray-500">Última vez</dt>
+                    <dd class="font-medium text-gray-800">
+                        {{ $ultima?->terminada_en
+                            ? \Illuminate\Support\Carbon::parse($ultima->terminada_en)->format('d/m/Y')
+                            : 'nunca' }}
+                    </dd>
+                </div>
+            </dl>
         </div>
     </section>
-
-    {{-- La otra fuente del mismo dato. Mientras el padron este vacio es la
-         unica; cuando se importe, pasa a cubrir solo lo que el padron no tenga
-         (los RUC inscritos despues de la ultima descarga). --}}
     </div>
 
     <section class="rounded-lg border border-gray-200 bg-white shadow-sm">
