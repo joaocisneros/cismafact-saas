@@ -182,12 +182,12 @@
 /* La sombra se encoge cuando el cuerpo esta arriba y se ensancha al apoyar:
    es lo que ata la figura al suelo. */
 @keyframes sombra-zancada {
-    0%, 50%, 100% { transform: scaleX(1);   opacity: .13; }
-    25%, 75%      { transform: scaleX(.78); opacity: .09; }
+    0%, 50%, 100% { transform: scaleX(1);   opacity: .16; }
+    25%, 75%      { transform: scaleX(.78); opacity: .11; }
 }
 
 .corredor .sombra {
     transform-box: view-box;
-    transform-origin: 30px 56.5px;
+    transform-origin: 30px 56px;
     animation: sombra-zancada .62s ease-in-out infinite;
 }

@@ -506,68 +506,60 @@
                      x-bind:style="'left: calc(' + (importando ? porcentaje : 0) + '% - 3rem)'">
                     {{-- Va por piezas para que se muevan las piernas: un emoji
                          solo puede botar entero. --}}
-                    <svg class="corredor h-24 w-24" viewBox="0 0 64 62" fill="none"
-                         stroke-linecap="round" stroke-linejoin="round"
+                    <svg class="corredor h-24 w-24 text-blue-600" viewBox="0 0 64 62" fill="none"
+                         stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                          role="img" aria-label="avanzando">
 
-                        {{-- Sombra en el suelo: ancla la figura, que si no
-                             parece que flota. Late con la zancada. --}}
-                        <ellipse class="sombra" cx="30" cy="56.5" rx="11" ry="2.2" fill="#0f172a" opacity=".13"/>
+                        {{-- Sombra: ata la figura al suelo. Sin ella flota. --}}
+                        <ellipse class="sombra" cx="30" cy="56" rx="11" ry="2.2"
+                                 fill="currentColor" stroke="none" opacity=".16"/>
 
                         {{-- Rayas de velocidad, que se quedan atras. --}}
-                        <g stroke="#93c5fd" stroke-width="2.6">
-                            <path class="estela" d="M14 17h-10" opacity=".7"/>
-                            <path class="estela estela-2" d="M11 27h-11" opacity=".55"/>
-                            <path class="estela estela-3" d="M15 37h-9" opacity=".4"/>
+                        <g stroke-width="2.6" opacity=".35">
+                            <path class="estela" d="M13 16h-9"/>
+                            <path class="estela estela-2" d="M10 26h-10"/>
+                            <path class="estela estela-3" d="M14 36h-8"/>
                         </g>
 
-                        {{-- Pierna de atras, en tonos mas apagados: el ojo la
-                             lee detras sin necesidad de mas. --}}
-                        <g class="muslo-b">
-                            <path d="M30 34 L30 43" stroke="#475569" stroke-width="6.4"/>
-                            <g class="rodilla-b">
-                                <path d="M30 43 L30 51" stroke="#475569" stroke-width="5.2"/>
-                                <path d="M27.5 53.4 h7.5" stroke="#1d4ed8" stroke-width="4.4"/>
-                                <path d="M27.5 55.2 h7.8" stroke="#e2e8f0" stroke-width="1.8"/>
+                        {{-- Todo lo de detras va con la misma tinta y menos
+                             opacidad: asi se lee al fondo sin parecer de otro
+                             color, que era lo que despistaba. --}}
+                        <g opacity=".45">
+                            <g class="muslo-b">
+                                <path d="M30 34 L30 43" stroke-width="7"/>
+                                <g class="rodilla-b">
+                                    <path d="M30 43 L30 51" stroke-width="5.6"/>
+                                    <path d="M28 53.6 h7" stroke-width="4.4"/>
+                                </g>
+                            </g>
+                            <g class="hombro-b">
+                                <path d="M30 22 L30 29" stroke-width="5.4"/>
+                                <g class="codo-b">
+                                    <path d="M30 29 L30 34.5" stroke-width="4.6"/>
+                                </g>
                             </g>
                         </g>
 
-                        <g class="hombro-b">
-                            <path d="M30 22 L30 29" stroke="#1d4ed8" stroke-width="5"/>
-                            <g class="codo-b">
-                                <path d="M30 29 L30 34" stroke="#e8b48d" stroke-width="4.2"/>
-                                <circle cx="30" cy="35.4" r="2.5" fill="#e8b48d"/>
-                            </g>
-                        </g>
+                        {{-- Cuerpo, inclinado hacia delante como quien corre. --}}
+                        <path d="M31.5 20.5 L28.8 35" stroke-width="10.5"/>
 
-                        {{-- Cuerpo: sudadera con capucha, inclinada hacia
-                             delante como quien corre. --}}
-                        <path d="M31.5 20 L28.8 35" stroke="#3b82f6" stroke-width="10.5"/>
-                        <path d="M33.6 19.5 a5 5 0 0 1 -6.4 2.6 a6 6 0 0 1 6.4 -2.6Z" fill="#2563eb"/>
+                        {{-- Cabeza: solo la forma. Una cara dibujada a mano a
+                             este tamaño sale rara mires como la mires. --}}
+                        <circle cx="36.5" cy="12" r="7" fill="currentColor" stroke="none"/>
+                        <path d="M33.8 17.4 L34.8 15" stroke-width="4.5"/>
 
-                        {{-- Cuello y cabeza. --}}
-                        <path d="M34.2 17.6 L35.4 14.6" stroke="#e8b48d" stroke-width="4"/>
-                        <circle cx="37" cy="11.5" r="6.6" fill="#f8c9a4"/>
-                        <path d="M30.6 10.4 a6.6 6.6 0 0 1 12.6 -1.7 a9 9 0 0 0 -6.2 -1.3 a7.5 7.5 0 0 0 -6.4 3Z" fill="#1e293b"/>
-                        <circle cx="40.4" cy="11.6" r="1.15" fill="#1e293b"/>
-                        <path d="M33.6 13.6 a2 2 0 0 0 1.6 .5" stroke="#d9a179" stroke-width="1.2"/>
-
-                        {{-- Pierna de delante, encima del cuerpo y con mas
-                             contraste. --}}
+                        {{-- Y lo de delante, a plena tinta. --}}
                         <g class="muslo-a">
-                            <path d="M30 34 L30 43" stroke="#1e293b" stroke-width="6.4"/>
+                            <path d="M30 34 L30 43" stroke-width="7"/>
                             <g class="rodilla-a">
-                                <path d="M30 43 L30 51" stroke="#1e293b" stroke-width="5.2"/>
-                                <path d="M27.5 53.4 h8" stroke="#3b82f6" stroke-width="4.6"/>
-                                <path d="M27.3 55.3 h8.4" stroke="#f8fafc" stroke-width="2"/>
+                                <path d="M30 43 L30 51" stroke-width="5.6"/>
+                                <path d="M28 53.6 h7.5" stroke-width="4.6"/>
                             </g>
                         </g>
-
                         <g class="hombro-a">
-                            <path d="M30 22 L30 29" stroke="#60a5fa" stroke-width="5"/>
+                            <path d="M30 22 L30 29" stroke-width="5.4"/>
                             <g class="codo-a">
-                                <path d="M30 29 L30 34" stroke="#f8c9a4" stroke-width="4.2"/>
-                                <circle cx="30" cy="35.4" r="2.5" fill="#f8c9a4"/>
+                                <path d="M30 29 L30 34.5" stroke-width="4.6"/>
                             </g>
                         </g>
                     </svg>
