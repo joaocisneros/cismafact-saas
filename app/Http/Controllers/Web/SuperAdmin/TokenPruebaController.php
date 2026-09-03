@@ -28,7 +28,10 @@ class TokenPruebaController extends Controller
     {
         $empresaDemo = Company::where('es_demo', true)->first();
 
+        // Solo los que reparte este modulo. Si la empresa demo se crea una
+        // credencial desde su panel, es suya y no un token de programador.
         $tokens = ApiKey::whereHas('company', fn ($q) => $q->where('es_demo', true))
+            ->where('origen', 'sandbox')
             ->with('company:id,razon_social')
             ->latest()
             ->get();
@@ -55,10 +58,10 @@ class TokenPruebaController extends Controller
      */
     public function regenerar(ApiKey $apiKey)
     {
-        if (! $apiKey->company?->es_demo) {
+        if ($apiKey->origen !== 'sandbox') {
             return back()->with('error',
-                'Esa credencial es de una empresa real, no de sandbox. Su secret se cambia desde '
-                . 'API Facturación, que es donde se ve a quién afecta.');
+                'Esa credencial no es un token de sandbox: es de una empresa. Su secret se cambia '
+                . 'desde API Facturación, que es donde se ve a quién afecta.');
         }
 
         $plainSecret = ApiKey::generateSecret();
@@ -116,6 +119,7 @@ class TokenPruebaController extends Controller
         $apiKey = ApiKey::create([
             'company_id' => $demo->id,
             'name' => 'Sandbox - ' . $validated['dev_name'],
+            'origen' => 'sandbox',
             'key' => ApiKey::generateKey(),
             'secret' => $plainSecret,
             'abilities' => ['*'],

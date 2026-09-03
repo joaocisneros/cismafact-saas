@@ -329,10 +329,10 @@ class ApiGlobalController extends Controller
      */
     public function destroyApiKey(ApiKey $apiKey)
     {
-        if (! $apiKey->company?->es_demo) {
+        if ($apiKey->origen !== 'sandbox') {
             return back()->with('error',
-                'Esa credencial es de una empresa real. Borrarla no se puede deshacer: el cliente '
-                . 'pierde su key y hay que rehacerle la integración. Usa «Bloquear», que sí se deshace.');
+                'Esa credencial no es un token de sandbox: es de una empresa. Borrarla no se puede '
+                . 'deshacer, pierde su key y hay que rehacerle la integración. Usa «Bloquear», que sí se deshace.');
         }
 
         $nombre = $apiKey->name;

@@ -13,7 +13,12 @@ class ApiKeyController extends Controller
 {
     public function index()
     {
+        // Solo las suyas. Los tokens que el Super Admin reparte a
+        // programadores cuelgan de la empresa demo, asi que a su dueño le
+        // salian aqui mezclados con los propios y podia regenerarlos o
+        // borrarlos, dejando sin servicio al programador.
         $apiKeys = ApiKey::where('company_id', Auth::user()->company_id)
+            ->where('origen', 'empresa')
             ->latest()
             ->get();
 
@@ -57,6 +62,10 @@ class ApiKeyController extends Controller
 
     public function destroy(ApiKey $apiKey)
     {
+        if ($apiKey->origen !== 'empresa') {
+            abort(404);
+        }
+
         if ($apiKey->company_id !== Auth::user()->company_id) {
             abort(403);
         }
@@ -68,6 +77,10 @@ class ApiKeyController extends Controller
 
     public function toggle(ApiKey $apiKey)
     {
+        if ($apiKey->origen !== 'empresa') {
+            abort(404);
+        }
+
         if ($apiKey->company_id !== Auth::user()->company_id) {
             abort(403);
         }
@@ -88,6 +101,10 @@ class ApiKeyController extends Controller
      */
     public function showSecret(ApiKey $apiKey)
     {
+        if ($apiKey->origen !== 'empresa') {
+            abort(404);
+        }
+
         // Cada empresa solo ve lo suyo.
         if ($apiKey->company_id !== Auth::user()->company_id) {
             abort(403);
@@ -98,6 +115,10 @@ class ApiKeyController extends Controller
 
     public function regenerate(ApiKey $apiKey)
     {
+        if ($apiKey->origen !== 'empresa') {
+            abort(404);
+        }
+
         if ($apiKey->company_id !== Auth::user()->company_id) {
             abort(403);
         }

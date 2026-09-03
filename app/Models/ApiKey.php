@@ -14,6 +14,8 @@ class ApiKey extends Model
     protected $fillable = [
         'company_id',
         'name',
+        // Quien la reparte: 'sandbox' (Super Admin) o 'empresa' (su dueño).
+        'origen',
         'key',
         'secret',
         'emitir_async',
