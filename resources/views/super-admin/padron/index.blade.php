@@ -501,12 +501,12 @@
 
             {{-- El corredor va donde va la barra. Mientras descarga se queda al
                  principio, porque todavia no hay nada que contar. --}}
-            <div class="relative mt-8 h-12">
+            <div class="relative mt-6 h-24">
                 <div class="absolute bottom-0 transition-all duration-700 ease-out"
-                     x-bind:style="'left: calc(' + (importando ? porcentaje : 0) + '% - 1.4rem)'">
+                     x-bind:style="'left: calc(' + (importando ? porcentaje : 0) + '% - 3rem)'">
                     {{-- Va por piezas para que se muevan las piernas: un emoji
                          solo puede botar entero. --}}
-                    <svg class="corredor h-16 w-16" viewBox="0 0 64 62" fill="none"
+                    <svg class="corredor h-24 w-24" viewBox="0 0 64 62" fill="none"
                          stroke-linecap="round" stroke-linejoin="round"
                          role="img" aria-label="avanzando">
 
