@@ -12,10 +12,14 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuthenticateApiKey
 {
+    /** Intentos fallidos por IP y minuto antes de cortar. */
+    private const FALLOS_POR_MINUTO = 10;
+
     public function handle(Request $request, Closure $next): Response
     {
         /*
@@ -63,6 +67,24 @@ class AuthenticateApiKey
             ], 401);
         }
 
+        /*
+         * Los fallos se cuentan por IP. La X-Api-Key no es secreta —sale en la
+         * ficha y viaja en cada peticion—, asi que quien la consiga podia
+         * quedarse probando secretos sin freno: cada intento costaba una
+         * consulta y nada le paraba.
+         *
+         * Solo frena a quien se equivoca: al acertar, el contador se borra, de
+         * modo que un cliente que integra bien no lo nota nunca.
+         */
+        $cubo = 'api-fallos:' . $request->ip();
+
+        if (RateLimiter::tooManyAttempts($cubo, self::FALLOS_POR_MINUTO)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Demasiados intentos fallidos. Espera un minuto.',
+            ], 429)->header('Retry-After', RateLimiter::availableIn($cubo));
+        }
+
         $apiKey = ApiKey::query()
             ->with(['company.branches' => fn ($query) => $query->where('activo', true)->oldest('id')])
             ->where('key', $apiKeyValue)
@@ -70,11 +92,15 @@ class AuthenticateApiKey
             ->first();
 
         if (! $apiKey || ! hash_equals((string) $apiKey->secret, (string) $apiSecretValue)) {
+            RateLimiter::hit($cubo, 60);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Credenciales API invalidas.',
             ], 401);
         }
+
+        RateLimiter::clear($cubo);
 
         if ($apiKey->expires_at && $apiKey->expires_at->isPast()) {
             return response()->json([
