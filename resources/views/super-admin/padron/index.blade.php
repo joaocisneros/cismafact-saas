@@ -158,9 +158,9 @@
             </div>
 
             {{-- Derecha: lo que contesta. --}}
-            <div class="overflow-y-auto bg-gray-50 p-5">
+            <div class="min-h-0 bg-gray-50 p-5">
                 @if($r = session('consulta_prueba'))
-                    <div class="rounded-lg border bg-white px-4 py-3 text-sm {{ $r['valido'] ? 'border-green-200' : 'border-red-200' }}">
+                    <div class="h-full overflow-y-auto rounded-lg border bg-white px-4 py-3 text-sm {{ $r['valido'] ? 'border-green-200' : 'border-red-200' }}">
                         <p class="font-semibold {{ $r['valido'] ? 'text-green-800' : 'text-red-800' }}">
                             {{ $r['numero'] }} — {{ $r['valido'] ? 'válido' : 'no válido' }}
                             @if(!empty($r['fuente']))
