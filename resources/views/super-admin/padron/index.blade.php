@@ -184,26 +184,40 @@
             @csrf
             @method('PUT')
 
-            <div class="grid gap-4 md:grid-cols-2">
-                <div>
-                    <label for="consultas_url" class="mb-1 block text-xs font-medium text-gray-700">Dirección</label>
-                    <input type="url" name="consultas_url" id="consultas_url"
+            {{-- La direccion ya viene puesta en el sistema y es la misma para
+                 todos: pedirla en pantalla obligaba a escribir a mano algo que
+                 nunca cambia. Se enseña, y cambiarla queda para el desplegable
+                 de abajo, que casi nadie va a abrir. --}}
+            <div class="flex flex-wrap items-center gap-2 rounded-lg bg-gray-50 px-3 py-2">
+                <span class="text-xs font-medium text-gray-500">Se pregunta a</span>
+                <code class="min-w-0 flex-1 truncate font-mono text-xs text-gray-700">{{ ($ajustes['consultas_url'] ?? '') ?: config('consultas.url') }}</code>
+                @unless($ajustes['consultas_url'] ?? null)
+                    <span class="rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-600">por defecto</span>
+                @endunless
+            </div>
+
+            <div>
+                <label for="consultas_token" class="mb-1 block text-xs font-medium text-gray-700">
+                    Token <span class="font-normal text-gray-400">· opcional, va como Bearer</span>
+                </label>
+                <input type="password" name="consultas_token" id="consultas_token" autocomplete="new-password"
+                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="{{ !empty($ajustes['consultas_token']) ? 'Guardado. Déjalo vacío para conservarlo' : 'Solo si tu proveedor lo pide' }}">
+            </div>
+
+            <details class="text-xs">
+                <summary class="cursor-pointer text-gray-500 hover:text-gray-700">Cambiar de proveedor</summary>
+                <div class="mt-2">
+                    <input type="text" name="consultas_url" id="consultas_url"
                            value="{{ old('consultas_url', $ajustes['consultas_url'] ?? '') }}"
                            class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="https://api.apis.net.pe/v1/{tipo}?numero={numero}">
-                    <p class="mt-1 text-xs text-gray-500">
-                        Pon <code class="rounded bg-gray-100 px-1">{tipo}</code> y
+                           placeholder="{{ config('consultas.url') }}">
+                    <p class="mt-1 text-gray-500">
+                        Vacío usa el de siempre. Pon <code class="rounded bg-gray-100 px-1">{tipo}</code> y
                         <code class="rounded bg-gray-100 px-1">{numero}</code> donde vayan.
                     </p>
                 </div>
-                <div>
-                    <label for="consultas_token" class="mb-1 block text-xs font-medium text-gray-700">Token</label>
-                    <input type="password" name="consultas_token" id="consultas_token" autocomplete="new-password"
-                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="{{ !empty($ajustes['consultas_token']) ? 'Dejar vacío para mantener el actual' : 'Opcional' }}">
-                    <p class="mt-1 text-xs text-gray-500">Va como <code class="rounded bg-gray-100 px-1">Bearer</code></p>
-                </div>
-            </div>
+            </details>
 
             <button type="submit" class="whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
                 Guardar
