@@ -131,10 +131,10 @@
             </p>
         </div>
 
-        <div class="grid lg:grid-cols-2 lg:divide-x lg:divide-gray-100">
+        <div class="grid lg:h-64 lg:grid-cols-2 lg:divide-x lg:divide-gray-100">
 
             {{-- Izquierda: a quién se pregunta y con qué. --}}
-            <div class="space-y-4 p-5">
+            <div class="space-y-4 overflow-y-auto p-5">
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="text-xs font-medium text-gray-500">Se pregunta a</span>
                     <code class="min-w-0 flex-1 truncate rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-700">{{ ($ajustes['consultas_url'] ?? '') ?: config('consultas.url') }}</code>
@@ -158,7 +158,7 @@
             </div>
 
             {{-- Derecha: lo que contesta. --}}
-            <div class="bg-gray-50 p-5">
+            <div class="overflow-y-auto bg-gray-50 p-5">
                 @if($r = session('consulta_prueba'))
                     <div class="rounded-lg border bg-white px-4 py-3 text-sm {{ $r['valido'] ? 'border-green-200' : 'border-red-200' }}">
                         <p class="font-semibold {{ $r['valido'] ? 'text-green-800' : 'text-red-800' }}">
