@@ -499,74 +499,7 @@
                         : 'El archivo pesa unos 600 MB; esta parte va sola.'"></p>
             </div>
 
-            {{-- El corredor va donde va la barra. Mientras descarga se queda al
-                 principio, porque todavia no hay nada que contar. --}}
-            <div class="relative mt-6 h-24">
-                <div class="absolute bottom-0 transition-all duration-700 ease-out"
-                     x-bind:style="'left: calc(' + (importando ? porcentaje : 0) + '% - 3rem)'">
-                    {{-- Va por piezas para que se muevan las piernas: un emoji
-                         solo puede botar entero. --}}
-                    <svg class="corredor h-24 w-24 text-blue-600" viewBox="0 0 64 62" fill="none"
-                         stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                         role="img" aria-label="avanzando">
-
-                        {{-- Sombra: ata la figura al suelo. Sin ella flota. --}}
-                        <ellipse class="sombra" cx="30" cy="56" rx="11" ry="2.2"
-                                 fill="currentColor" stroke="none" opacity=".16"/>
-
-                        {{-- Rayas de velocidad, que se quedan atras. --}}
-                        <g stroke-width="2.6" opacity=".35">
-                            <path class="estela" d="M13 16h-9"/>
-                            <path class="estela estela-2" d="M10 26h-10"/>
-                            <path class="estela estela-3" d="M14 36h-8"/>
-                        </g>
-
-                        {{-- Todo lo de detras va con la misma tinta y menos
-                             opacidad: asi se lee al fondo sin parecer de otro
-                             color, que era lo que despistaba. --}}
-                        <g opacity=".45">
-                            <g class="muslo-b">
-                                <path d="M30 34 L30 43" stroke-width="7"/>
-                                <g class="rodilla-b">
-                                    <path d="M30 43 L30 51" stroke-width="5.6"/>
-                                    <path d="M28 53.6 h7" stroke-width="4.4"/>
-                                </g>
-                            </g>
-                            <g class="hombro-b">
-                                <path d="M30 22 L30 29" stroke-width="5.4"/>
-                                <g class="codo-b">
-                                    <path d="M30 29 L30 34.5" stroke-width="4.6"/>
-                                </g>
-                            </g>
-                        </g>
-
-                        {{-- Cuerpo, inclinado hacia delante como quien corre. --}}
-                        <path d="M31.5 20.5 L28.8 35" stroke-width="10.5"/>
-
-                        {{-- Cabeza: solo la forma. Una cara dibujada a mano a
-                             este tamaño sale rara mires como la mires. --}}
-                        <circle cx="36.5" cy="12" r="7" fill="currentColor" stroke="none"/>
-                        <path d="M33.8 17.4 L34.8 15" stroke-width="4.5"/>
-
-                        {{-- Y lo de delante, a plena tinta. --}}
-                        <g class="muslo-a">
-                            <path d="M30 34 L30 43" stroke-width="7"/>
-                            <g class="rodilla-a">
-                                <path d="M30 43 L30 51" stroke-width="5.6"/>
-                                <path d="M28 53.6 h7.5" stroke-width="4.6"/>
-                            </g>
-                        </g>
-                        <g class="hombro-a">
-                            <path d="M30 22 L30 29" stroke-width="5.4"/>
-                            <g class="codo-a">
-                                <path d="M30 29 L30 34.5" stroke-width="4.6"/>
-                            </g>
-                        </g>
-                    </svg>
-                </div>
-            </div>
-
-            <div class="h-4 w-full overflow-hidden rounded-full bg-gray-100">
+            <div class="mt-7 h-4 w-full overflow-hidden rounded-full bg-gray-100">
                 <div x-show="importando"
                      class="h-full rounded-full bg-blue-600 transition-all duration-700 ease-out"
                      x-bind:style="'width: ' + porcentaje + '%'"></div>

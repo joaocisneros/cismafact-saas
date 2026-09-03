@@ -48,10 +48,6 @@
 
 /* El icono respira: en una espera de horas, algo tiene que moverse aunque no
    haya nada nuevo que contar. */
-@keyframes respira {
-    0%, 100% { transform: scale(1);    opacity: 1;   }
-    50%      { transform: scale(1.08); opacity: .85; }
-}
 
 .respira { animation: respira 2s ease-in-out infinite; }
 
@@ -64,130 +60,7 @@
  * Y corre en vez de saltar: sube y baja como quien da zancadas, se inclina
  * hacia delante en el impulso y se endereza al caer. Solo botar parecia un
  * muñeco en un muelle. */
-@keyframes zancada {
-    0%   { transform: scaleX(-1) translateY(0)       rotate(0deg); }
-    15%  { transform: scaleX(-1) translateY(-.45rem) rotate(-9deg); }
-    30%  { transform: scaleX(-1) translateY(-.2rem)  rotate(-4deg); }
-    50%  { transform: scaleX(-1) translateY(0)       rotate(2deg); }
-    65%  { transform: scaleX(-1) translateY(-.35rem) rotate(-7deg); }
-    85%  { transform: scaleX(-1) translateY(-.1rem)  rotate(3deg); }
-    100% { transform: scaleX(-1) translateY(0)       rotate(0deg); }
-}
 
 /* El polvo que deja detras: sale del pie y se queda atras mientras el
    corredor sigue. Sin esto, el movimiento se lee como un salto en el sitio. */
-@keyframes polvo {
-    0%   { opacity: .55; transform: translateX(0)     scale(1); }
-    100% { opacity: 0;   transform: translateX(1.1rem) scale(.4); }
-}
 
-.corre {
-    position: relative;
-    animation: zancada .55s ease-in-out infinite;
-}
-
-.corre::after {
-    content: '';
-    position: absolute;
-    right: -.15rem;
-    bottom: .15rem;
-    width: .5rem;
-    height: .2rem;
-    border-radius: 9999px;
-    background: rgb(148 163 184 / .8);
-    animation: polvo .55s linear infinite;
-}
-
-/*
- * El ciclo de carrera.
- *
- * Con la pierna de una pieza solo cabia abrir y cerrar como un compas, y por
- * eso el movimiento se veia siempre igual: lo era. Al correr la rodilla se
- * dobla mucho cuando el pie va detras —el talon sube hacia el gluteo— y se
- * estira al llegar delante. Ese contraste es la zancada.
- *
- * Muslo y pantorrilla llevan el mismo ciclo pero desfasados; la pierna de
- * atras va media vuelta por detras de la de delante.
- */
-/* Los signos importan y no son intuitivos: en SVG el eje Y crece hacia abajo,
-   asi que un giro positivo lleva la pierna hacia la IZQUIERDA. El corredor
-   mira a la derecha, de modo que adelante es negativo. Con los signos al
-   reves parecia que andaba de espaldas. */
-@keyframes muslo-ciclo {
-    0%   { transform: rotate(-26deg); }  /* apoya delante */
-    25%  { transform: rotate(2deg); }    /* pasa bajo el cuerpo */
-    50%  { transform: rotate(30deg); }   /* impulsa detras */
-    75%  { transform: rotate(-6deg); }   /* recoge */
-    100% { transform: rotate(-26deg); }
-}
-
-/* La rodilla solo dobla hacia atras: llevaba el signo cambiado y la pierna se
-   partia hacia delante, que es lo que se veia torcido. */
-@keyframes rodilla-ciclo {
-    0%   { transform: rotate(6deg); }    /* casi estirada al apoyar */
-    25%  { transform: rotate(14deg); }
-    50%  { transform: rotate(52deg); }   /* el talon sube al empujar */
-    75%  { transform: rotate(88deg); }   /* recogida, talon al gluteo */
-    100% { transform: rotate(6deg); }
-}
-
-/* Los brazos van al contrario que la pierna del mismo lado, con el codo
-   siempre algo doblado, que es como se corre. */
-@keyframes hombro-ciclo {
-    0%   { transform: rotate(34deg); }
-    50%  { transform: rotate(-30deg); }
-    100% { transform: rotate(34deg); }
-}
-
-@keyframes codo-ciclo {
-    0%   { transform: rotate(-58deg); }
-    50%  { transform: rotate(-88deg); }
-    100% { transform: rotate(-58deg); }
-}
-
-/* El cuerpo sube en el impulso y baja al apoyar: dos botes por ciclo. */
-@keyframes bote {
-    0%, 50%, 100% { transform: translateY(0); }
-    25%, 75%      { transform: translateY(-.16rem); }
-}
-
-/* Rayas de velocidad, que salen y se desvanecen hacia atras. */
-@keyframes estela {
-    0%   { opacity: .6; transform: translateX(0); }
-    100% { opacity: 0;  transform: translateX(-.9rem); }
-}
-
-.corredor { animation: bote .62s ease-in-out infinite; }
-
-/* El giro sale de la articulacion, no del centro del dibujo: con el origen
-   mal puesto la pierna no gira, se desliza. Las coordenadas son las del
-   viewBox, de ahi el transform-box. */
-.corredor g { transform-box: view-box; }
-
-.corredor .muslo-a   { transform-origin: 30px 34px; animation: muslo-ciclo   .62s ease-in-out infinite; }
-.corredor .rodilla-a { transform-origin: 30px 43px; animation: rodilla-ciclo .62s ease-in-out infinite; }
-.corredor .hombro-a  { transform-origin: 30px 22px; animation: hombro-ciclo  .62s ease-in-out infinite; }
-.corredor .codo-a    { transform-origin: 30px 29px; animation: codo-ciclo    .62s ease-in-out infinite; }
-
-/* La otra mitad del cuerpo, media zancada por detras. */
-.corredor .muslo-b   { transform-origin: 30px 34px; animation: muslo-ciclo   .62s ease-in-out infinite; animation-delay: -.31s; }
-.corredor .rodilla-b { transform-origin: 30px 43px; animation: rodilla-ciclo .62s ease-in-out infinite; animation-delay: -.31s; }
-.corredor .hombro-b  { transform-origin: 30px 22px; animation: hombro-ciclo  .62s ease-in-out infinite; animation-delay: -.31s; }
-.corredor .codo-b    { transform-origin: 30px 29px; animation: codo-ciclo    .62s ease-in-out infinite; animation-delay: -.31s; }
-
-.corredor .estela   { animation: estela .62s linear infinite; }
-.corredor .estela-2 { animation-delay: .2s; }
-.corredor .estela-3 { animation-delay: .4s; }
-
-/* La sombra se encoge cuando el cuerpo esta arriba y se ensancha al apoyar:
-   es lo que ata la figura al suelo. */
-@keyframes sombra-zancada {
-    0%, 50%, 100% { transform: scaleX(1);   opacity: .16; }
-    25%, 75%      { transform: scaleX(.78); opacity: .11; }
-}
-
-.corredor .sombra {
-    transform-box: view-box;
-    transform-origin: 30px 56px;
-    animation: sombra-zancada .62s ease-in-out infinite;
-}
