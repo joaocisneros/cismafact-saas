@@ -132,14 +132,26 @@ class StatisticController extends Controller
             $start = now()->subMonths(11)->startOfMonth();
             $end = now()->endOfMonth();
 
-            $invoices = Invoice::whereBetween('created_at', [$start, $end])
-                ->selectRaw("YEAR(created_at) as anio, MONTH(created_at) as mes, COUNT(*) as total, SUM(mto_imp_venta) as ventas")
+            /*
+             * Por fecha de emision y sin los anulados, como el resto del
+             * sistema.
+             *
+             * Contaba por la fecha de grabado, asi que un comprobante emitido
+             * a fin de mes y registrado al dia siguiente caia en el mes que no
+             * era. Y sumaba las ventas de los comprobantes dados de baja, que
+             * ya no son ventas: esta pantalla daba mas de lo que las empresas
+             * ven en su propio panel.
+             */
+            $invoices = Invoice::whereBetween('fecha_emision', [$start, $end])
+                ->whereNull('anulado_en')
+                ->selectRaw("YEAR(fecha_emision) as anio, MONTH(fecha_emision) as mes, COUNT(*) as total, SUM(mto_imp_venta) as ventas")
                 ->groupBy('anio', 'mes')
                 ->get()
                 ->mapWithKeys(fn($r) => [$r->anio . '-' . str_pad($r->mes, 2, '0', STR_PAD_LEFT) => $r]);
 
-            $boletas = Boleta::whereBetween('created_at', [$start, $end])
-                ->selectRaw("YEAR(created_at) as anio, MONTH(created_at) as mes, COUNT(*) as total, SUM(mto_imp_venta) as ventas")
+            $boletas = Boleta::whereBetween('fecha_emision', [$start, $end])
+                ->whereNull('anulado_en')
+                ->selectRaw("YEAR(fecha_emision) as anio, MONTH(fecha_emision) as mes, COUNT(*) as total, SUM(mto_imp_venta) as ventas")
                 ->groupBy('anio', 'mes')
                 ->get()
                 ->mapWithKeys(fn($r) => [$r->anio . '-' . str_pad($r->mes, 2, '0', STR_PAD_LEFT) => $r]);

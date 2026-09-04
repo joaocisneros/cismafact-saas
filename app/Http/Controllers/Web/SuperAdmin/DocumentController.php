@@ -229,12 +229,18 @@ class DocumentController extends Controller
             $query->where("{$table}.numero_completo", 'like', '%' . $request->input('search') . '%');
         }
 
+        /*
+         * «Desde» y «Hasta» son la fecha del comprobante, no la del dia en que
+         * se grabo. Quien busca «los documentos de agosto» quiere los emitidos
+         * en agosto: uno del 31 registrado el 1 de septiembre es de agosto, y
+         * asi lo cuentan el resto de pantallas.
+         */
         if ($request->filled('date_from')) {
-            $query->whereDate("{$table}.created_at", '>=', $request->input('date_from'));
+            $query->whereDate("{$table}.fecha_emision", '>=', $request->input('date_from'));
         }
 
         if ($request->filled('date_to')) {
-            $query->whereDate("{$table}.created_at", '<=', $request->input('date_to'));
+            $query->whereDate("{$table}.fecha_emision", '<=', $request->input('date_to'));
         }
 
         return $query;
