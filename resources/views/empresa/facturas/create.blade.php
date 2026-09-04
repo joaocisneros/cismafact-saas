@@ -63,7 +63,7 @@
         <div class="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
             <div class="flex items-center justify-between">
                 <h2 class="font-semibold text-gray-800">Cliente</h2>
-                <select @change="seleccionarCliente($event.target.value)" class="rounded-md border border-gray-300 px-3 py-2 text-sm">
+                <select @change="seleccionarCliente($event.target.value)" class="w-72 max-w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
                     <option value="">— Cliente frecuente (RUC) —</option>
                     <template x-for="c in clientesRuc" :key="c.id">
                         <option :value="c.id" x-text="c.doc + ' - ' + c.nombre"></option>

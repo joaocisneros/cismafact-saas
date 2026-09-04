@@ -53,12 +53,14 @@
         <div class="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
             <div class="flex items-center justify-between">
                 <h2 class="font-semibold text-gray-800">Cliente</h2>
+                {{-- Ancho fijo: el texto de dentro cambia con el tipo elegido, y
+                     sin esto la caja crecia y encogia moviendo lo de al lado. --}}
                 <select x-model="clienteElegido" @change="seleccionarCliente($event.target.value)"
-                        class="rounded-md border border-gray-300 px-3 py-2 text-sm">
+                        class="w-72 max-w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
                     {{-- Solo los del tipo que está puesto al lado: elegir aquí un
                          cliente de otro tipo dejaba el formulario descuadrado, y
                          eso no se veía hasta darle a emitir. --}}
-                    <option value="" x-text="clientesDelTipo.length ? '— Cliente frecuente —' : '— Ninguno con ese documento —'"></option>
+                    <option value="" x-text="clientesDelTipo.length ? '— Cliente frecuente —' : '— Ninguno de ese tipo —'"></option>
                     <template x-for="c in clientesDelTipo" :key="c.id">
                         <option :value="c.id" x-text="c.doc + ' - ' + c.nombre"></option>
                     </template>
