@@ -233,16 +233,16 @@ class AuthController extends Controller
      */
     public function systemInfo()
     {
-        $userCount = User::count();
-        $isInitialized = $userCount > 0;
-
+        /*
+         * Esta ruta no pide credenciales: sirve para saber, desde fuera, si el
+         * sistema esta en pie —lo usa el instalador y sirve de latido—.
+         *
+         * Por eso contesta lo justo. Antes decia cuantos usuarios hay, en que
+         * entorno corre y si el modo depuracion esta encendido: eso no lo
+         * necesita nadie de fuera y a quien busque atacar le ahorra trabajo.
+         */
         return response()->json([
-            'system_initialized' => $isInitialized,
-            'user_count' => $userCount,
-            'roles_count' => Role::count(),
-            'app_name' => config('app.name'),
-            'app_env' => config('app.env'),
-            'app_debug' => config('app.debug'),
+            'system_initialized' => User::exists(),
             'database_connected' => $this->checkDatabaseConnection(),
         ]);
     }
