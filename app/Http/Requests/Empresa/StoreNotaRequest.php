@@ -77,6 +77,52 @@ abstract class StoreNotaRequest extends FormRequest
         ];
     }
 
+    public function withValidator(\Illuminate\Validation\Validator $validator): void
+    {
+        $validator->after(fn ($v) => $this->elAfectadoTieneQueSerTuyo($v));
+    }
+
+    /**
+     * El comprobante que se modifica tiene que existir, ser de esta empresa y
+     * estar aceptado.
+     *
+     * El campo se escribe a mano y solo se miraba que tuviera pinta de
+     * numero. Se podia emitir una nota contra un comprobante inventado o de
+     * otra empresa: SUNAT la rechaza, pero el correlativo ya se ha gastado y
+     * hay que dar de baja la nota para recuperarlo.
+     */
+    private function elAfectadoTieneQueSerTuyo(\Illuminate\Validation\Validator $validator): void
+    {
+        $numero = (string) $this->input('num_doc_afectado');
+        $tipo = (string) $this->input('tipo_doc_afectado');
+
+        if ($numero === '' || $tipo === '') {
+            return;   // de eso ya avisan las reglas de arriba
+        }
+
+        $modelo = $tipo === '01' ? \App\Models\Invoice::class : \App\Models\Boleta::class;
+
+        $afectado = $modelo::where('company_id', Auth::user()->company_id)
+            ->where('numero_completo', $numero)
+            ->first(['id', 'estado_sunat']);
+
+        if (! $afectado) {
+            $validator->errors()->add(
+                'num_doc_afectado',
+                "No tienes ningún comprobante {$numero}. Revisa el número o elígelo de la lista."
+            );
+
+            return;
+        }
+
+        if ($afectado->estado_sunat !== 'ACEPTADO') {
+            $validator->errors()->add(
+                'num_doc_afectado',
+                "{$numero} todavía no está aceptado por SUNAT, así que no se puede modificar."
+            );
+        }
+    }
+
     public function messages(): array
     {
         return [

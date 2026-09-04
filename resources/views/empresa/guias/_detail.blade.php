@@ -41,15 +41,21 @@
             <a href="{{ route('empresa.documents.download', ['guia_remision', $guia->id, 'cdr']) }}" class="rounded-md bg-gray-100 text-gray-700 px-4 py-2 text-sm font-medium hover:bg-gray-200">CDR</a>
         @endif
         @if($guia->estado_sunat !== 'ACEPTADO')
-            <form method="POST" action="{{ route('empresa.guias.send-sunat', $guia->id) }}">
+            <form method="POST" action="{{ route('empresa.guias.send-sunat', $guia->id) }}" x-data="{ enviando: false }" @submit="enviando = true">
                 @csrf
-                <button class="rounded-md bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700">{{ $guia->ticket ? 'Reenviar a SUNAT' : 'Enviar a SUNAT' }}</button>
+                <button type="submit" :disabled="enviando"
+                        class="rounded-md bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+                    <span x-text="enviando ? 'Enviando…' : '{{ $guia->ticket ? 'Reenviar a SUNAT' : 'Enviar a SUNAT' }}'"></span>
+                </button>
             </form>
         @endif
         @if($guia->ticket && $guia->estado_sunat !== 'ACEPTADO')
-            <form method="POST" action="{{ route('empresa.guias.check-status', $guia->id) }}">
+            <form method="POST" action="{{ route('empresa.guias.check-status', $guia->id) }}" x-data="{ enviando: false }" @submit="enviando = true">
                 @csrf
-                <button class="rounded-md bg-emerald-600 text-white px-4 py-2 text-sm font-medium hover:bg-emerald-700">Consultar estado SUNAT</button>
+                <button type="submit" :disabled="enviando"
+                        class="rounded-md bg-emerald-600 text-white px-4 py-2 text-sm font-medium hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">
+                    <span x-text="enviando ? 'Enviando…' : 'Consultar estado SUNAT'"></span>
+                </button>
             </form>
         @endif
     </div>

@@ -37,9 +37,12 @@
             <a href="{{ route('empresa.documents.download', ['factura', $factura->id, 'cdr']) }}" class="rounded-md bg-gray-100 text-gray-700 px-4 py-2 text-sm font-medium hover:bg-gray-200">CDR</a>
         @endif
         @if($factura->estado_sunat !== 'ACEPTADO')
-            <form method="POST" action="{{ route('empresa.facturas.send-sunat', $factura->id) }}">
+            <form method="POST" action="{{ route('empresa.facturas.send-sunat', $factura->id) }}" x-data="{ enviando: false }" @submit="enviando = true">
                 @csrf
-                <button class="rounded-md bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700">Reenviar a SUNAT</button>
+                <button type="submit" :disabled="enviando"
+                        class="rounded-md bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+                    <span x-text="enviando ? 'Enviando…' : 'Reenviar a SUNAT'"></span>
+                </button>
             </form>
         @endif
     </div>

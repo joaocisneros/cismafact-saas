@@ -178,13 +178,17 @@ abstract class BaseNotaController extends Controller
             ->limit(500)
             ->get(['id', 'tipo_documento', 'numero_documento', 'razon_social', 'direccion', 'email']);
 
-        // Comprobantes que se pueden afectar (facturas y boletas aceptadas).
+        // Comprobantes que se pueden afectar: solo los aceptados. Decia
+        // «aceptadas» pero no lo filtraba, asi que ofrecia tambien los
+        // pendientes y los rechazados, que no se pueden modificar.
         $facturas = Invoice::where('company_id', $companyId)
+            ->where('estado_sunat', 'ACEPTADO')
             ->latest('id')->limit(100)
             ->get(['numero_completo', 'client_id'])
             ->map(fn ($f) => ['tipo' => '01', 'num' => $f->numero_completo, 'client_id' => $f->client_id]);
 
         $boletas = Boleta::where('company_id', $companyId)
+            ->where('estado_sunat', 'ACEPTADO')
             ->latest('id')->limit(100)
             ->get(['numero_completo', 'client_id'])
             ->map(fn ($b) => ['tipo' => '03', 'num' => $b->numero_completo, 'client_id' => $b->client_id]);
