@@ -55,7 +55,10 @@ abstract class StoreNotaRequest extends FormRequest
             // Cliente
             'client' => ['required', 'array'],
             'client.tipo_documento' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::DOCUMENTOS_IDENTIDAD)],
-            'client.numero_documento' => ['required', 'string', 'max:15'],
+            // Un DNI son ocho digitos y un RUC once. Con «max:15» se podia
+            // dejar el tipo en RUC y el numero de un DNI, y eso lo devuelve
+            // SUNAT mucho despues de darle a emitir.
+            'client.numero_documento' => CatalogoSunat::reglaNumeroDocumento($this->input('client.tipo_documento')),
             'client.razon_social' => ['required', 'string', 'max:255'],
             'client.direccion' => ['nullable', 'string', 'max:255'],
             'client.email' => ['nullable', 'email', 'max:100'],

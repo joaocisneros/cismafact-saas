@@ -39,7 +39,10 @@ class StoreBoletaRequest extends FormRequest
             // En boleta el cliente puede ser DNI o "sin documento" (0)
             'client' => ['required', 'array'],
             'client.tipo_documento' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::DOCUMENTOS_IDENTIDAD)],
-            'client.numero_documento' => ['required', 'string', 'max:15'],
+            // Un DNI son ocho digitos y un RUC once. Con «max:15» se podia
+            // dejar el tipo en RUC y el numero de un DNI, y eso lo devuelve
+            // SUNAT mucho despues de darle a emitir.
+            'client.numero_documento' => CatalogoSunat::reglaNumeroDocumento($this->input('client.tipo_documento')),
             'client.razon_social' => ['required', 'string', 'max:255'],
             'client.direccion' => ['nullable', 'string', 'max:255'],
             'client.email' => ['nullable', 'email', 'max:100'],
@@ -63,6 +66,7 @@ class StoreBoletaRequest extends FormRequest
         return [
             'serie.regex' => 'La serie de boleta debe empezar con B (ej. B001).',
             'client.numero_documento.required' => 'El documento del cliente es requerido.',
+            'client.numero_documento.regex' => CatalogoSunat::avisoNumeroDocumento($this->input('client.tipo_documento')),
             'client.razon_social.required' => 'El nombre del cliente es requerido.',
             'detalles.required' => 'Agrega al menos un ítem.',
             'detalles.min' => 'Agrega al menos un ítem.',

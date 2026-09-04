@@ -156,6 +156,36 @@ class CatalogoSunat
         ],
     ];
 
+    /**
+     * Como tiene que ser el numero, segun el documento que sea.
+     *
+     * El tipo y el numero se elegian por separado y nadie comprobaba que
+     * cuadraran: se podia dejar «RUC» con ocho digitos, o un DNI con tres. El
+     * formulario lo aceptaba y el rechazo llegaba de SUNAT media hora despues,
+     * cuando ya no se sabia que habia pasado.
+     *
+     * DNI y RUC tienen largo fijo. Los demas son documentos de fuera, sin un
+     * formato que se pueda dar por sabido, asi que solo se les pone tope.
+     */
+    public static function reglaNumeroDocumento(?string $tipo): array
+    {
+        return match ((string) $tipo) {
+            '1' => ['required', 'string', 'regex:/^\d{8}$/'],
+            '6' => ['required', 'string', 'regex:/^\d{11}$/'],
+            default => ['required', 'string', 'max:15'],
+        };
+    }
+
+    /** Que decirle a quien puso un numero que no cuadra con su tipo. */
+    public static function avisoNumeroDocumento(?string $tipo): string
+    {
+        return match ((string) $tipo) {
+            '1' => 'El DNI son 8 dígitos.',
+            '6' => 'El RUC son 11 dígitos.',
+            default => 'El número de documento no puede pasar de 15 caracteres.',
+        };
+    }
+
     /** Si esa afectacion paga IGV. */
     public static function llevaIgv(?string $afectacion): bool
     {

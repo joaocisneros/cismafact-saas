@@ -91,12 +91,7 @@
             </div>
             <div class="grid gap-4 md:grid-cols-4">
                 <label class="text-sm font-medium text-gray-700">Tipo doc.
-                    <select name="client[tipo_documento]" x-model="cliente.tipo" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
-                        <option value="6">RUC</option>
-                        <option value="1">DNI</option>
-                        <option value="4">Carnet ext.</option>
-                        <option value="0">Sin documento</option>
-                    </select>
+                    <x-select-tipo-documento name="client[tipo_documento]" x-model="cliente.tipo" />
                 </label>
                 <label class="text-sm font-medium text-gray-700">N° documento
                     <input name="client[numero_documento]" x-model="cliente.doc" required maxlength="15" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
