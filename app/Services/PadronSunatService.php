@@ -58,6 +58,24 @@ class PadronSunatService
     /** Asi marca el padron los campos sin dato. */
     private const VACIOS = ['', '-', '--'];
 
+    /**
+     * De donde se baja y con que cabeceras.
+     *
+     * Se exponen para que la pantalla pueda preguntar a SUNAT que tiene
+     * publicado sin descargar nada, y sin repetir la direccion en dos sitios
+     * —el dia que SUNAT la cambie, se toca aqui y ya—.
+     */
+    public static function urlDelArchivo(): string
+    {
+        return self::URL;
+    }
+
+    /** @return array<string,string> */
+    public static function cabeceras(): array
+    {
+        return self::NAVEGADOR;
+    }
+
     /** @return int Filas importadas. */
     public function actualizar(?callable $avisar = null): int
     {

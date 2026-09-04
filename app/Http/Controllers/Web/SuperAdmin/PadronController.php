@@ -5,9 +5,13 @@ namespace App\Http\Controllers\Web\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Services\ConsultaDocumentoService;
+use App\Services\PadronSunatService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 /**
  * Padron reducido de SUNAT: estado y actualizacion.
@@ -28,6 +32,7 @@ class PadronController extends Controller
             'enMarcha' => $this->enMarcha(),
             'empezo' => optional(DB::table('padron_importaciones')->latest('id')->first())->iniciada_en,
             'referencia' => $this->referencia(),
+            'enSunat' => $this->disponibleEnSunat(),
             'espacio' => $this->espacio(),
             'puedeLanzar' => $this->puedeLanzar(),
             // El proveedor externo vive aqui, junto al padron: las dos son
@@ -137,6 +142,46 @@ class PadronController extends Controller
      *
      * @return array{filas: int, exacta: bool}
      */
+    /**
+     * Que padron tiene SUNAT publicado ahora mismo.
+     *
+     * Solo pide las cabeceras: no descarga el archivo. Con eso se sabe de que
+     * dia es y cuanto pesa, que es lo que hace falta para decidir si merece la
+     * pena gastar seis horas.
+     *
+     * Se guarda una hora: la pantalla se abre muchas veces y SUNAT publica
+     * como mucho un archivo al dia.
+     *
+     * @return array{fecha: string|null, bytes: int|null, error: string|null}
+     */
+    private function disponibleEnSunat(): array
+    {
+        return Cache::remember('padron_disponible', now()->addHour(), function () {
+            try {
+                $r = Http::withHeaders(PadronSunatService::cabeceras())
+                    ->connectTimeout(4)
+                    ->timeout(8)
+                    ->head(PadronSunatService::urlDelArchivo());
+
+                if (! $r->successful()) {
+                    return ['fecha' => null, 'bytes' => null, 'error' => 'SUNAT respondió ' . $r->status() . '.'];
+                }
+
+                $publicado = $r->header('Last-Modified');
+
+                return [
+                    'fecha' => $publicado ? Carbon::parse($publicado)->toDateString() : null,
+                    'bytes' => (int) $r->header('Content-Length') ?: null,
+                    'error' => null,
+                ];
+            } catch (\Throwable $e) {
+                // Que no responda no es motivo para romper la pantalla: se
+                // deja de enseñar el aviso y ya.
+                return ['fecha' => null, 'bytes' => null, 'error' => 'No se pudo preguntar a SUNAT.'];
+            }
+        });
+    }
+
     private function referencia(): array
     {
         $ultimaBuena = (int) DB::table('padron_importaciones')

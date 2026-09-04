@@ -283,6 +283,7 @@
 
         @php($sinEspacio = ($espacio['libre'] ?? 99) < $espacio['necesario'])
         @php($ultima = $importaciones->first())
+        @php($tuyo = $importaciones->firstWhere('estado', 'completada')?->datos_de)
 
         {{-- Lo que impide lanzarlo va a todo el ancho: es lo primero que hay
              que leer y asi no compite con nada. --}}
@@ -360,6 +361,33 @@
                             : 'nunca' }}
                     </dd>
                 </div>
+
+                {{-- Que tiene SUNAT hoy, preguntado solo por cabeceras. Sirve
+                     para no gastar seis horas y 373 MB en acabar con lo mismo
+                     que ya habia. --}}
+                @if($enSunat['fecha'])
+                    @php($mio = $tuyo ?? null)
+                    <div class="flex gap-3">
+                        <dt class="w-32 shrink-0 text-gray-500">SUNAT publicó</dt>
+                        <dd class="font-medium text-gray-800">
+                            {{ \Illuminate\Support\Carbon::parse($enSunat['fecha'])->format('d/m/Y') }}
+                            @if($enSunat['bytes'])
+                                <span class="font-normal text-gray-400">· {{ round($enSunat['bytes'] / 1024 ** 2) }} MB</span>
+                            @endif
+                        </dd>
+                    </div>
+
+                    @if($mio && $mio === $enSunat['fecha'])
+                        <p class="mt-1 rounded-lg bg-green-50 px-3 py-2 text-xs text-green-800">
+                            Ya tienes ese mismo padrón. Volver a descargarlo no traería nada nuevo.
+                        </p>
+                    @elseif($mio)
+                        <p class="mt-1 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                            El tuyo es del {{ \Illuminate\Support\Carbon::parse($mio)->format('d/m/Y') }}:
+                            hay uno más reciente.
+                        </p>
+                    @endif
+                @endif
             </dl>
         </div>
     </section>
