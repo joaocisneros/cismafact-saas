@@ -48,6 +48,14 @@ class LimitarEmision
             return $next($request);
         }
 
+        // Consultar no es emitir. Listar comprobantes, ver uno o descargar su
+        // PDF no ocupa a SUNAT ni deja un proceso esperando, asi que no tiene
+        // por que gastar cupo. Entraban aqui porque el middleware cubre el
+        // grupo de rutas entero, no porque debieran.
+        if ($request->isMethodSafe()) {
+            return $next($request);
+        }
+
         // El tope general va primero: si el sistema esta saturado da igual
         // quien pregunte, y asi el que llega no gasta su cupo propio en una
         // peticion que no se va a atender.
@@ -82,8 +90,15 @@ class LimitarEmision
 
         // Lo que queda, para que quien integra pueda repartir su carga sin
         // tener que chocarse con el limite para descubrirlo.
-        return $respuesta
-            ->header('X-RateLimit-Limit', self::POR_MINUTO)
-            ->header('X-RateLimit-Remaining', RateLimiter::remaining($cubo, self::POR_MINUTO));
+        //
+        // Por headers->set y no por ->header(): lo segundo solo lo tienen las
+        // respuestas de Laravel, y no todas lo son. Una descarga se devuelve
+        // en streaming, que es de Symfony y no conoce ese metodo: pedir el PDF
+        // de un comprobante moria aqui con un 500 despues de haberlo emitido
+        // bien.
+        $respuesta->headers->set('X-RateLimit-Limit', (string) self::POR_MINUTO);
+        $respuesta->headers->set('X-RateLimit-Remaining', (string) RateLimiter::remaining($cubo, self::POR_MINUTO));
+
+        return $respuesta;
     }
 }
