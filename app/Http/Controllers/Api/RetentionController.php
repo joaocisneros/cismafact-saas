@@ -13,6 +13,8 @@ use Illuminate\Http\JsonResponse;
 
 class RetentionController extends Controller
 {
+    use \App\Http\Controllers\Api\Concerns\BuscaEnSuEmpresa;
+
     use HandlesPdfGeneration;
     protected $documentService;
     protected $fileService;
@@ -56,6 +58,14 @@ class RetentionController extends Controller
                 'message' => 'Retenciones obtenidas correctamente'
             ]);
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -77,6 +87,14 @@ class RetentionController extends Controller
                 'message' => 'Retención creada correctamente'
             ], 201);
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -89,7 +107,7 @@ class RetentionController extends Controller
     public function show($id): JsonResponse
     {
         try {
-            $retention = Retention::with(['company', 'branch'])->findOrFail($id);
+            $retention = $this->deLaEmpresa(Retention::class, $id, ['company', 'branch']);
 
             return response()->json([
                 'success' => true,
@@ -97,6 +115,14 @@ class RetentionController extends Controller
                 'message' => 'Retención obtenida correctamente'
             ]);
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -109,7 +135,7 @@ class RetentionController extends Controller
     public function sendToSunat($id): JsonResponse
     {
         try {
-            $retention = Retention::with(['company', 'branch'])->findOrFail($id);
+            $retention = $this->deLaEmpresa(Retention::class, $id, ['company', 'branch']);
 
             if ($retention->estado_sunat === 'ACEPTADO') {
                 return response()->json([
@@ -152,6 +178,14 @@ class RetentionController extends Controller
                 ], 400);
             }
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -164,7 +198,7 @@ class RetentionController extends Controller
     public function downloadXml($id)
     {
         try {
-            $retention = Retention::findOrFail($id);
+            $retention = $this->deLaEmpresa(Retention::class, $id);
             $download = $this->fileService->downloadXml($retention);
             
             if (!$download) {
@@ -176,6 +210,14 @@ class RetentionController extends Controller
             
             return $download;
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -188,7 +230,7 @@ class RetentionController extends Controller
     public function downloadCdr($id)
     {
         try {
-            $retention = Retention::findOrFail($id);
+            $retention = $this->deLaEmpresa(Retention::class, $id);
             $download = $this->fileService->downloadCdr($retention);
             
             if (!$download) {
@@ -200,6 +242,14 @@ class RetentionController extends Controller
             
             return $download;
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -211,13 +261,13 @@ class RetentionController extends Controller
 
     public function downloadPdf($id, Request $request)
     {
-        $retention = Retention::findOrFail($id);
+        $retention = $this->deLaEmpresa(Retention::class, $id);
         return $this->downloadDocumentPdf($retention, $request);
     }
 
     public function generatePdf($id, Request $request)
     {
-        $retention = Retention::with(['company', 'branch'])->findOrFail($id);
+        $retention = $this->deLaEmpresa(Retention::class, $id, ['company', 'branch']);
         return $this->generateDocumentPdf($retention, 'retention', $request);
     }
 }

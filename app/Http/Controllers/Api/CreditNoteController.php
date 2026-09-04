@@ -14,6 +14,8 @@ use Illuminate\Http\JsonResponse;
 
 class CreditNoteController extends Controller
 {
+    use \App\Http\Controllers\Api\Concerns\BuscaEnSuEmpresa;
+
     use HandlesPdfGeneration;
     protected $documentService;
     protected $fileService;
@@ -57,6 +59,14 @@ class CreditNoteController extends Controller
                 'message' => 'Notas de crédito obtenidas correctamente'
             ]);
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -83,6 +93,14 @@ class CreditNoteController extends Controller
                 'sunat_error' => $sendResult['success'] ? null : $sendResult['error'],
             ], $sendResult['success'] ? 201 : 422);
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -95,7 +113,7 @@ class CreditNoteController extends Controller
     public function show($id): JsonResponse
     {
         try {
-            $creditNote = CreditNote::with(['company', 'branch', 'client'])->findOrFail($id);
+            $creditNote = $this->deLaEmpresa(CreditNote::class, $id, ['company', 'branch', 'client']);
 
             return response()->json([
                 'success' => true,
@@ -103,6 +121,14 @@ class CreditNoteController extends Controller
                 'message' => 'Nota de crédito obtenida correctamente'
             ]);
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -115,7 +141,7 @@ class CreditNoteController extends Controller
     public function sendToSunat($id): JsonResponse
     {
         try {
-            $creditNote = CreditNote::with(['company', 'branch', 'client'])->findOrFail($id);
+            $creditNote = $this->deLaEmpresa(CreditNote::class, $id, ['company', 'branch', 'client']);
 
             if ($creditNote->estado_sunat === 'ACEPTADO') {
                 return response()->json([
@@ -158,6 +184,14 @@ class CreditNoteController extends Controller
                 ], 400);
             }
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -170,7 +204,7 @@ class CreditNoteController extends Controller
     public function downloadXml($id)
     {
         try {
-            $creditNote = CreditNote::findOrFail($id);
+            $creditNote = $this->deLaEmpresa(CreditNote::class, $id);
             $download = $this->fileService->downloadXml($creditNote);
             
             if (!$download) {
@@ -182,6 +216,14 @@ class CreditNoteController extends Controller
             
             return $download;
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -194,7 +236,7 @@ class CreditNoteController extends Controller
     public function downloadCdr($id)
     {
         try {
-            $creditNote = CreditNote::findOrFail($id);
+            $creditNote = $this->deLaEmpresa(CreditNote::class, $id);
             $download = $this->fileService->downloadCdr($creditNote);
             
             if (!$download) {
@@ -206,6 +248,14 @@ class CreditNoteController extends Controller
             
             return $download;
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -217,13 +267,13 @@ class CreditNoteController extends Controller
 
     public function downloadPdf($id, Request $request)
     {
-        $creditNote = CreditNote::findOrFail($id);
+        $creditNote = $this->deLaEmpresa(CreditNote::class, $id);
         return $this->downloadDocumentPdf($creditNote, $request);
     }
 
     public function generatePdf($id, Request $request)
     {
-        $creditNote = CreditNote::with(['company', 'branch', 'client'])->findOrFail($id);
+        $creditNote = $this->deLaEmpresa(CreditNote::class, $id, ['company', 'branch', 'client']);
         return $this->generateDocumentPdf($creditNote, 'credit_note', $request);
     }
 }

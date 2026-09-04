@@ -319,6 +319,23 @@ class CompanyController extends Controller
      */
     private function errorResponse(string $message, Exception $e): JsonResponse
     {
+        /*
+         * Un documento que no aparece no es un servidor roto.
+         *
+         * findOrFail lanza ModelNotFoundException, que es una Exception como
+         * cualquier otra, asi que este catch la convertia en 500 y ademas
+         * repetia su mensaje entero: «No query results for model
+         * [App\Models\Boleta] 19», que dice el nombre de la clase y el id que
+         * se probo. A quien pregunta por un comprobante que no es suyo se le
+         * responde lo mismo que si no existiera.
+         */
+        if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
+        }
+
         return response()->json([
             'success' => false,
             'message' => $message . ': ' . $e->getMessage()

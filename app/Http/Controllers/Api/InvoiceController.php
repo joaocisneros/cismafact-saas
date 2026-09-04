@@ -15,6 +15,8 @@ use Illuminate\Http\JsonResponse;
 
 class InvoiceController extends Controller
 {
+    use \App\Http\Controllers\Api\Concerns\BuscaEnSuEmpresa;
+
     use HandlesPdfGeneration;
     protected $documentService;
     protected $fileService;
@@ -60,6 +62,14 @@ class InvoiceController extends Controller
                 'message' => 'Facturas obtenidas correctamente'
             ]);
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -111,6 +121,14 @@ class InvoiceController extends Controller
                 'sunat_error' => $sendResult['success'] ? null : $sendResult['error'],
             ], $sendResult['success'] ? 201 : 422);
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -123,7 +141,7 @@ class InvoiceController extends Controller
     public function show($id): JsonResponse
     {
         try {
-            $invoice = Invoice::with(['company', 'branch', 'client'])->findOrFail($id);
+            $invoice = $this->deLaEmpresa(Invoice::class, $id, ['company', 'branch', 'client']);
 
             return response()->json([
                 'success' => true,
@@ -131,6 +149,14 @@ class InvoiceController extends Controller
                 'message' => 'Factura obtenida correctamente'
             ]);
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -143,7 +169,7 @@ class InvoiceController extends Controller
     public function sendToSunat($id): JsonResponse
     {
         try {
-            $invoice = Invoice::with(['company', 'branch', 'client'])->findOrFail($id);
+            $invoice = $this->deLaEmpresa(Invoice::class, $id, ['company', 'branch', 'client']);
 
             if ($invoice->estado_sunat === 'ACEPTADO') {
                 return response()->json([
@@ -187,6 +213,14 @@ class InvoiceController extends Controller
                 ], 400);
             }
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -199,7 +233,7 @@ class InvoiceController extends Controller
     public function downloadXml($id)
     {
         try {
-            $invoice = Invoice::findOrFail($id);
+            $invoice = $this->deLaEmpresa(Invoice::class, $id);
             
             $download = $this->fileService->downloadXml($invoice);
             
@@ -212,6 +246,14 @@ class InvoiceController extends Controller
             
             return $download;
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -224,7 +266,7 @@ class InvoiceController extends Controller
     public function downloadCdr($id)
     {
         try {
-            $invoice = Invoice::findOrFail($id);
+            $invoice = $this->deLaEmpresa(Invoice::class, $id);
             
             $download = $this->fileService->downloadCdr($invoice);
             
@@ -237,6 +279,14 @@ class InvoiceController extends Controller
             
             return $download;
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // No aparece, o es de otra empresa: al que pregunta se le responde
+            // lo mismo en los dos casos. Antes salia un 500 con el mensaje de
+            // Eloquent, que dice la clase y el id que se probo.
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -248,13 +298,13 @@ class InvoiceController extends Controller
 
     public function downloadPdf($id, Request $request)
     {
-        $invoice = Invoice::findOrFail($id);
+        $invoice = $this->deLaEmpresa(Invoice::class, $id);
         return $this->downloadDocumentPdf($invoice, $request);
     }
 
     public function generatePdf($id, Request $request)
     {
-        $invoice = Invoice::with(['company', 'branch', 'client'])->findOrFail($id);
+        $invoice = $this->deLaEmpresa(Invoice::class, $id, ['company', 'branch', 'client']);
         return $this->generateDocumentPdf($invoice, 'invoice', $request);
     }
 

@@ -19,6 +19,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class BoletaController extends Controller
 {
+    use \App\Http\Controllers\Api\Concerns\BuscaEnSuEmpresa;
+
     use HandlesPdfGeneration;
 
     protected DocumentService $documentService;
@@ -93,7 +95,7 @@ class BoletaController extends Controller
     public function show(string $id): JsonResponse
     {
         try {
-            $boleta = Boleta::with(['company', 'branch', 'client'])->findOrFail($id);
+            $boleta = $this->deLaEmpresa(Boleta::class, $id, ['company', 'branch', 'client']);
             
             return response()->json([
                 'success' => true,
@@ -110,7 +112,7 @@ class BoletaController extends Controller
     public function sendToSunat(string $id): JsonResponse
     {
         try {
-            $boleta = Boleta::with(['company', 'branch', 'client'])->findOrFail($id);
+            $boleta = $this->deLaEmpresa(Boleta::class, $id, ['company', 'branch', 'client']);
             
             if ($boleta->estado_sunat === 'ACEPTADO') {
                 return response()->json([
@@ -142,7 +144,7 @@ class BoletaController extends Controller
     public function downloadXml(string $id): Response
     {
         try {
-            $boleta = Boleta::findOrFail($id);
+            $boleta = $this->deLaEmpresa(Boleta::class, $id);
 
             $download = $this->fileService->downloadXml($boleta);
 
@@ -163,7 +165,7 @@ class BoletaController extends Controller
     public function downloadCdr(string $id): Response
     {
         try {
-            $boleta = Boleta::findOrFail($id);
+            $boleta = $this->deLaEmpresa(Boleta::class, $id);
 
             $download = $this->fileService->downloadCdr($boleta);
 
@@ -184,7 +186,7 @@ class BoletaController extends Controller
     public function downloadPdf(string $id, Request $request): Response
     {
         try {
-            $boleta = Boleta::findOrFail($id);
+            $boleta = $this->deLaEmpresa(Boleta::class, $id);
             return $this->downloadDocumentPdf($boleta, $request);
         } catch (Exception $e) {
             return $this->errorResponse('Error al descargar PDF', $e);
@@ -197,7 +199,7 @@ class BoletaController extends Controller
     public function generatePdf(string $id, Request $request): Response
     {
         try {
-            $boleta = Boleta::with(['company', 'branch', 'client'])->findOrFail($id);
+            $boleta = $this->deLaEmpresa(Boleta::class, $id, ['company', 'branch', 'client']);
             return $this->generateDocumentPdf($boleta, 'boleta', $request);
         } catch (Exception $e) {
             return $this->errorResponse('Error al generar PDF', $e);
@@ -392,6 +394,23 @@ class BoletaController extends Controller
      */
     private function errorResponse(string $message, Exception $e): JsonResponse
     {
+        /*
+         * Un documento que no aparece no es un servidor roto.
+         *
+         * findOrFail lanza ModelNotFoundException, que es una Exception como
+         * cualquier otra, asi que este catch la convertia en 500 y ademas
+         * repetia su mensaje entero: «No query results for model
+         * [App\Models\Boleta] 19», que dice el nombre de la clase y el id que
+         * se probo. A quien pregunta por un comprobante que no es suyo se le
+         * responde lo mismo que si no existiera.
+         */
+        if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el documento.',
+            ], 404);
+        }
+
         return response()->json([
             'success' => false,
             'message' => $message . ': ' . $e->getMessage()
