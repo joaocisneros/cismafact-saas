@@ -159,8 +159,11 @@ class PadronController extends Controller
         return Cache::remember('padron_disponible', now()->addHour(), function () {
             try {
                 $r = Http::withHeaders(PadronSunatService::cabeceras())
-                    ->connectTimeout(4)
-                    ->timeout(8)
+                    // Corto a proposito: esto es un adorno util, no algo por
+                    // lo que merezca la pena hacer esperar a nadie. Si SUNAT
+                    // tarda, se deja para la proxima vez.
+                    ->connectTimeout(3)
+                    ->timeout(4)
                     ->head(PadronSunatService::urlDelArchivo());
 
                 if (! $r->successful()) {
