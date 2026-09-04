@@ -197,12 +197,17 @@ class ClientController extends Controller
     {
         return $request->validate([
             'tipo_documento' => ['required', Rule::in(self::TIPOS_DOC)],
-            'numero_documento' => [
-                'required', 'string', 'max:15',
-                Rule::unique('clients')
-                    ->where(fn ($q) => $q->where('company_id', $companyId)->where('tipo_documento', $request->tipo_documento))
-                    ->ignore($ignoreId),
-            ],
+            // El largo lo pone el tipo: un DNI son ocho digitos y un RUC once.
+            // Con «max:15» se podia guardar un cliente con el tipo en RUC y el
+            // numero de un DNI, y el fallo no aparecia hasta emitirle algo.
+            'numero_documento' => array_merge(
+                CatalogoSunat::reglaNumeroDocumento($request->input('tipo_documento')),
+                [
+                    Rule::unique('clients')
+                        ->where(fn ($q) => $q->where('company_id', $companyId)->where('tipo_documento', $request->tipo_documento))
+                        ->ignore($ignoreId),
+                ],
+            ),
             'razon_social' => ['required', 'string', 'max:255'],
             'nombre_comercial' => ['nullable', 'string', 'max:255'],
             'direccion' => ['nullable', 'string', 'max:255'],
@@ -210,6 +215,7 @@ class ClientController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
         ], [
             'numero_documento.unique' => 'Ya existe un cliente con ese tipo y número de documento.',
+            'numero_documento.regex' => CatalogoSunat::avisoNumeroDocumento($request->input('tipo_documento')),
         ]);
     }
 
