@@ -13,7 +13,9 @@
 # Uso:  sh scripts/probar-api.sh  https://tu-servidor  LA_KEY  EL_SECRET
 #
 # Las consultas de RUC y DNI se quedan fuera a proposito: cada llamada gasta
-# cuota del proveedor externo.
+# cuota del proveedor externo. Su contador (api/consultas/cuota) tampoco esta:
+# pertenece a ese modulo y se abre con su propia llave, asi que con la de
+# facturacion responde 401 y saldria como un fallo que no es.
 
 URL="${1%/}"
 KEY="$2"
@@ -24,7 +26,7 @@ if [ -z "$URL" ] || [ -z "$KEY" ] || [ -z "$SECRET" ]; then
     exit 1
 fi
 
-# --- Los 48 endpoints que no llevan ningun dato en la direccion.
+# --- Los 47 endpoints que no llevan ningun dato en la direccion.
 LISTADOS="
 api/anulaciones
 api/anulaciones/documentos/disponibles
@@ -32,7 +34,6 @@ api/boletas
 api/buscar-documento
 api/clientes
 api/consulta-cpe/estadisticas
-api/consultas/cuota
 api/empresa
 api/facturas
 api/guias-remision
@@ -175,6 +176,7 @@ id_de() {
 
 bien=0
 vacios=0
+piden=0
 fallos=0
 FALLOS="$GUARDADOS/fallos"
 : > "$FALLOS"
@@ -191,6 +193,13 @@ anotar() {
             vacios=$((vacios + 1))
             printf '  %-54s %s  (sin ese dato)\n' "$1" "$2"
             ;;
+        422)
+            # Tampoco es un fallo: el endpoint contesta que a la peticion le
+            # falta un dato obligatorio, y aqui se llama a todo sin parametros
+            # a proposito. Que lo diga es justo lo que tiene que hacer.
+            piden=$((piden + 1))
+            printf '  %-54s %s  (pide un parametro)\n' "$1" "$2"
+            ;;
         *)
             fallos=$((fallos + 1))
             printf '%-54s %s\n' "$1" "$2" >> "$FALLOS"
@@ -202,7 +211,7 @@ anotar() {
 echo
 echo "Servidor: $URL"
 echo
-echo "== Listados y consultas generales (48)"
+echo "== Listados y consultas generales (47)"
 
 for ruta in $LISTADOS; do
     anotar "$ruta" "$(codigo_de "$ruta")"
@@ -249,7 +258,7 @@ comprobar_puerta "con una key que no existe" "$inventada"
 
 echo
 echo "-----------------------------------------------------------"
-printf 'responden bien: %d    sin datos que devolver: %d    con problema: %d\n' "$bien" "$vacios" "$fallos"
+printf 'responden bien: %d    sin datos: %d    piden un parametro: %d    con problema: %d\n' "$bien" "$vacios" "$piden" "$fallos"
 
 if [ "$fallos" -gt 0 ]; then
     echo
