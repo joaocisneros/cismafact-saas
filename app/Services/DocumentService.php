@@ -2418,7 +2418,6 @@ class DocumentService
                               ->where('branch_id', $branchId)
                               ->whereDate('fecha_emision', $fechaReferencia)
                               ->where('estado_sunat', 'ACEPTADO')
-                              ->whereNull('anulado_en')
                               ->whereNull('anulado_en')   // ya anulado: no se ofrece de nuevo
                               ->get(['id', 'serie', 'correlativo', 'numero_completo', 'mto_imp_venta']);
             

@@ -34,7 +34,11 @@
                 No hay boletas ACEPTADAS para el {{ \Illuminate\Support\Carbon::parse($fecha)->format('d/m/Y') }}.
             </div>
         @else
-        <form method="POST" action="{{ route('empresa.resumenes.store') }}" class="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
+        {{-- Se bloquea al enviar: el resumen va a SUNAT y gasta correlativo, asi
+             que un segundo clic durante la espera manda otro. --}}
+        <form method="POST" action="{{ route('empresa.resumenes.store') }}"
+              x-data="{ enviando: false }" @submit="enviando = true"
+              class="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
             @csrf
             <input type="hidden" name="fecha_resumen" value="{{ $fecha }}">
 
@@ -62,7 +66,10 @@
 
             <div class="flex justify-end gap-2">
                 <a href="{{ route('empresa.resumenes.index') }}" class="rounded-md border border-gray-300 px-5 py-2.5 text-sm">Cancelar</a>
-                <button class="rounded-md bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-700">Anular y enviar a SUNAT</button>
+                <button type="submit" :disabled="enviando"
+                        class="rounded-md bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60">
+                    <span x-text="enviando ? 'Enviando a SUNAT…' : 'Anular y enviar a SUNAT'"></span>
+                </button>
             </div>
         </form>
         @endif

@@ -28,7 +28,10 @@
                 {{ \Illuminate\Support\Carbon::parse($fecha)->format('d/m/Y') }}, o ya fueron anulados.
             </div>
         @else
+            {{-- Se bloquea al enviar: la baja va a SUNAT y gasta correlativo, asi
+                 que un segundo clic durante la espera manda otra. --}}
             <form method="POST" action="{{ route('empresa.anulaciones.store') }}" class="space-y-4"
+                  x-data="{ enviando: false }" @submit="enviando = true"
                   data-success-message="Anulación enviada a SUNAT.">
                 @csrf
                 <input type="hidden" name="fecha_referencia" value="{{ $fecha }}">
@@ -85,9 +88,10 @@
                 <div class="flex justify-end gap-2 pt-1">
                     <button type="button" onclick="window.closeAdminModal()"
                             class="rounded-md border border-gray-300 px-4 py-2 text-sm">Cancelar</button>
-                    <button class="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                    <button type="submit" :disabled="enviando"
+                            class="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                             onclick="return confirm('¿Anular los comprobantes marcados? Se comunica a SUNAT y no se puede deshacer.')">
-                        Anular en SUNAT
+                        <span x-text="enviando ? 'Enviando a SUNAT…' : 'Anular en SUNAT'"></span>
                     </button>
                 </div>
             </form>

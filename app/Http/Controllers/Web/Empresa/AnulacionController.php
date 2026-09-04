@@ -130,6 +130,10 @@ class AnulacionController extends Controller
         }
 
         $companyId = Auth::user()->company_id;
+
+        if ($aviso = $this->algunoNoEsAnulable($companyId, $data['documentos'])) {
+            return back()->withInput()->with('error', $aviso);
+        }
         $seleccion = collect($data['documentos']);
 
         // Cada grupo va por su trámite. El usuario no elige: se deduce del tipo.
@@ -268,6 +272,53 @@ class AnulacionController extends Controller
         return $resultado['success']
             ? [true, "Resumen de baja enviado por {$cuantas} boleta(s)."]
             : [false, 'El resumen de boletas falló: ' . $this->errorText($resultado['error'] ?? null)];
+    }
+
+    /**
+     * Que cada comprobante marcado exista, sea de esta empresa y se pueda
+     * anular.
+     *
+     * La pantalla solo ofrece los que valen, pero lo que llega es tipo, serie
+     * y correlativo sueltos: nada impedia mandar otros. Se enviaba a SUNAT una
+     * baja de comprobantes que no son tuyos o que ya estaban anulados, y el
+     * correlativo de la baja se gastaba igual.
+     */
+    private function algunoNoEsAnulable(int $companyId, array $documentos): ?string
+    {
+        $modelos = [
+            '01' => \App\Models\Invoice::class,
+            '03' => \App\Models\Boleta::class,
+            '07' => \App\Models\CreditNote::class,
+            '08' => \App\Models\DebitNote::class,
+        ];
+
+        foreach ($documentos as $documento) {
+            $modelo = $modelos[$documento['tipo_documento']] ?? null;
+            $numero = $documento['serie'] . '-' . $documento['correlativo'];
+
+            if (! $modelo) {
+                return "No se reconoce el tipo de comprobante {$numero}.";
+            }
+
+            $encontrado = $modelo::where('company_id', $companyId)
+                ->where('serie', $documento['serie'])
+                ->where('correlativo', $documento['correlativo'])
+                ->first(['id', 'estado_sunat', 'anulado_en']);
+
+            if (! $encontrado) {
+                return "No tienes ningún comprobante {$numero}.";
+            }
+
+            if ($encontrado->estado_sunat !== 'ACEPTADO') {
+                return "{$numero} no está aceptado por SUNAT, así que no hay nada que anular.";
+            }
+
+            if ($encontrado->anulado_en) {
+                return "{$numero} ya estaba anulado.";
+            }
+        }
+
+        return null;
     }
 
     /**

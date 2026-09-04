@@ -57,10 +57,10 @@
     <div class="flex flex-wrap justify-end gap-2">
         @if($anulacion->estado_sunat !== 'ACEPTADO' && $anulacion->ticket)
             <form method="POST" action="{{ route('empresa.anulaciones.check-status', $anulacion->id) }}"
-                  data-success-message="Estado actualizado.">
+                  data-success-message="Estado actualizado." x-data="{ enviando: false }" @submit="enviando = true">
                 @csrf
-                <button class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                    Consultar estado
+                <button type="submit" :disabled="enviando" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+                    <span x-text="enviando ? 'Consultando…' : 'Consultar estado'"></span>
                 </button>
             </form>
         @endif
