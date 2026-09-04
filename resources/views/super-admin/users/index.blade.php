@@ -114,13 +114,27 @@
                             @if(request()->boolean('papelera'))
                                 {{-- Sobre alguien borrado no hay mas que hacer que
                                      devolverlo: editarlo o bloquearlo no tiene sentido. --}}
-                                <form method="POST" action="{{ route('super-admin.users.restore', $user->id) }}"
-                                      onsubmit="return confirm('¿Devolver a este usuario al listado? Vuelve con su empresa, su rol y su contraseña.')">
-                                    @csrf
-                                    <button type="submit" class="rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">
-                                        Restaurar
-                                    </button>
-                                </form>
+                                <div class="flex items-center gap-2">
+                                    <form method="POST" action="{{ route('super-admin.users.restore', $user->id) }}"
+                                          onsubmit="return confirm('¿Devolver a este usuario al listado? Vuelve con su empresa, su rol y su contraseña.')">
+                                        @csrf
+                                        <button type="submit" class="rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">
+                                            Restaurar
+                                        </button>
+                                    </form>
+
+                                    {{-- Esto no se deshace, asi que el aviso lo dice tal cual
+                                         y solo aparece aqui dentro: en el listado normal no
+                                         hay forma de borrar del todo por error. --}}
+                                    <form method="POST" action="{{ route('super-admin.users.force-delete', $user->id) }}"
+                                          onsubmit="return confirm('Se borrará «{{ $user->name }}» para siempre. Esto NO se puede deshacer: no habrá forma de recuperarlo. ¿Seguro?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50">
+                                            Borrar del todo
+                                        </button>
+                                    </form>
+                                </div>
                             @else
                             <div class="flex items-center gap-1.5">
                                 <x-icon-action icon="ver" label="Ver detalle" color="blue" type="button"

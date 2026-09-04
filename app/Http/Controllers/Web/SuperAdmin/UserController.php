@@ -74,6 +74,28 @@ class UserController extends Controller
             ->with('success', "Usuario «{$usuario->name}» restaurado.");
     }
 
+    /**
+     * Lo saca de la papelera y lo borra de verdad.
+     *
+     * Esto no se deshace: es para vaciar lo que ya no sirve. Solo se puede
+     * sobre lo que ya esta en la papelera, asi que nadie llega aqui sin haber
+     * borrado antes y haberlo visto ahi.
+     */
+    public function forceDelete(int $id)
+    {
+        $usuario = User::onlyTrashed()->findOrFail($id);
+
+        // La propia cuenta no: quien la borrara se quedaria fuera del panel.
+        abort_if($usuario->id === auth()->id(), 403, 'No puedes borrar tu propia cuenta.');
+
+        $nombre = $usuario->name;
+        $usuario->forceDelete();
+
+        return redirect()
+            ->route('super-admin.users.index', ['papelera' => 1])
+            ->with('success', "«{$nombre}» se borró definitivamente.");
+    }
+
     public function create()
     {
         $companies = Company::orderBy('razon_social')->get();
