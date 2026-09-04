@@ -254,9 +254,15 @@ class CompanyConfigController extends Controller
     public function getDefaults(): JsonResponse
     {
         try {
-            // Crear una instancia temporal para obtener defaults
+            // Una empresa en blanco, solo para preguntarle sus valores de
+            // arranque; no se guarda.
+            //
+            // Antes se llamaba a getDefaultConfigurations(), que vive en el
+            // trait ConfigurableCompany y que Company no usa: el endpoint
+            // moria con «Call to undefined method». Los valores buenos son los
+            // de HasCompanyConfigurations, que es el trait que si lleva.
             $company = new Company();
-            $defaults = $company->getDefaultConfigurations();
+            $defaults = $company->getDefaultConfigurationData();
             
             return response()->json([
                 'success' => true,
@@ -277,11 +283,16 @@ class CompanyConfigController extends Controller
      */
     public function getSummary(Request $request): JsonResponse
     {
+        // La validacion va fuera del try: dentro, el catch de mas abajo
+        // atrapa la excepcion que lanza y la devuelve como 500. Que a la
+        // peticion le falte un dato no es que el servidor este roto —es un
+        // 422, y lo corrige quien llama.
+        $request->validate([
+            'company_ids' => 'array',
+            'company_ids.*' => 'integer|exists:companies,id',
+        ]);
+
         try {
-            $request->validate([
-                'company_ids' => 'array',
-                'company_ids.*' => 'integer|exists:companies,id'
-            ]);
             
             $companyIds = $request->input('company_ids', []);
             $query = Company::query();

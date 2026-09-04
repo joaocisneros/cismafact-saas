@@ -63,11 +63,16 @@ class DailySummaryController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        // La validacion va fuera del try: dentro, el catch de mas abajo
+        // atrapa la excepcion que lanza y la devuelve como 500. Que a la
+        // peticion le falte un dato no es que el servidor este roto —es un
+        // 422, y lo corrige quien llama.
+        $validated = $request->validate([
+            'branch_id' => 'required|exists:branches,id',
+            'fecha_resumen' => 'required|date',
+        ]);
+
         try {
-            $validated = $request->validate([
-                'branch_id' => 'required|exists:branches,id',
-                'fecha_resumen' => 'required|date',
-            ]);
 
             $validated['company_id'] = (int) $request->user()->company_id;
             Branch::where('company_id', $validated['company_id'])
@@ -179,11 +184,12 @@ class DailySummaryController extends Controller
     /** Boletas que aun se pueden anular en una fecha. */
     public function boletasForVoiding(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'branch_id' => 'nullable|integer',
+            'fecha_emision' => 'nullable|date',
+        ]);
+
         try {
-            $validated = $request->validate([
-                'branch_id' => 'nullable|integer',
-                'fecha_emision' => 'nullable|date',
-            ]);
 
             $companyId = (int) $request->user()->company_id;
 
@@ -223,13 +229,14 @@ class DailySummaryController extends Controller
      */
     public function voidBoletas(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'branch_id' => 'nullable|integer',
+            'fecha_referencia' => 'required|date',
+            'boletas' => 'required|array|min:1',
+            'boletas.*' => 'required|string|max:20',
+        ]);
+
         try {
-            $validated = $request->validate([
-                'branch_id' => 'nullable|integer',
-                'fecha_referencia' => 'required|date',
-                'boletas' => 'required|array|min:1',
-                'boletas.*' => 'required|string|max:20',
-            ]);
 
             $companyId = (int) $request->user()->company_id;
 
@@ -274,11 +281,12 @@ class DailySummaryController extends Controller
 
     public function pendingBoletas(Request $request): JsonResponse
     {
+        $request->validate([
+            'branch_id' => 'required|exists:branches,id',
+            'fecha_emision' => 'required|date',
+        ]);
+
         try {
-            $request->validate([
-                'branch_id' => 'required|exists:branches,id',
-                'fecha_emision' => 'required|date',
-            ]);
 
             $boletas = Boleta::with(['company', 'branch', 'client'])
                 ->where('company_id', (int) $request->user()->company_id)

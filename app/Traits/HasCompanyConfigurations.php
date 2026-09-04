@@ -604,8 +604,11 @@ trait HasCompanyConfigurations
 
     /**
      * Obtener datos de configuraciones por defecto
+     *
+     * Publico porque la API los publica en /config/defaults: quien integra
+     * necesita saber con que valores arranca una empresa antes de cambiarlos.
      */
-    protected function getDefaultConfigurationData(): array
+    public function getDefaultConfigurationData(): array
     {
         return [
             // Endpoints de servicios SUNAT - Beta

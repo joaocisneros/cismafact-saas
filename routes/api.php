@@ -405,10 +405,13 @@ Route::prefix('v1')->middleware('api.key')->group(function () {
     Route::prefix('voided-documents')->group(function () {
         Route::get('/', [VoidedDocumentController::class, 'index']);
         Route::post('/', [VoidedDocumentController::class, 'store']);
+        // Antes de /{id}, o no se alcanza: el router casa la primera ruta que
+        // encaje, y «documents-for-voiding» encaja como si fuera un id. La
+        // peticion acababa buscando una baja con ese nombre y devolviendo 404.
+        Route::get('/documents-for-voiding', [VoidedDocumentController::class, 'documentsForVoiding']);
         Route::get('/{id}', [VoidedDocumentController::class, 'show']);
         Route::post('/{id}/send-sunat', [VoidedDocumentController::class, 'sendToSunat']);
         Route::post('/{id}/check-status', [VoidedDocumentController::class, 'checkStatus']);
-        Route::get('/documents-for-voiding', [VoidedDocumentController::class, 'documentsForVoiding']);
         Route::get('/{id}/download-xml', [VoidedDocumentController::class, 'downloadXml']);
         Route::get('/{id}/download-cdr', [VoidedDocumentController::class, 'downloadCdr']);
     });
@@ -419,10 +422,11 @@ Route::prefix('v1')->middleware('api.key')->group(function () {
     Route::prefix('daily-summaries')->group(function () {
         Route::get('/', [DailySummaryController::class, 'index']);
         Route::post('/', [DailySummaryController::class, 'store']);
+        // Antes de /{id}, por lo mismo que en las bajas.
+        Route::get('/pending-boletas', [DailySummaryController::class, 'pendingBoletas']);
         Route::get('/{id}', [DailySummaryController::class, 'show']);
         Route::post('/{id}/send-sunat', [DailySummaryController::class, 'sendToSunat']);
         Route::post('/{id}/check-status', [DailySummaryController::class, 'checkStatus']);
-        Route::get('/pending-boletas', [DailySummaryController::class, 'pendingBoletas']);
     });
 
     // ========================

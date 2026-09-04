@@ -201,13 +201,18 @@ class VoidedDocumentController extends Controller
 
     public function documentsForVoiding(Request $request): JsonResponse
     {
+        // La validacion va fuera del try: dentro, el catch de mas abajo
+        // atrapa la excepcion que lanza y la devuelve como 500. Que a la
+        // peticion le falte un dato no es que el servidor este roto —es un
+        // 422, y lo corrige quien llama.
+        $validated = $request->validate([
+            'branch_id' => ['nullable', 'integer'],
+            'fecha_referencia' => ['nullable', 'date'],
+            'tipo_documento' => ['nullable', 'string', 'in:01,07,08,09'],
+        ]);
+
         try {
             $companyId = (int) $request->user()->company_id;
-            $validated = $request->validate([
-                'branch_id' => ['nullable', 'integer'],
-                'fecha_referencia' => ['nullable', 'date'],
-                'tipo_documento' => ['nullable', 'string', 'in:01,07,08,09'],
-            ]);
 
             $branchQuery = Branch::where('company_id', $companyId);
             $branch = isset($validated['branch_id'])
