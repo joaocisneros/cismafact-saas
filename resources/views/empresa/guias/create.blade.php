@@ -55,16 +55,20 @@
         <div class="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
             <div class="flex items-center justify-between">
                 <h2 class="font-semibold text-gray-800">Destinatario</h2>
-                <select @change="seleccionarCliente($event.target.value)" class="rounded-md border border-gray-300 px-3 py-2 text-sm">
-                    <option value="">— Cliente frecuente —</option>
-                    <template x-for="c in clientes" :key="c.id">
+                <select x-model="clienteElegido" @change="seleccionarCliente($event.target.value)"
+                        class="rounded-md border border-gray-300 px-3 py-2 text-sm">
+                    {{-- Solo los del tipo que está puesto al lado: elegir aquí un
+                         cliente de otro tipo dejaba el formulario descuadrado, y
+                         eso no se veía hasta darle a emitir. --}}
+                    <option value="" x-text="clientesDelTipo.length ? '— Cliente frecuente —' : '— Ninguno con ese documento —'"></option>
+                    <template x-for="c in clientesDelTipo" :key="c.id">
                         <option :value="c.id" x-text="c.doc + ' - ' + c.nombre"></option>
                     </template>
                 </select>
             </div>
             <div class="grid gap-4 md:grid-cols-4">
                 <label class="text-sm font-medium text-gray-700">Tipo doc.
-                    <x-select-tipo-documento name="destinatario[tipo_documento]" x-model="dest.tipo" />
+                    <x-select-tipo-documento name="destinatario[tipo_documento]" x-model="dest.tipo" @change="cambiarTipo()" />
                 </label>
                 <label class="text-sm font-medium text-gray-700">N° documento
                     <input name="destinatario[numero_documento]" x-model="dest.doc" required maxlength="15" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
@@ -225,11 +229,21 @@
 function guiaForm(config) {
     return {
         clientes: config.clientes,
+        clienteElegido: '',
         enviando: false,
         modalidad: '01',
         partidaUbigeo: '',
         dest: { tipo: '6', doc: '', nombre: '', dir: '', email: '' },
         items: [{ codigo: '001', descripcion: '', unidad: 'NIU', cantidad: 1 }],
+        get clientesDelTipo() {
+            return this.clientes.filter(c => String(c.tipo) === String(this.dest.tipo));
+        },
+        /** Al cambiar de tipo, el elegido ya no vale: era de la otra lista. */
+        cambiarTipo() {
+            this.clienteElegido = '';
+            this.dest.doc = '';
+            this.dest.nombre = '';
+        },
         seleccionarCliente(id) {
             const c = this.clientes.find(x => String(x.id) === String(id));
             if (c) this.dest = { tipo: c.tipo, doc: c.doc, nombre: c.nombre, dir: c.dir || '', email: c.email || '' };

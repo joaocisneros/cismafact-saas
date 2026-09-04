@@ -82,16 +82,20 @@
         <div class="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
             <div class="flex items-center justify-between">
                 <h2 class="font-semibold text-gray-800">Cliente</h2>
-                <select @change="seleccionarCliente($event.target.value)" class="rounded-md border border-gray-300 px-3 py-2 text-sm">
-                    <option value="">— Cliente frecuente —</option>
-                    <template x-for="c in clientes" :key="c.id">
+                <select x-model="clienteElegido" @change="seleccionarCliente($event.target.value)"
+                        class="rounded-md border border-gray-300 px-3 py-2 text-sm">
+                    {{-- Solo los del tipo que está puesto al lado: elegir aquí un
+                         cliente de otro tipo dejaba el formulario descuadrado, y
+                         eso no se veía hasta darle a emitir. --}}
+                    <option value="" x-text="clientesDelTipo.length ? '— Cliente frecuente —' : '— Ninguno con ese documento —'"></option>
+                    <template x-for="c in clientesDelTipo" :key="c.id">
                         <option :value="c.id" x-text="c.doc + ' - ' + c.nombre"></option>
                     </template>
                 </select>
             </div>
             <div class="grid gap-4 md:grid-cols-4">
                 <label class="text-sm font-medium text-gray-700">Tipo doc.
-                    <x-select-tipo-documento name="client[tipo_documento]" x-model="cliente.tipo" />
+                    <x-select-tipo-documento name="client[tipo_documento]" x-model="cliente.tipo" @change="cambiarTipo()" />
                 </label>
                 <label class="text-sm font-medium text-gray-700">N° documento
                     <input name="client[numero_documento]" x-model="cliente.doc" required maxlength="15" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
@@ -186,6 +190,7 @@
 function notaForm(config) {
     return {
         clientes: config.clientes,
+        clienteElegido: '',
         referencias: config.referencias,
         moneda: config.moneda,
         tipoAfectado: '01',
@@ -226,6 +231,15 @@ function notaForm(config) {
             this.numAfectado = r.num;
             const c = this.clientes.find(x => String(x.id) === String(r.client_id));
             if (c) this.cliente = { tipo: c.tipo, doc: c.doc, nombre: c.nombre, dir: c.dir || '', email: c.email || '' };
+        },
+        get clientesDelTipo() {
+            return this.clientes.filter(c => String(c.tipo) === String(this.cliente.tipo));
+        },
+        /** Al cambiar de tipo, el elegido ya no vale: era de la otra lista. */
+        cambiarTipo() {
+            this.clienteElegido = '';
+            this.cliente.doc = '';
+            this.cliente.nombre = '';
         },
         seleccionarCliente(id) {
             const c = this.clientes.find(x => String(x.id) === String(id));
