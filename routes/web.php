@@ -149,6 +149,7 @@ Route::prefix('super-admin')
         Route::middleware('role:super_admin')->group(function () {
 
         Route::post('/users/{user}/toggle-active', [SuperAdminUserController::class, 'toggleActive'])->name('users.toggle-active');
+        Route::post('/users/{id}/restore', [SuperAdminUserController::class, 'restore'])->name('users.restore');
         Route::get('/users/{user}/reset-password', [SuperAdminUserController::class, 'resetPasswordForm'])->name('users.reset-password.form');
         Route::post('/users/{user}/reset-password', [SuperAdminUserController::class, 'resetPassword'])->name('users.reset-password');
         Route::delete('/users/{user}', [SuperAdminUserController::class, 'destroy'])->name('users.destroy');

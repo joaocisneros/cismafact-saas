@@ -39,12 +39,39 @@ class UserController extends Controller
             $query->where('active', $request->status === 'active');
         }
 
+        /*
+         * La papelera, solo si se pide. Los borrados no estorban en el
+         * listado de cada dia, pero tienen que poder encontrarse: borrar un
+         * usuario por error no puede ser el final.
+         */
+        if ($request->boolean('papelera')) {
+            $query->onlyTrashed();
+        }
+
         $users = $query->latest()->simplePaginate(15)->withQueryString();
         $companies = Cache::remember('super_admin_company_filter_options', now()->addMinutes(5), fn () => Company::orderBy('razon_social')
             ->limit(300)
             ->get(['id', 'razon_social']));
 
-        return view('super-admin.users.index', compact('users', 'companies'));
+        $enPapelera = User::onlyTrashed()->count();
+
+        return view('super-admin.users.index', compact('users', 'companies', 'enPapelera'));
+    }
+
+    /**
+     * Saca un usuario de la papelera.
+     *
+     * Vuelve tal como estaba —su empresa, su rol, su contraseña—: no es un
+     * usuario nuevo, es el mismo.
+     */
+    public function restore(int $id)
+    {
+        $usuario = User::onlyTrashed()->findOrFail($id);
+        $usuario->restore();
+
+        return redirect()
+            ->route('super-admin.users.index')
+            ->with('success', "Usuario «{$usuario->name}» restaurado.");
     }
 
     public function create()

@@ -48,11 +48,37 @@
                 <button type="submit" class="min-w-24 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Buscar</button>
                 <a href="{{ route('super-admin.users.index') }}" class="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Limpiar</a>
             </div>
+
+            {{-- Se mantiene al filtrar: sin esto, buscar dentro de la papelera
+                 devolvia al listado normal. --}}
+            @if(request()->boolean('papelera'))
+                <input type="hidden" name="papelera" value="1">
+            @endif
         </div>
     </form>
 
     <div class="overflow-hidden rounded-xl bg-white shadow-sm">
-        <div class="overflow-x-auto">
+        {{-- Solo se menciona cuando hay algo dentro: si esta vacia, no hace falta
+         saber que existe. --}}
+    @if($enPapelera > 0 && ! request()->boolean('papelera'))
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+            <p class="text-amber-900">
+                Hay {{ $enPapelera }} {{ \Illuminate\Support\Str::plural('usuario', $enPapelera) }} en la papelera. Se pueden recuperar.
+            </p>
+            <a href="{{ route('super-admin.users.index', ['papelera' => 1]) }}"
+               class="rounded-md border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100">Ver la papelera</a>
+        </div>
+    @endif
+
+    @if(request()->boolean('papelera'))
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-sm">
+            <p class="text-gray-700">Estás viendo la papelera: estos usuarios están borrados y no pueden entrar.</p>
+            <a href="{{ route('super-admin.users.index') }}"
+               class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-100">Volver al listado</a>
+        </div>
+    @endif
+
+    <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b bg-gray-50">
@@ -85,6 +111,17 @@
                         </td>
                         <td class="px-4 py-3 text-gray-500">{{ $user->created_at->format('d/m/Y') }}</td>
                         <td class="px-4 py-3">
+                            @if(request()->boolean('papelera'))
+                                {{-- Sobre alguien borrado no hay mas que hacer que
+                                     devolverlo: editarlo o bloquearlo no tiene sentido. --}}
+                                <form method="POST" action="{{ route('super-admin.users.restore', $user->id) }}"
+                                      onsubmit="return confirm('¿Devolver a este usuario al listado? Vuelve con su empresa, su rol y su contraseña.')">
+                                    @csrf
+                                    <button type="submit" class="rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">
+                                        Restaurar
+                                    </button>
+                                </form>
+                            @else
                             <div class="flex items-center gap-1.5">
                                 <x-icon-action icon="ver" label="Ver detalle" color="blue" type="button"
                                                onclick="window.openAdminModal('{{ route('super-admin.users.show', $user) }}', 'Detalle de usuario')" />
@@ -108,6 +145,7 @@
                                     </form>
                                 @endif
                             </div>
+                            @endif
                         </td>
                     </tr>
                     @empty
