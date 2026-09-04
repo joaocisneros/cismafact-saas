@@ -100,10 +100,10 @@
              que son de todos los clientes del hosting— y parecia que sobraba
              sitio para algo que no cabia. --}}
         <x-stat-card title="Base de datos"
-                     :value="$espacio['bd']['usado'] !== null ? $espacio['bd']['usado'] . ' GB' : '—'"
+                     :value="$espacio['bd']['usado_texto'] ?? '—'"
                      :subtitle="$espacio['bd']['cabe'] === null
-                        ? 'El padrón añade ' . $espacio['bd']['necesario'] . ' GB · comprueba tu cuota'
-                        : ($espacio['bd']['libre'] . ' GB libres de ' . $espacio['bd']['cuota'] . ' · el padrón pide ' . $espacio['bd']['necesario'])"
+                        ? 'El padrón añade ' . $espacio['bd']['necesario_texto'] . ' · comprueba tu cuota'
+                        : ($espacio['bd']['libre_texto'] . ' libres de ' . $espacio['bd']['cuota_texto'] . ' · el padrón pide ' . $espacio['bd']['necesario_texto'])"
                      :color="$espacio['bd']['cabe'] === null ? 'amber' : ($espacio['bd']['cabe'] ? 'green' : 'red')">
             <x-slot:icon>
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -306,11 +306,11 @@
                         <p class="font-semibold">No hay espacio suficiente</p>
                         <p class="mt-1 text-xs">
                             @if($espacio['bd']['cabe'] === false)
-                                A la base de datos le quedan {{ $espacio['bd']['libre'] }} GB
-                                y el padrón pide {{ $espacio['bd']['necesario'] }}.
+                                A la base de datos le quedan {{ $espacio['bd']['libre_texto'] }}
+                                y el padrón pide {{ $espacio['bd']['necesario_texto'] }}.
                             @else
-                                Al disco le quedan {{ $espacio['disco']['libre'] }} GB
-                                y el ZIP de SUNAT pide {{ $espacio['disco']['necesario'] }}.
+                                Al disco le quedan {{ $espacio['disco']['libre_texto'] }}
+                                y el ZIP de SUNAT pide {{ $espacio['disco']['necesario_texto'] }}.
                             @endif
                             La importación fallaría a mitad.
                         </p>
@@ -359,7 +359,7 @@
             <dl class="space-y-2 p-5 text-sm">
                 <div class="flex gap-3">
                     <dt class="w-32 shrink-0 text-gray-500">Ocupa</dt>
-                    <dd class="font-medium text-gray-800">unos {{ $espacio['bd']['necesario'] }} GB</dd>
+                    <dd class="font-medium text-gray-800">unos {{ $espacio['bd']['necesario_texto'] }}</dd>
                 </div>
                 <div class="flex gap-3">
                     <dt class="w-32 shrink-0 text-gray-500">Tarda</dt>
@@ -369,9 +369,9 @@
                     <dt class="w-32 shrink-0 text-gray-500">Base de datos</dt>
                     <dd class="font-medium {{ $espacio['bd']['cabe'] === false ? 'text-red-700' : 'text-gray-800' }}">
                         @if($espacio['bd']['cabe'] === null)
-                            ocupa {{ $espacio['bd']['usado'] ?? '?' }} GB · cuota sin configurar
+                            ocupa {{ $espacio['bd']['usado_texto'] ?? '?' }} · cuota sin configurar
                         @else
-                            {{ $espacio['bd']['libre'] }} GB libres de {{ $espacio['bd']['cuota'] }}
+                            {{ $espacio['bd']['libre_texto'] }} libres de {{ $espacio['bd']['cuota_texto'] }}
                         @endif
                     </dd>
                 </div>
@@ -379,9 +379,9 @@
                     <dt class="w-32 shrink-0 text-gray-500">Disco</dt>
                     <dd class="font-medium {{ $espacio['disco']['cabe'] === false ? 'text-red-700' : 'text-gray-800' }}">
                         @if($espacio['disco']['cabe'] === null)
-                            ocupa {{ $espacio['disco']['usado'] ?? '?' }} GB · cuota sin configurar
+                            ocupa {{ $espacio['disco']['usado_texto'] ?? '?' }} · cuota sin configurar
                         @else
-                            {{ $espacio['disco']['libre'] }} GB libres de {{ $espacio['disco']['cuota'] }}
+                            {{ $espacio['disco']['libre_texto'] }} libres de {{ $espacio['disco']['cuota_texto'] }}
                         @endif
                     </dd>
                 </div>

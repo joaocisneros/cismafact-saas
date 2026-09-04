@@ -236,12 +236,33 @@ class PadronController extends Controller
 
         return [
             'usado' => $usado !== null ? round($usado, 1) : null,
+            // En texto aparte porque en gigas casi todo sale «0 GB»: una base
+            // de 180 MB es cero al redondear, y en pantalla parecia que no
+            // ocupaba nada o que no se habia podido medir.
+            'usado_texto' => $this->enTexto($usado),
             'cuota' => $cuota,
+            'cuota_texto' => $this->enTexto($cuota),
             'libre' => $libre,
+            'libre_texto' => $this->enTexto($libre),
             'necesario' => $necesario,
+            'necesario_texto' => $this->enTexto($necesario),
             // Sin tope configurado no se afirma nada: ni que cabe ni que no.
             'cabe' => $libre === null ? null : $libre >= $necesario,
         ];
+    }
+
+    /** Un tamano en la unidad en que se entiende: «180 MB», «3.4 GB». */
+    private function enTexto(?float $gb): ?string
+    {
+        if ($gb === null) {
+            return null;
+        }
+
+        if (abs($gb) < 1) {
+            return round($gb * 1024) . ' MB';
+        }
+
+        return rtrim(rtrim(number_format($gb, 1, '.', ''), '0'), '.') . ' GB';
     }
 
     /** Lo que ocupan las tablas de esta base, en GB. */
