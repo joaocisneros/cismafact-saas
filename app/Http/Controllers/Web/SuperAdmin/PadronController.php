@@ -197,49 +197,44 @@ class PadronController extends Controller
     }
 
     /**
-     * Si hay sitio para el padron, en los dos sitios que hace falta.
+     * Si hay sitio para el padron.
      *
      * No se pregunta con disk_free_space(): esa funcion mira el disco de la
      * maquina, que en un hosting compartido es de todos los clientes. Decia
-     * «539 GB libres» cuando la cuenta entera ocupaba 187 MB y su cuota era
-     * mucho menor, o sea que invitaba a lanzar una importacion que no cabia y
-     * que habria muerto a mitad.
+     * «539 GB libres» cuando la cuenta tenia 1 GB contratado, o sea que
+     * invitaba a lanzar una importacion que no cabia y que habria muerto a
+     * mitad, llenando el disco por el camino.
      *
-     * Lo que se puede medir de verdad es lo que ya se esta usando. El tope lo
-     * pone quien contrato el hosting (config/padron.php); sin el, la pantalla
-     * dice que hay que comprobarlo en vez de inventar una cifra tranquilizadora.
+     * Una sola cuota y no dos, aunque hagan falta dos sitios —el ZIP en disco
+     * y los RUC en la base—: los hostings compartidos cobran una bolsa unica
+     * y la base de datos sale de ella. Sumar dos topes que no existen daba el
+     * doble de sitio del que hay.
+     *
+     * El tope lo pone quien contrato el hosting (config/padron.php); sin el,
+     * la pantalla dice que hay que comprobarlo en vez de inventar una cifra
+     * tranquilizadora.
      */
     private function espacio(): array
     {
-        return [
-            'disco' => $this->sitio(
-                usado: $this->pesoDeStorage(),
-                cuota: config('padron.cuota_disco_gb'),
-                necesario: 0.4,     // el ZIP que se baja de SUNAT
-            ),
-            'bd' => $this->sitio(
-                usado: $this->pesoDeLaBaseDeDatos(),
-                cuota: config('padron.cuota_bd_gb'),
-                // Mientras se importa conviven la tabla vieja y la nueva, asi
-                // que en el momento del cambio hace falta el doble. Es el pico
-                // que decide si cabe o no.
-                necesario: $this->hayPadron() ? 6 : 3,
-            ),
-        ];
-    }
+        $bd = $this->pesoDeLaBaseDeDatos();
+        $disco = $this->pesoDeStorage();
+        $usado = ($bd === null && $disco === null) ? null : (float) $bd + (float) $disco;
 
-    /** Lo mismo para el disco y para la base: usado, tope y si cabe. */
-    private function sitio(?float $usado, $cuota, float $necesario): array
-    {
+        $cuota = config('padron.cuota_gb');
         $cuota = is_numeric($cuota) ? (float) $cuota : null;
-        $libre = ($cuota !== null && $usado !== null) ? round($cuota - $usado, 1) : null;
+
+        $libre = ($cuota !== null && $usado !== null) ? round($cuota - $usado, 2) : null;
+
+        // El ZIP de SUNAT mas lo que ocupan los RUC ya dentro. Si ya hay
+        // padron son 3 GB mas, no menos: mientras se importa conviven la tabla
+        // vieja y la nueva, y solo al final se cambia una por otra.
+        $necesario = ($this->hayPadron() ? 6 : 3) + 0.4;
 
         return [
-            'usado' => $usado !== null ? round($usado, 1) : null,
-            // En texto aparte porque en gigas casi todo sale «0 GB»: una base
-            // de 180 MB es cero al redondear, y en pantalla parecia que no
-            // ocupaba nada o que no se habia podido medir.
+            'usado' => $usado,
             'usado_texto' => $this->enTexto($usado),
+            'bd_texto' => $this->enTexto($bd),
+            'disco_texto' => $this->enTexto($disco),
             'cuota' => $cuota,
             'cuota_texto' => $this->enTexto($cuota),
             'libre' => $libre,
@@ -251,7 +246,12 @@ class PadronController extends Controller
         ];
     }
 
-    /** Un tamano en la unidad en que se entiende: «180 MB», «3.4 GB». */
+    /**
+     * Un tamano en la unidad en que se entiende: «189 MB», «3.4 GB».
+     *
+     * Todo en gigas salia «0 GB»: una base de 189 MB es cero al redondear, y
+     * en pantalla parecia que no ocupaba nada o que no se habia medido.
+     */
     private function enTexto(?float $gb): ?string
     {
         if ($gb === null) {

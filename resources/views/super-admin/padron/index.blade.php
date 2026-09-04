@@ -99,12 +99,12 @@
              comprobarla: antes salia el disco de la maquina —cientos de gigas
              que son de todos los clientes del hosting— y parecia que sobraba
              sitio para algo que no cabia. --}}
-        <x-stat-card title="Base de datos"
-                     :value="$espacio['bd']['usado_texto'] ?? '—'"
-                     :subtitle="$espacio['bd']['cabe'] === null
-                        ? 'El padrón añade ' . $espacio['bd']['necesario_texto'] . ' · comprueba tu cuota'
-                        : ($espacio['bd']['libre_texto'] . ' libres de ' . $espacio['bd']['cuota_texto'] . ' · el padrón pide ' . $espacio['bd']['necesario_texto'])"
-                     :color="$espacio['bd']['cabe'] === null ? 'amber' : ($espacio['bd']['cabe'] ? 'green' : 'red')">
+        <x-stat-card title="Espacio ocupado"
+                     :value="$espacio['usado_texto'] ?? '—'"
+                     :subtitle="$espacio['cabe'] === null
+                        ? 'El padrón pide ' . $espacio['necesario_texto'] . ' · comprueba tu cuota'
+                        : ($espacio['libre_texto'] . ' libres de ' . $espacio['cuota_texto'] . ' · el padrón pide ' . $espacio['necesario_texto'])"
+                     :color="$espacio['cabe'] === null ? 'amber' : ($espacio['cabe'] ? 'green' : 'red')">
             <x-slot:icon>
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.858 5.858A9 9 0 1118.142 18.142 9 9 0 015.858 5.858zM12 8v4l3 3"/>
@@ -292,8 +292,7 @@
         {{-- Solo se afirma que no cabe cuando se sabe: sin cuota configurada
              no hay con que comparar, y avisar en falso es tan malo como
              callarse. --}}
-        @php($sinEspacio = $espacio['bd']['cabe'] === false || $espacio['disco']['cabe'] === false)
-        @php($sinMedir = $espacio['bd']['cabe'] === null)
+        @php($sinEspacio = $espacio['cabe'] === false)
         @php($ultima = $importaciones->first())
         @php($tuyo = $importaciones->firstWhere('estado', 'completada')?->datos_de)
 
@@ -305,14 +304,10 @@
                     <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
                         <p class="font-semibold">No hay espacio suficiente</p>
                         <p class="mt-1 text-xs">
-                            @if($espacio['bd']['cabe'] === false)
-                                A la base de datos le quedan {{ $espacio['bd']['libre_texto'] }}
-                                y el padrón pide {{ $espacio['bd']['necesario_texto'] }}.
-                            @else
-                                Al disco le quedan {{ $espacio['disco']['libre_texto'] }}
-                                y el ZIP de SUNAT pide {{ $espacio['disco']['necesario_texto'] }}.
-                            @endif
-                            La importación fallaría a mitad.
+                            Te quedan {{ $espacio['libre_texto'] }} de {{ $espacio['cuota_texto'] }}
+                            y el padrón pide {{ $espacio['necesario_texto'] }}.
+                            La importación fallaría a mitad y dejaría el disco lleno,
+                            que tumba también todo lo demás.
                         </p>
                     </div>
                 @endif
@@ -359,30 +354,27 @@
             <dl class="space-y-2 p-5 text-sm">
                 <div class="flex gap-3">
                     <dt class="w-32 shrink-0 text-gray-500">Ocupa</dt>
-                    <dd class="font-medium text-gray-800">unos {{ $espacio['bd']['necesario_texto'] }}</dd>
+                    <dd class="font-medium text-gray-800">unos {{ $espacio['necesario_texto'] }}</dd>
                 </div>
                 <div class="flex gap-3">
                     <dt class="w-32 shrink-0 text-gray-500">Tarda</dt>
                     <dd class="font-medium text-gray-800">horas</dd>
                 </div>
                 <div class="flex gap-3">
-                    <dt class="w-32 shrink-0 text-gray-500">Base de datos</dt>
-                    <dd class="font-medium {{ $espacio['bd']['cabe'] === false ? 'text-red-700' : 'text-gray-800' }}">
-                        @if($espacio['bd']['cabe'] === null)
-                            ocupa {{ $espacio['bd']['usado_texto'] ?? '?' }} · cuota sin configurar
+                    <dt class="w-32 shrink-0 text-gray-500">Tienes</dt>
+                    <dd class="font-medium {{ $espacio['cabe'] === false ? 'text-red-700' : 'text-gray-800' }}">
+                        @if($espacio['cabe'] === null)
+                            ocupas {{ $espacio['usado_texto'] ?? '?' }} · cuota sin configurar
                         @else
-                            {{ $espacio['bd']['libre_texto'] }} libres de {{ $espacio['bd']['cuota_texto'] }}
+                            {{ $espacio['libre_texto'] }} libres de {{ $espacio['cuota_texto'] }}
                         @endif
                     </dd>
                 </div>
                 <div class="flex gap-3">
-                    <dt class="w-32 shrink-0 text-gray-500">Disco</dt>
-                    <dd class="font-medium {{ $espacio['disco']['cabe'] === false ? 'text-red-700' : 'text-gray-800' }}">
-                        @if($espacio['disco']['cabe'] === null)
-                            ocupa {{ $espacio['disco']['usado_texto'] ?? '?' }} · cuota sin configurar
-                        @else
-                            {{ $espacio['disco']['libre_texto'] }} libres de {{ $espacio['disco']['cuota_texto'] }}
-                        @endif
+                    <dt class="w-32 shrink-0 text-gray-500">De eso</dt>
+                    <dd class="font-medium text-gray-800">
+                        {{ $espacio['bd_texto'] ?? '?' }} la base de datos,
+                        {{ $espacio['disco_texto'] ?? '?' }} los archivos
                     </dd>
                 </div>
                 <div class="flex gap-3">
