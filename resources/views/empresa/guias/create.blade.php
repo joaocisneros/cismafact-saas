@@ -26,7 +26,7 @@
         <div class="rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">{{ session('error') }}</div>
     @endif
 
-    <form method="POST" action="{{ route('empresa.guias.store') }}" class="space-y-5">
+    <form method="POST" action="{{ route('empresa.guias.store') }}" @submit="enviando = true" class="space-y-5">
         @csrf
         <input type="hidden" name="branch_id" value="{{ $branch->id }}">
 
@@ -64,12 +64,7 @@
             </div>
             <div class="grid gap-4 md:grid-cols-4">
                 <label class="text-sm font-medium text-gray-700">Tipo doc.
-                    <select name="destinatario[tipo_documento]" x-model="dest.tipo" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
-                        <option value="6">RUC</option>
-                        <option value="1">DNI</option>
-                        <option value="4">Carnet ext.</option>
-                        <option value="0">Sin documento</option>
-                    </select>
+                    <x-select-tipo-documento name="destinatario[tipo_documento]" x-model="dest.tipo" />
                 </label>
                 <label class="text-sm font-medium text-gray-700">N° documento
                     <input name="destinatario[numero_documento]" x-model="dest.doc" required maxlength="15" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
@@ -215,7 +210,13 @@
 
         <div class="flex justify-end gap-2">
             <a href="{{ route('empresa.guias.index') }}" class="rounded-md border border-gray-300 px-5 py-2.5 text-sm">Cancelar</a>
-            <button class="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700">Emitir y enviar a SUNAT</button>
+            {{-- Se bloquea al enviar: emitir tarda lo que tarde SUNAT, y sin esto
+                 un segundo clic mientras se espera emite la guia dos veces y
+                 quema un correlativo que luego hay que anular. --}}
+            <button type="submit" :disabled="enviando"
+                    class="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400">
+                <span x-text="enviando ? 'Enviando a SUNAT…' : 'Emitir y enviar a SUNAT'"></span>
+            </button>
         </div>
     </form>
 </div>
@@ -224,6 +225,7 @@
 function guiaForm(config) {
     return {
         clientes: config.clientes,
+        enviando: false,
         modalidad: '01',
         partidaUbigeo: '',
         dest: { tipo: '6', doc: '', nombre: '', dir: '', email: '' },
@@ -232,7 +234,12 @@ function guiaForm(config) {
             const c = this.clientes.find(x => String(x.id) === String(id));
             if (c) this.dest = { tipo: c.tipo, doc: c.doc, nombre: c.nombre, dir: c.dir || '', email: c.email || '' };
         },
-        agregarItem() { this.items.push({ codigo: String(this.items.length + 1).padStart(3, '0'), descripcion: '', unidad: 'NIU', cantidad: 1 }); },
+        agregarItem() {
+            // Uno mas que el mayor, no uno mas que la cuenta: al quitar un item
+            // de en medio, contar los que quedan repetia un codigo ya usado.
+            const siguiente = this.items.reduce((mayor, it) => Math.max(mayor, Number(it.codigo) || 0), 0) + 1;
+            this.items.push({ codigo: String(siguiente).padStart(3, '0'), descripcion: '', unidad: 'NIU', cantidad: 1 });
+        },
         quitarItem(i) { if (this.items.length > 1) this.items.splice(i, 1); },
     };
 }

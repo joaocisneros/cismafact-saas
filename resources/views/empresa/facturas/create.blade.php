@@ -27,7 +27,7 @@
         <div class="rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">{{ session('error') }}</div>
     @endif
 
-    <form method="POST" action="{{ route('empresa.facturas.store') }}" class="space-y-5">
+    <form method="POST" action="{{ route('empresa.facturas.store') }}" @submit="enviando = true" class="space-y-5">
         @csrf
         <input type="hidden" name="branch_id" value="{{ $branch->id }}">
 
@@ -137,7 +137,7 @@
                                 <td class="py-2 pr-2"><input type="number" step="0.001" min="0.001" :name="`detalles[${i}][cantidad]`" x-model.number="item.cantidad" required class="w-20 rounded border border-gray-300 px-2 py-1.5"></td>
                                 <td class="py-2 pr-2"><input type="number" step="0.01" min="0" :name="`detalles[${i}][mto_valor_unitario]`" x-model.number="item.valorUnitario" required class="w-24 rounded border border-gray-300 px-2 py-1.5"></td>
                                 <td class="py-2 pr-2">
-                                    <x-select-afectacion ::name="`detalles[${i}][tip_afe_igv]`" x-model="item.afectacion" />
+                                    <x-select-afectacion :excluir="['17']" ::name="`detalles[${i}][tip_afe_igv]`" x-model="item.afectacion" />
                                     {{-- No solo la 10: un retiro o una bonificacion gravada tampoco se
                                          cobra, pero paga IGV igual sobre su valor referencial. La 17
                                          queda fuera porque el IVAP lleva su propia tasa. --}}
@@ -158,6 +158,9 @@
                     <div class="flex justify-between text-gray-600"><span>Op. gravadas</span><span x-text="simbolo + ' ' + formato(totales.gravadas)"></span></div>
                     <div class="flex justify-between text-gray-600" x-show="totales.exoneradas > 0"><span>Op. exoneradas</span><span x-text="simbolo + ' ' + formato(totales.exoneradas)"></span></div>
                     <div class="flex justify-between text-gray-600" x-show="totales.inafectas > 0"><span>Op. inafectas</span><span x-text="simbolo + ' ' + formato(totales.inafectas)"></span></div>
+                    {{-- Aparte del total: lo gratuito se declara pero no se cobra,
+                         asi que sumarlo daria un importe que el cliente no paga. --}}
+                    <div class="flex justify-between text-gray-600" x-show="totales.gratuitas > 0"><span>Op. gratuitas</span><span x-text="simbolo + ' ' + formato(totales.gratuitas)"></span></div>
                     <div class="flex justify-between text-gray-600"><span>IGV (18%)</span><span x-text="simbolo + ' ' + formato(totales.igv)"></span></div>
                     <div class="flex justify-between font-bold text-gray-900 text-base border-t border-gray-200 pt-1"><span>Total</span><span x-text="simbolo + ' ' + formato(totales.total)"></span></div>
                 </div>
@@ -173,7 +176,13 @@
 
         <div class="flex justify-end gap-2">
             <a href="{{ route('empresa.facturas.index') }}" class="rounded-md border border-gray-300 px-5 py-2.5 text-sm">Cancelar</a>
-            <button class="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700">Emitir y enviar a SUNAT</button>
+            {{-- Se bloquea al enviar: emitir tarda lo que tarde SUNAT, y sin esto
+                 un segundo clic mientras se espera emite el comprobante dos
+                 veces y quema un correlativo que luego hay que anular. --}}
+            <button type="submit" :disabled="enviando"
+                    class="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400">
+                <span x-text="enviando ? 'Enviando a SUNAT…' : 'Emitir y enviar a SUNAT'"></span>
+            </button>
         </div>
     </form>
 </div>
@@ -184,23 +193,37 @@ function facturaForm(config) {
         clientes: config.clientes,
         moneda: config.moneda,
         cliente: { tipo: '6', doc: '', nombre: '', dir: '', email: '' },
+        enviando: false,
         items: [{ codigo: '001', descripcion: '', unidad: 'NIU', cantidad: 1, valorUnitario: 0, afectacion: '10' }],
 
-        get simbolo() { return this.moneda === 'USD' ? '$' : 'S/'; },
+        get simbolo() {
+            // Las que no tienen simbolo conocido salen con su codigo: mejor
+            // «BRL 100.00» que un «S/ 100.00» que no es verdad.
+            return { PEN: 'S/', USD: '$', EUR: '\u20ac', GBP: '\u00a3', JPY: '\u00a5', CNY: '\u00a5' }[this.moneda] || this.moneda;
+        },
 
         get clientesRuc() { return this.clientes.filter(c => String(c.tipo) === '6'); },
 
         get totales() {
-            let gravadas = 0, exoneradas = 0, inafectas = 0, exportacion = 0, igv = 0;
+            let gravadas = 0, exoneradas = 0, inafectas = 0, exportacion = 0, gratuitas = 0, igv = 0;
             this.items.forEach(it => {
                 const base = (Number(it.cantidad) || 0) * (Number(it.valorUnitario) || 0);
+
+                // Lo que no se cobra va aparte y no suma al total a pagar: se
+                // declara, pero el cliente no lo paga.
+                if (['11','12','13','14','15','16','21','31','32','33','34','35','36'].includes(it.afectacion)) {
+                    gratuitas += base;
+                    if (it.afectacion !== '21' && it.afectacion[0] === '1') igv += base * 0.18;
+                    return;
+                }
+
                 if (it.afectacion === '10') { gravadas += base; igv += base * 0.18; }
                 else if (it.afectacion === '20') { exoneradas += base; }
                 else if (it.afectacion === '30') { inafectas += base; }
                 else if (it.afectacion === '40') { exportacion += base; }
             });
             const total = gravadas + exoneradas + inafectas + exportacion + igv;
-            return { gravadas, exoneradas, inafectas, exportacion, igv, total };
+            return { gravadas, exoneradas, inafectas, exportacion, gratuitas, igv, total };
         },
 
         seleccionarCliente(id) {
@@ -208,7 +231,10 @@ function facturaForm(config) {
             if (c) this.cliente = { tipo: '6', doc: c.doc, nombre: c.nombre, dir: c.dir || '', email: c.email || '' };
         },
         agregarItem() {
-            this.items.push({ codigo: String(this.items.length + 1).padStart(3, '0'), descripcion: '', unidad: 'NIU', cantidad: 1, valorUnitario: 0, afectacion: '10' });
+            // Uno mas que el mayor, no uno mas que la cuenta: al quitar un item
+            // de en medio, contar los que quedan repetia un codigo ya usado.
+            const siguiente = this.items.reduce((mayor, it) => Math.max(mayor, Number(it.codigo) || 0), 0) + 1;
+            this.items.push({ codigo: String(siguiente).padStart(3, '0'), descripcion: '', unidad: 'NIU', cantidad: 1, valorUnitario: 0, afectacion: '10' });
         },
         quitarItem(i) { if (this.items.length > 1) this.items.splice(i, 1); },
         formato(n) { return (Number(n) || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); },

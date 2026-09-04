@@ -126,30 +126,34 @@ class CatalogoSunat
      * Dieciocho opciones seguidas no se leen. Agrupadas se entienden de un
      * vistazo, porque es como estan pensadas: una operacion onerosa por
      * familia y, colgando de ella, las que no se cobran.
+     *
+     * Cada opcion repite su familia aunque el grupo ya la diga: el grupo solo
+     * se ve con el desplegable abierto, y cerrado ponia «Operación onerosa» a
+     * secas, que no dice si eso lleva IGV o no.
      */
     public const AFECTACIONES_POR_FAMILIA = [
         'Gravado' => [
-            '10' => 'Operación onerosa',
-            '11' => 'Retiro por premio',
-            '12' => 'Retiro por donación',
-            '13' => 'Retiro',
-            '14' => 'Retiro por publicidad',
-            '15' => 'Bonificaciones',
-            '16' => 'Retiro por entrega a trabajadores',
-            '17' => 'IVAP (arroz pilado)',
+            '10' => 'Gravado · operación onerosa',
+            '11' => 'Gravado · retiro por premio',
+            '12' => 'Gravado · retiro por donación',
+            '13' => 'Gravado · retiro',
+            '14' => 'Gravado · retiro por publicidad',
+            '15' => 'Gravado · bonificaciones',
+            '16' => 'Gravado · retiro a trabajadores',
+            '17' => 'Gravado · IVAP (arroz pilado)',
         ],
         'Exonerado' => [
-            '20' => 'Operación onerosa',
-            '21' => 'Transferencia gratuita',
+            '20' => 'Exonerado · operación onerosa',
+            '21' => 'Exonerado · transferencia gratuita',
         ],
         'Inafecto' => [
-            '30' => 'Operación onerosa',
-            '31' => 'Retiro por bonificación',
-            '32' => 'Retiro',
-            '33' => 'Retiro por muestras médicas',
-            '34' => 'Retiro por convenio colectivo',
-            '35' => 'Retiro por premio',
-            '36' => 'Retiro por publicidad',
+            '30' => 'Inafecto · operación onerosa',
+            '31' => 'Inafecto · retiro por bonificación',
+            '32' => 'Inafecto · retiro',
+            '33' => 'Inafecto · retiro por muestras médicas',
+            '34' => 'Inafecto · retiro por convenio colectivo',
+            '35' => 'Inafecto · retiro por premio',
+            '36' => 'Inafecto · retiro por publicidad',
         ],
         'Exportación' => [
             '40' => 'Exportación',
