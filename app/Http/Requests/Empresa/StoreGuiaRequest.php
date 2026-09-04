@@ -4,6 +4,7 @@ namespace App\Http\Requests\Empresa;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use App\Support\CatalogoSunat;
 
 class StoreGuiaRequest extends FormRequest
 {
@@ -54,7 +55,7 @@ class StoreGuiaRequest extends FormRequest
 
             // Destinatario
             'destinatario' => ['required', 'array'],
-            'destinatario.tipo_documento' => ['required', 'string', 'in:0,1,4,6'],
+            'destinatario.tipo_documento' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::DOCUMENTOS_IDENTIDAD)],
             'destinatario.numero_documento' => ['required', 'string', 'max:15'],
             'destinatario.razon_social' => ['required', 'string', 'max:255'],
             'destinatario.direccion' => ['nullable', 'string', 'max:255'],
@@ -82,6 +83,8 @@ class StoreGuiaRequest extends FormRequest
 
             // Transporte privado (mod 02): vehículo + conductor
             'vehiculo_placa' => ['required_if:mod_traslado,02', 'nullable', 'string', 'max:8'],
+            // El conductor es siempre una persona, asi que aqui no caben los
+            // documentos de persona juridica del catalogo 06.
             'conductor_tipo_doc' => ['required_if:mod_traslado,02', 'nullable', 'string', 'in:1,4,6,7'],
             'conductor_num_doc' => ['required_if:mod_traslado,02', 'nullable', 'string', 'max:15'],
             'conductor_licencia' => ['required_if:mod_traslado,02', 'nullable', 'string', 'max:20'],

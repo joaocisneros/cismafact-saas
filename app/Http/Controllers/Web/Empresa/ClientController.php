@@ -10,11 +10,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use App\Support\CatalogoSunat;
 
 class ClientController extends Controller
 {
-    /** Tipos de documento de identidad aceptados por SUNAT. */
-    private const TIPOS_DOC = ['1', '4', '6', '0'];
+    /**
+     * Tipos de documento de identidad aceptados por SUNAT.
+     *
+     * Los nueve del catalogo 06, no los cuatro de siempre: sin pasaporte ni
+     * los documentos extranjeros no se puede dar de alta a quien vive fuera,
+     * y luego tampoco facturarle una exportacion.
+     */
+    private const TIPOS_DOC = CatalogoSunat::DOCUMENTOS_IDENTIDAD;
 
     /**
      * Busquedas por minuto y empresa en el autocompletado.

@@ -4,7 +4,7 @@
 
 @section('content')
 @php
-    $tipos = ['1' => 'DNI', '6' => 'RUC', '4' => 'Carnet de Extranjería', '0' => 'Doc. Trib. No Dom. sin RUC'];
+    $tipos = \App\Support\CatalogoSunat::DOCUMENTOS_IDENTIDAD_NOMBRE;
     $action = $client->exists ? route('empresa.clients.update', $client) : route('empresa.clients.store');
 @endphp
 <div class="space-y-6 max-w-3xl">

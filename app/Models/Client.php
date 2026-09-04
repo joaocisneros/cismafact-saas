@@ -115,13 +115,9 @@ class Client extends Model
 
     public function getDocumentTypeNameAttribute(): string
     {
-        return match($this->tipo_documento) {
-            '1' => 'DNI',
-            '4' => 'Carnet de Extranjería',
-            '6' => 'RUC',
-            '0' => 'DOC.TRIB.NO.DOM.SIN.RUC',
-            default => 'Desconocido'
-        };
+        // Del catalogo 06 entero: con la lista corta, un cliente con
+        // pasaporte salia en pantalla como «Desconocido».
+        return \App\Support\CatalogoSunat::DOCUMENTOS_IDENTIDAD_NOMBRE[$this->tipo_documento] ?? 'Desconocido';
     }
 
     public function getFullDocumentAttribute(): string

@@ -132,6 +132,8 @@ class CatalogoController extends Controller
     public function buscarDocumento(Request $request): JsonResponse
     {
         $request->validate([
+            // Solo los que el buscador sabe resolver: al padron y al proveedor
+            // externo se les pregunta por RUC y por DNI, no por un pasaporte.
             'tipo' => ['required', 'string', 'in:0,1,4,6,7'],
             'numero' => ['required', 'string', 'max:20'],
         ]);

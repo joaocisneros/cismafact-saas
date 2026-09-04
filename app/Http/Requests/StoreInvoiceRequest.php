@@ -7,6 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\ValidationException;
 use App\Models\Branch;
 use App\Support\NormativaSunat;
+use App\Support\CatalogoSunat;
 
 class StoreInvoiceRequest extends FormRequest
 {
@@ -51,7 +52,7 @@ class StoreInvoiceRequest extends FormRequest
             'serie' => 'required|string|max:4',
             'fecha_emision' => 'required|date',
             'fecha_vencimiento' => 'nullable|date|after_or_equal:fecha_emision',
-            'moneda' => 'required|string|in:PEN,USD',
+            'moneda' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::MONEDAS)],
             'tipo_operacion' => 'nullable|string|max:4',
             'forma_pago_tipo' => 'required|string|in:Contado,Credito',
             'forma_pago_cuotas' => 'nullable|array',
@@ -60,7 +61,7 @@ class StoreInvoiceRequest extends FormRequest
             'forma_pago_cuotas.*.fecha_pago' => 'required_with:forma_pago_cuotas|date',
             
             // Cliente
-            'client.tipo_documento' => 'required|string|in:1,4,6,0',
+            'client.tipo_documento' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::DOCUMENTOS_IDENTIDAD)],
             'client.numero_documento' => 'required|string|max:15',
             'client.razon_social' => 'required|string|max:255',
             'client.nombre_comercial' => 'nullable|string|max:255',

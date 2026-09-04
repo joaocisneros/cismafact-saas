@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Exception;
+use App\Support\CatalogoSunat;
 
 class ClientController extends Controller
 {
@@ -74,7 +75,7 @@ class ClientController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'company_id' => 'nullable|integer|exists:companies,id',
-                'tipo_documento' => 'required|string|in:1,4,6,7,0', // DNI, CE, RUC, PAS, SIN DOC
+                'tipo_documento' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::DOCUMENTOS_IDENTIDAD)], // DNI, CE, RUC, PAS, SIN DOC
                 'numero_documento' => 'required|string|max:20',
                 'razon_social' => 'required|string|max:255',
                 'nombre_comercial' => 'nullable|string|max:255',
@@ -183,7 +184,7 @@ class ClientController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'company_id' => 'required|integer|exists:companies,id',
-                'tipo_documento' => 'required|string|in:1,4,6,7,0',
+                'tipo_documento' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::DOCUMENTOS_IDENTIDAD)],
                 'numero_documento' => 'required|string|max:20',
                 'razon_social' => 'required|string|max:255',
                 'nombre_comercial' => 'nullable|string|max:255',
@@ -377,7 +378,7 @@ class ClientController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'company_id' => 'required|integer|exists:companies,id',
-                'tipo_documento' => 'required|string|in:1,4,6,7,0',
+                'tipo_documento' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::DOCUMENTOS_IDENTIDAD)],
                 'numero_documento' => 'required|string|max:20'
             ]);
 

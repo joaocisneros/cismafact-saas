@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Empresa;
 
+use App\Support\CatalogoSunat;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Validator;
 
 class StoreFacturaRequest extends FormRequest
 {
@@ -40,14 +42,19 @@ class StoreFacturaRequest extends FormRequest
             'serie'      => ['required', 'string', 'size:4', 'regex:/^F[A-Z0-9]{3}$/'],
             'fecha_emision' => ['required', 'date'],
             'fecha_vencimiento' => ['nullable', 'date', 'after_or_equal:fecha_emision'],
-            'moneda' => ['required', 'string', 'in:PEN,USD'],
+            'moneda' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::MONEDAS)],
             'tipo_operacion' => ['nullable', 'string', 'max:4'],
             'forma_pago_tipo' => ['required', 'string', 'in:Contado,Credito'],
 
-            // Cliente (en factura el RUC es obligatorio: tipo 6)
+            // Cliente. La factura pide RUC, salvo cuando se exporta: al que no
+            // vive aqui se le identifica con su pasaporte o con su numero
+            // tributario de fuera, porque RUC no tiene. De que sea de verdad una
+            // exportacion se encarga clienteSinRucSoloAlExportar().
             'client' => ['required', 'array'],
-            'client.tipo_documento' => ['required', 'string', 'in:6'],
-            'client.numero_documento' => ['required', 'string', 'regex:/^\d{11}$/'],
+            'client.tipo_documento' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::DOCUMENTOS_FACTURA)],
+            'client.numero_documento' => $this->esCliente('6')
+                ? ['required', 'string', 'regex:/^\d{11}$/']
+                : ['required', 'string', 'max:15'],
             'client.razon_social' => ['required', 'string', 'max:255'],
             'client.direccion' => ['nullable', 'string', 'max:255'],
             'client.email' => ['nullable', 'email', 'max:100'],
@@ -59,7 +66,7 @@ class StoreFacturaRequest extends FormRequest
             'detalles.*.unidad' => ['required', 'string', 'max:3'],
             'detalles.*.cantidad' => ['required', 'numeric', 'min:0.001'],
             'detalles.*.mto_valor_unitario' => ['required', 'numeric', 'min:0'],
-            'detalles.*.tip_afe_igv' => ['required', 'string', 'in:10,20,30,40'],
+            'detalles.*.tip_afe_igv' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::AFECTACIONES_IGV)],
             'detalles.*.porcentaje_igv' => ['nullable', 'numeric', 'min:0', 'max:100'],
 
             'observacion' => ['nullable', 'string', 'max:500'],
@@ -74,7 +81,7 @@ class StoreFacturaRequest extends FormRequest
             'serie.required' => 'La serie es requerida.',
             'serie.regex' => 'La serie de factura debe empezar con F (ej. F001).',
             'fecha_emision.required' => 'La fecha de emisión es requerida.',
-            'client.tipo_documento.in' => 'Una factura solo puede emitirse a un cliente con RUC. Para clientes con DNI usa una Boleta.',
+            'client.tipo_documento.in' => 'Ese tipo de documento no vale para una factura. Con DNI usa una Boleta; sin RUC solo se puede facturar una exportación.',
             'client.numero_documento.required' => 'El RUC del cliente es requerido.',
             'client.numero_documento.regex' => 'El RUC del cliente debe tener 11 dígitos.',
             'client.razon_social.required' => 'La razón social del cliente es requerida.',
@@ -84,6 +91,43 @@ class StoreFacturaRequest extends FormRequest
             'detalles.*.cantidad.min' => 'La cantidad debe ser mayor a cero.',
             'detalles.*.mto_valor_unitario.required' => 'El valor unitario es requerido.',
         ];
+    }
+
+    /** Si el cliente lleva ese tipo de documento. */
+    private function esCliente(string $tipo): bool
+    {
+        return (string) $this->input('client.tipo_documento') === $tipo;
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(fn (Validator $v) => $this->clienteSinRucSoloAlExportar($v));
+    }
+
+    /**
+     * Sin RUC solo se factura una exportacion.
+     *
+     * SUNAT admite pasaporte y documentos extranjeros en la factura, pero solo
+     * cuando lo que se vende sale del pais. Una venta interna a alguien sin RUC
+     * se documenta con boleta, y aceptarla aqui seria emitir algo que SUNAT
+     * devuelve.
+     */
+    private function clienteSinRucSoloAlExportar(Validator $validator): void
+    {
+        if ($this->esCliente('6')) {
+            return;
+        }
+
+        $lineas = (array) $this->input('detalles', []);
+        $todoExportacion = $lineas !== [] && ! collect($lineas)
+            ->contains(fn ($linea) => ($linea['tip_afe_igv'] ?? null) !== CatalogoSunat::AFECTACION_EXPORTACION);
+
+        if (! $todoExportacion) {
+            $validator->errors()->add(
+                'client.tipo_documento',
+                'Sin RUC solo se puede facturar una exportación. Marca todos los ítems como exportación o usa una Boleta.'
+            );
+        }
     }
 
     /**
@@ -111,7 +155,9 @@ class StoreFacturaRequest extends FormRequest
                     'cantidad' => (float) $d['cantidad'],
                     'mto_valor_unitario' => (float) $d['mto_valor_unitario'],
                     'tip_afe_igv' => $d['tip_afe_igv'],
-                    'porcentaje_igv' => $d['tip_afe_igv'] === '10' ? (float) ($d['porcentaje_igv'] ?? 18) : 0,
+                    // Los retiros y bonificaciones gravadas tampoco se cobran, pero pagan
+                    // IGV sobre su valor referencial; con 0 habrian salido sin impuesto.
+                    'porcentaje_igv' => CatalogoSunat::llevaIgv($d['tip_afe_igv']) ? (float) ($d['porcentaje_igv'] ?? 18) : 0,
                 ];
             }, $v['detalles']),
             'datos_adicionales' => ['observacion' => $v['observacion'] ?? null],

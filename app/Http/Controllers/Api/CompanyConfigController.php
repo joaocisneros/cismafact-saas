@@ -8,6 +8,7 @@ use App\Services\CompanyConfigService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
+use App\Support\CatalogoSunat;
 
 class CompanyConfigController extends Controller
 {
@@ -380,7 +381,7 @@ class CompanyConfigController extends Controller
                 return $request->validate([
                     'ubl_version' => 'sometimes|in:2.0,2.1',
                     'formato_numero' => 'sometimes|string|max:50',
-                    'moneda_default' => 'sometimes|in:PEN,USD,EUR',
+                    'moneda_default' => ['sometimes', CatalogoSunat::paraRegla(CatalogoSunat::MONEDAS)],
                     'tipo_operacion_default' => 'sometimes|string|max:10',
                     'incluir_leyendas_automaticas' => 'sometimes|boolean',
                     'envio_automatico' => 'sometimes|boolean',

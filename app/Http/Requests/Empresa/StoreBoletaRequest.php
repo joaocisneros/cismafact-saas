@@ -4,6 +4,7 @@ namespace App\Http\Requests\Empresa;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use App\Support\CatalogoSunat;
 
 class StoreBoletaRequest extends FormRequest
 {
@@ -32,12 +33,12 @@ class StoreBoletaRequest extends FormRequest
             'branch_id'  => ['required', 'exists:branches,id'],
             'serie'      => ['required', 'string', 'size:4', 'regex:/^B[A-Z0-9]{3}$/'],
             'fecha_emision' => ['required', 'date'],
-            'moneda' => ['required', 'string', 'in:PEN,USD'],
+            'moneda' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::MONEDAS)],
             'tipo_operacion' => ['nullable', 'string', 'max:4'],
 
             // En boleta el cliente puede ser DNI o "sin documento" (0)
             'client' => ['required', 'array'],
-            'client.tipo_documento' => ['required', 'string', 'in:0,1,4,6'],
+            'client.tipo_documento' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::DOCUMENTOS_IDENTIDAD)],
             'client.numero_documento' => ['required', 'string', 'max:15'],
             'client.razon_social' => ['required', 'string', 'max:255'],
             'client.direccion' => ['nullable', 'string', 'max:255'],
@@ -49,7 +50,7 @@ class StoreBoletaRequest extends FormRequest
             'detalles.*.unidad' => ['required', 'string', 'max:3'],
             'detalles.*.cantidad' => ['required', 'numeric', 'min:0.001'],
             'detalles.*.mto_valor_unitario' => ['required', 'numeric', 'min:0'],
-            'detalles.*.tip_afe_igv' => ['required', 'string', 'in:10,20,30,40'],
+            'detalles.*.tip_afe_igv' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::AFECTACIONES_IGV)],
             'detalles.*.porcentaje_igv' => ['nullable', 'numeric', 'min:0', 'max:100'],
 
             'observacion' => ['nullable', 'string', 'max:500'],
@@ -87,7 +88,9 @@ class StoreBoletaRequest extends FormRequest
                 'cantidad' => (float) $d['cantidad'],
                 'mto_valor_unitario' => (float) $d['mto_valor_unitario'],
                 'tip_afe_igv' => $d['tip_afe_igv'],
-                'porcentaje_igv' => $d['tip_afe_igv'] === '10' ? (float) ($d['porcentaje_igv'] ?? 18) : 0,
+                // Los retiros y bonificaciones gravadas tampoco se cobran, pero pagan
+                // IGV sobre su valor referencial; con 0 habrian salido sin impuesto.
+                'porcentaje_igv' => CatalogoSunat::llevaIgv($d['tip_afe_igv']) ? (float) ($d['porcentaje_igv'] ?? 18) : 0,
             ], $v['detalles']),
             'datos_adicionales' => ['observacion' => $v['observacion'] ?? null],
             'usuario_creacion' => $v['usuario_creacion'] ?? null,

@@ -49,10 +49,7 @@
                        class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
             </label>
             <label class="text-sm font-medium text-gray-700">Moneda
-                <select name="moneda" x-model="moneda" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
-                    <option value="PEN">PEN (Soles)</option>
-                    <option value="USD">USD (Dólares)</option>
-                </select>
+                <x-select-moneda name="moneda" x-model="moneda" />
             </label>
             <label class="text-sm font-medium text-gray-700">Forma de pago
                 <select name="forma_pago_tipo" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2">
@@ -140,13 +137,12 @@
                                 <td class="py-2 pr-2"><input type="number" step="0.001" min="0.001" :name="`detalles[${i}][cantidad]`" x-model.number="item.cantidad" required class="w-20 rounded border border-gray-300 px-2 py-1.5"></td>
                                 <td class="py-2 pr-2"><input type="number" step="0.01" min="0" :name="`detalles[${i}][mto_valor_unitario]`" x-model.number="item.valorUnitario" required class="w-24 rounded border border-gray-300 px-2 py-1.5"></td>
                                 <td class="py-2 pr-2">
-                                    <select :name="`detalles[${i}][tip_afe_igv]`" x-model="item.afectacion" class="rounded border border-gray-300 px-2 py-1.5">
-                                        <option value="10">Gravado (IGV 18%)</option>
-                                        <option value="20">Exonerado</option>
-                                        <option value="30">Inafecto</option>
-                                        <option value="40">Exportación</option>
-                                    </select>
-                                    <input type="hidden" :name="`detalles[${i}][porcentaje_igv]`" :value="item.afectacion === '10' ? 18 : 0">
+                                    <x-select-afectacion ::name="`detalles[${i}][tip_afe_igv]`" x-model="item.afectacion" />
+                                    {{-- No solo la 10: un retiro o una bonificacion gravada tampoco se
+                                         cobra, pero paga IGV igual sobre su valor referencial. La 17
+                                         queda fuera porque el IVAP lleva su propia tasa. --}}
+                                    <input type="hidden" :name="`detalles[${i}][porcentaje_igv]`"
+                                           :value="['10','11','12','13','14','15','16'].includes(item.afectacion) ? 18 : 0">
                                 </td>
                                 <td class="py-2 pr-2 text-right font-medium" x-text="formato(item.cantidad * item.valorUnitario)"></td>
                                 <td class="py-2 text-right"><button type="button" @click="quitarItem(i)" class="text-red-500 hover:text-red-700" x-show="items.length > 1">✕</button></td>

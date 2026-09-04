@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\CatalogoSunat;
 
 class StoreRetentionRequest extends FormRequest
 {
@@ -20,7 +21,7 @@ class StoreRetentionRequest extends FormRequest
             'serie' => 'required|string|max:4',
             'correlativo' => 'required|string|max:8',
             'fecha_emision' => 'required|date',
-            'moneda' => 'required|string|in:PEN,USD',
+            'moneda' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::MONEDAS)],
             
             // Información de retención
             'regimen' => 'required|string|in:01,02,03',
@@ -30,7 +31,7 @@ class StoreRetentionRequest extends FormRequest
             'imp_pagado' => 'required|numeric|min:0',
             
             // Proveedor
-            'proveedor.tipo_documento' => 'required|string|in:1,4,6,0',
+            'proveedor.tipo_documento' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::DOCUMENTOS_IDENTIDAD)],
             'proveedor.numero_documento' => 'required|string|max:15',
             'proveedor.razon_social' => 'required|string|max:255',
             'proveedor.nombre_comercial' => 'nullable|string|max:255',
@@ -48,14 +49,14 @@ class StoreRetentionRequest extends FormRequest
             'detalles.*.num_doc' => 'required|string|max:20',
             'detalles.*.fecha_emision' => 'required|date',
             'detalles.*.fecha_retencion' => 'required|date|after_or_equal:detalles.*.fecha_emision',
-            'detalles.*.moneda' => 'required|string|in:PEN,USD',
+            'detalles.*.moneda' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::MONEDAS)],
             'detalles.*.imp_total' => 'required|numeric|min:0',
             'detalles.*.imp_pagar' => 'required|numeric|min:0',
             'detalles.*.imp_retenido' => 'required|numeric|min:0',
             
             // Pagos dentro de cada detalle
             'detalles.*.pagos' => 'required|array|min:1',
-            'detalles.*.pagos.*.moneda' => 'required|string|in:PEN,USD',
+            'detalles.*.pagos.*.moneda' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::MONEDAS)],
             'detalles.*.pagos.*.fecha' => 'required|date',
             'detalles.*.pagos.*.importe' => 'required|numeric|min:0',
             
@@ -63,8 +64,8 @@ class StoreRetentionRequest extends FormRequest
             'detalles.*.tipo_cambio' => 'required|array',
             'detalles.*.tipo_cambio.fecha' => 'required|date',
             'detalles.*.tipo_cambio.factor' => 'required|numeric|min:0',
-            'detalles.*.tipo_cambio.moneda_obj' => 'required|string|in:PEN,USD',
-            'detalles.*.tipo_cambio.moneda_ref' => 'required|string|in:PEN,USD',
+            'detalles.*.tipo_cambio.moneda_obj' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::MONEDAS)],
+            'detalles.*.tipo_cambio.moneda_ref' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::MONEDAS)],
         ];
     }
 

@@ -6,6 +6,7 @@ use App\Http\Requests\Concerns\NormalizesDemoPayload;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Models\Branch;
 use App\Support\NormativaSunat;
+use App\Support\CatalogoSunat;
 
 class StoreDebitNoteRequest extends FormRequest
 {
@@ -35,7 +36,7 @@ class StoreDebitNoteRequest extends FormRequest
             'serie' => 'required|string|max:4',
             'fecha_emision' => 'required|date',
             'ubl_version' => 'nullable|string|max:5',
-            'moneda' => 'required|string|in:PEN,USD',
+            'moneda' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::MONEDAS)],
             
             // Documento afectado
             'tipo_doc_afectado' => 'required|string|in:01,03',
@@ -44,7 +45,7 @@ class StoreDebitNoteRequest extends FormRequest
             'des_motivo' => 'required|string|max:250',
             
             // Cliente
-            'client.tipo_documento' => 'required|string|in:1,4,6,0',
+            'client.tipo_documento' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::DOCUMENTOS_IDENTIDAD)],
             'client.numero_documento' => 'required|string|max:15',
             'client.razon_social' => 'required|string|max:255',
             'client.nombre_comercial' => 'nullable|string|max:255',
