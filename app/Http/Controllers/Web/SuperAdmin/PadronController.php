@@ -196,13 +196,89 @@ class PadronController extends Controller
             : ['filas' => 11_500_000, 'exacta' => false];
     }
 
+    /**
+     * Si hay sitio para el padron, en los dos sitios que hace falta.
+     *
+     * No se pregunta con disk_free_space(): esa funcion mira el disco de la
+     * maquina, que en un hosting compartido es de todos los clientes. Decia
+     * «539 GB libres» cuando la cuenta entera ocupaba 187 MB y su cuota era
+     * mucho menor, o sea que invitaba a lanzar una importacion que no cabia y
+     * que habria muerto a mitad.
+     *
+     * Lo que se puede medir de verdad es lo que ya se esta usando. El tope lo
+     * pone quien contrato el hosting (config/padron.php); sin el, la pantalla
+     * dice que hay que comprobarlo en vez de inventar una cifra tranquilizadora.
+     */
     private function espacio(): array
     {
-        $libre = @disk_free_space(base_path());
+        return [
+            'disco' => $this->sitio(
+                usado: $this->pesoDeStorage(),
+                cuota: config('padron.cuota_disco_gb'),
+                necesario: 0.4,     // el ZIP que se baja de SUNAT
+            ),
+            'bd' => $this->sitio(
+                usado: $this->pesoDeLaBaseDeDatos(),
+                cuota: config('padron.cuota_bd_gb'),
+                // Mientras se importa conviven la tabla vieja y la nueva, asi
+                // que en el momento del cambio hace falta el doble. Es el pico
+                // que decide si cabe o no.
+                necesario: $this->hayPadron() ? 6 : 3,
+            ),
+        ];
+    }
+
+    /** Lo mismo para el disco y para la base: usado, tope y si cabe. */
+    private function sitio(?float $usado, $cuota, float $necesario): array
+    {
+        $cuota = is_numeric($cuota) ? (float) $cuota : null;
+        $libre = ($cuota !== null && $usado !== null) ? round($cuota - $usado, 1) : null;
 
         return [
-            'libre' => $libre ? round($libre / 1024 ** 3, 1) : null,
-            'necesario' => 3,
+            'usado' => $usado !== null ? round($usado, 1) : null,
+            'cuota' => $cuota,
+            'libre' => $libre,
+            'necesario' => $necesario,
+            // Sin tope configurado no se afirma nada: ni que cabe ni que no.
+            'cabe' => $libre === null ? null : $libre >= $necesario,
         ];
+    }
+
+    /** Lo que ocupan las tablas de esta base, en GB. */
+    private function pesoDeLaBaseDeDatos(): ?float
+    {
+        try {
+            $bytes = DB::table('information_schema.tables')
+                ->where('table_schema', DB::getDatabaseName())
+                ->sum(DB::raw('data_length + index_length'));
+
+            return $bytes ? $bytes / 1024 ** 3 : 0.0;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /** Lo que ocupa storage/, que es donde cae el ZIP. */
+    private function pesoDeStorage(): ?float
+    {
+        try {
+            $bytes = 0;
+            $carpeta = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator(storage_path(), \FilesystemIterator::SKIP_DOTS)
+            );
+
+            foreach ($carpeta as $fichero) {
+                $bytes += $fichero->getSize();
+            }
+
+            return $bytes / 1024 ** 3;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function hayPadron(): bool
+    {
+        return DB::table('padron_ruc')->limit(1)->exists();
     }
 }

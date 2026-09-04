@@ -92,11 +92,19 @@
             </x-slot:icon>
         </x-stat-card>
 
-        {{-- En rojo cuando no cabe: es lo unico de aqui que impide importar. --}}
-        <x-stat-card title="Espacio libre en disco"
-                     :value="$espacio['libre'] !== null ? $espacio['libre'] . ' GB' : '—'"
-                     :subtitle="'Hacen falta unos ' . $espacio['necesario'] . ' GB'"
-                     :color="($espacio['libre'] ?? 0) >= $espacio['necesario'] ? 'green' : 'red'">
+        {{-- El padron vive en la base de datos, asi que es su sitio el que
+             decide si cabe. El disco solo aguanta el ZIP un rato.
+
+             Cuando no hay cuota configurada se ensena lo que ocupa y se pide
+             comprobarla: antes salia el disco de la maquina —cientos de gigas
+             que son de todos los clientes del hosting— y parecia que sobraba
+             sitio para algo que no cabia. --}}
+        <x-stat-card title="Base de datos"
+                     :value="$espacio['bd']['usado'] !== null ? $espacio['bd']['usado'] . ' GB' : '—'"
+                     :subtitle="$espacio['bd']['cabe'] === null
+                        ? 'El padrón añade ' . $espacio['bd']['necesario'] . ' GB · comprueba tu cuota'
+                        : ($espacio['bd']['libre'] . ' GB libres de ' . $espacio['bd']['cuota'] . ' · el padrón pide ' . $espacio['bd']['necesario'])"
+                     :color="$espacio['bd']['cabe'] === null ? 'amber' : ($espacio['bd']['cabe'] ? 'green' : 'red')">
             <x-slot:icon>
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.858 5.858A9 9 0 1118.142 18.142 9 9 0 015.858 5.858zM12 8v4l3 3"/>
@@ -281,7 +289,11 @@
             <p class="mt-0.5 text-xs text-gray-500">Las consultas no se cortan mientras se importa.</p>
         </div>
 
-        @php($sinEspacio = ($espacio['libre'] ?? 99) < $espacio['necesario'])
+        {{-- Solo se afirma que no cabe cuando se sabe: sin cuota configurada
+             no hay con que comparar, y avisar en falso es tan malo como
+             callarse. --}}
+        @php($sinEspacio = $espacio['bd']['cabe'] === false || $espacio['disco']['cabe'] === false)
+        @php($sinMedir = $espacio['bd']['cabe'] === null)
         @php($ultima = $importaciones->first())
         @php($tuyo = $importaciones->firstWhere('estado', 'completada')?->datos_de)
 
@@ -293,7 +305,13 @@
                     <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
                         <p class="font-semibold">No hay espacio suficiente</p>
                         <p class="mt-1 text-xs">
-                            Quedan {{ $espacio['libre'] }} GB libres y hacen falta unos {{ $espacio['necesario'] }}.
+                            @if($espacio['bd']['cabe'] === false)
+                                A la base de datos le quedan {{ $espacio['bd']['libre'] }} GB
+                                y el padrón pide {{ $espacio['bd']['necesario'] }}.
+                            @else
+                                Al disco le quedan {{ $espacio['disco']['libre'] }} GB
+                                y el ZIP de SUNAT pide {{ $espacio['disco']['necesario'] }}.
+                            @endif
                             La importación fallaría a mitad.
                         </p>
                     </div>
@@ -341,16 +359,30 @@
             <dl class="space-y-2 p-5 text-sm">
                 <div class="flex gap-3">
                     <dt class="w-32 shrink-0 text-gray-500">Ocupa</dt>
-                    <dd class="font-medium text-gray-800">unos {{ $espacio['necesario'] }} GB</dd>
+                    <dd class="font-medium text-gray-800">unos {{ $espacio['bd']['necesario'] }} GB</dd>
                 </div>
                 <div class="flex gap-3">
                     <dt class="w-32 shrink-0 text-gray-500">Tarda</dt>
                     <dd class="font-medium text-gray-800">horas</dd>
                 </div>
                 <div class="flex gap-3">
-                    <dt class="w-32 shrink-0 text-gray-500">Espacio libre</dt>
-                    <dd class="font-medium {{ $sinEspacio ? 'text-red-700' : 'text-gray-800' }}">
-                        {{ $espacio['libre'] !== null ? $espacio['libre'] . ' GB' : 'no se pudo medir' }}
+                    <dt class="w-32 shrink-0 text-gray-500">Base de datos</dt>
+                    <dd class="font-medium {{ $espacio['bd']['cabe'] === false ? 'text-red-700' : 'text-gray-800' }}">
+                        @if($espacio['bd']['cabe'] === null)
+                            ocupa {{ $espacio['bd']['usado'] ?? '?' }} GB · cuota sin configurar
+                        @else
+                            {{ $espacio['bd']['libre'] }} GB libres de {{ $espacio['bd']['cuota'] }}
+                        @endif
+                    </dd>
+                </div>
+                <div class="flex gap-3">
+                    <dt class="w-32 shrink-0 text-gray-500">Disco</dt>
+                    <dd class="font-medium {{ $espacio['disco']['cabe'] === false ? 'text-red-700' : 'text-gray-800' }}">
+                        @if($espacio['disco']['cabe'] === null)
+                            ocupa {{ $espacio['disco']['usado'] ?? '?' }} GB · cuota sin configurar
+                        @else
+                            {{ $espacio['disco']['libre'] }} GB libres de {{ $espacio['disco']['cuota'] }}
+                        @endif
                     </dd>
                 </div>
                 <div class="flex gap-3">
