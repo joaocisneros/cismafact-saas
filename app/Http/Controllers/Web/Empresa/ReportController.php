@@ -26,9 +26,18 @@ class ReportController extends Controller
         $consumoApi = $this->getConsumoApi($companyId);
 
         $totalVentasMes = collect($ventasMensuales)->last()['value'] ?? 0;
-        $totalDocsMes = array_sum(array_column($docsPorTipo, 'value'));
-        $igvGenerado = $totalVentasMes * 0.18;
-        $ticketPromedio = $totalDocsMes > 0 ? $totalVentasMes / $totalDocsMes : 0;
+
+        // El IGV se sumaba como el 18% de las ventas del mes. No es lo mismo:
+        // ese total ya lleva el IGV dentro, y ademas hay lineas exoneradas,
+        // inafectas y de exportacion que no lo pagan. Salia inflado. Lo que se
+        // declara es lo que se cobro, y eso esta guardado en cada comprobante.
+        $igvGenerado = $this->igvDelMes($companyId);
+
+        // Ventas del mes entre comprobantes del mes. Antes se dividia entre
+        // todos los que la empresa habia emitido desde siempre, asi que el
+        // ticket bajaba solo con el tiempo aunque las ventas fueran iguales.
+        $ventasDelMes = $this->comprobantesDeVentaDelMes($companyId);
+        $ticketPromedio = $ventasDelMes > 0 ? $totalVentasMes / $ventasDelMes : 0;
 
         $data = [
             'ventasDiarias' => $ventasDiarias,
@@ -201,6 +210,37 @@ class ReportController extends Controller
         });
     }
 
+    /**
+     * El IGV que se cobro este mes, sumado de los comprobantes.
+     *
+     * Solo facturas y boletas: las notas modifican una venta que ya se conto,
+     * y sumarlas contaria su IGV dos veces.
+     */
+    private function igvDelMes(int $companyId): float
+    {
+        [$desde, $hasta] = [now()->startOfMonth(), now()->endOfMonth()];
+
+        $sumar = fn (string $modelo) => $modelo::where('company_id', $companyId)
+            ->whereBetween('fecha_emision', [$desde, $hasta])
+            ->whereNull('anulado_en')
+            ->sum('mto_igv');
+
+        return (float) $sumar(Invoice::class) + (float) $sumar(Boleta::class);
+    }
+
+    /** Cuantas facturas y boletas se emitieron este mes, sin contar anuladas. */
+    private function comprobantesDeVentaDelMes(int $companyId): int
+    {
+        [$desde, $hasta] = [now()->startOfMonth(), now()->endOfMonth()];
+
+        $contar = fn (string $modelo) => $modelo::where('company_id', $companyId)
+            ->whereBetween('fecha_emision', [$desde, $hasta])
+            ->whereNull('anulado_en')
+            ->count();
+
+        return $contar(Invoice::class) + $contar(Boleta::class);
+    }
+
     private function getVentasMensuales(int $companyId): array
     {
         $cacheKey = "report_ventas_mensuales_{$companyId}";
@@ -255,8 +295,11 @@ class ReportController extends Controller
 
             $union = null;
             foreach ($tablas as $label => $tabla) {
+                // Sin los anulados: un comprobante dado de baja ya no cuenta
+                // como emitido, y las graficas de ventas tampoco lo cuentan.
                 $consulta = DB::table($tabla)
                     ->where('company_id', $companyId)
+                    ->whereNull('anulado_en')
                     ->selectRaw("'{$label}' as label, COUNT(*) as value");
                 $union = $union ? $union->unionAll($consulta) : $consulta;
             }

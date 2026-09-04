@@ -12,7 +12,7 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <x-chart-bar title="Documentos por Tipo" :data="$docsPorTipo" />
+        <x-chart-bar title="Documentos por tipo (total emitido)" :data="$docsPorTipo" />
         <x-chart-bar title="Consumo API (Últimos 7 días)" :data="$consumoApi" />
     </div>
 
@@ -33,11 +33,11 @@
                     <span class="text-sm font-semibold">S/ {{ number_format($totalMes, 2) }}</span>
                 </div>
                 <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                    <span class="text-sm text-blue-600 font-medium">IGV Generado (18%)</span>
+                    <span class="text-sm text-blue-600 font-medium">IGV del mes</span>
                     <span class="text-sm font-semibold text-blue-700">S/ {{ number_format($igvGenerado, 2) }}</span>
                 </div>
                 <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                    <span class="text-sm text-green-600 font-medium">Ticket Promedio</span>
+                    <span class="text-sm text-green-600 font-medium">Ticket promedio del mes</span>
                     <span class="text-sm font-semibold text-green-700">S/ {{ number_format($ticketPromedio, 2) }}</span>
                 </div>
             </div>

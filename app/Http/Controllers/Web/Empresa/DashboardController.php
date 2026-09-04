@@ -80,15 +80,24 @@ class DashboardController extends Controller
 
     private function getDocumentStats(string $model, int $companyId, Carbon $todayStart, Carbon $tomorrowStart, Carbon $monthStart, Carbon $nextMonthStart): object
     {
+        /*
+         * Por fecha de emision y no por la de grabado.
+         *
+         * Un comprobante se puede emitir con fecha anterior al dia en que se
+         * registra, y lo que cuenta —para SUNAT, para el contador y para la
+         * pantalla de Reportes— es la del comprobante. Con created_at, el
+         * Dashboard y Reportes daban numeros distintos del mismo mes y no
+         * habia forma de saber cual creer.
+         */
         return $model::where('company_id', $companyId)
             ->selectRaw('COUNT(*) as total_count')
-            ->selectRaw('SUM(CASE WHEN created_at >= ? AND created_at < ? THEN 1 ELSE 0 END) as today_count', [$todayStart, $tomorrowStart])
-            ->selectRaw('SUM(CASE WHEN created_at >= ? AND created_at < ? THEN 1 ELSE 0 END) as month_count', [$monthStart, $nextMonthStart])
+            ->selectRaw('SUM(CASE WHEN fecha_emision >= ? AND fecha_emision < ? THEN 1 ELSE 0 END) as today_count', [$todayStart, $tomorrowStart])
+            ->selectRaw('SUM(CASE WHEN fecha_emision >= ? AND fecha_emision < ? THEN 1 ELSE 0 END) as month_count', [$monthStart, $nextMonthStart])
             ->selectRaw('SUM(CASE WHEN estado_sunat = ? THEN 1 ELSE 0 END) as pending_count', ['PENDIENTE'])
             // Un comprobante dado de baja ya no es una venta: se cuenta como
             // emitido, pero su importe no puede seguir sumando.
-            ->selectRaw('COALESCE(SUM(CASE WHEN created_at >= ? AND created_at < ? AND anulado_en IS NULL THEN mto_imp_venta ELSE 0 END), 0) as today_sales', [$todayStart, $tomorrowStart])
-            ->selectRaw('COALESCE(SUM(CASE WHEN created_at >= ? AND created_at < ? AND anulado_en IS NULL THEN mto_imp_venta ELSE 0 END), 0) as month_sales', [$monthStart, $nextMonthStart])
+            ->selectRaw('COALESCE(SUM(CASE WHEN fecha_emision >= ? AND fecha_emision < ? AND anulado_en IS NULL THEN mto_imp_venta ELSE 0 END), 0) as today_sales', [$todayStart, $tomorrowStart])
+            ->selectRaw('COALESCE(SUM(CASE WHEN fecha_emision >= ? AND fecha_emision < ? AND anulado_en IS NULL THEN mto_imp_venta ELSE 0 END), 0) as month_sales', [$monthStart, $nextMonthStart])
             ->first();
     }
 
