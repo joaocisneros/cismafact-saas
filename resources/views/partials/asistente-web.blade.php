@@ -380,6 +380,55 @@
 
             {{-- El WhatsApp: siempre disponible al final de una rama, y
                  destacado cuando lo que pidio se resuelve hablando. --}}
+            {{-- Que le escribas tu.
+
+                 Va antes del WhatsApp y no en su lugar: quien quiere escribir
+                 ahora lo tiene igual, y quien no —que son casi todos, porque
+                 abrir una conversacion con un numero desconocido cuesta— deja
+                 su numero y se va. --}}
+            <div x-show="(mostrarWhatsapp || cerrado) && ! esperando && ! contactoEnviado" class="pt-1">
+                <div x-show="! contactoAbierto">
+                    <button type="button" @click="contactoAbierto = true"
+                            class="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50/50">
+                        <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor"
+                             stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                        </svg>
+                        Prefiero que me escriban
+                    </button>
+                </div>
+
+                <form x-show="contactoAbierto" @submit.prevent="dejarContacto"
+                      class="space-y-2 rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+                    <p class="text-xs font-semibold text-gray-700">Déjanos tus datos y te escribimos</p>
+
+                    <input type="text" x-model="contacto.nombre" maxlength="120" required
+                           placeholder="Tu nombre"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+
+                    <input type="tel" x-model="contacto.telefono" maxlength="30" required
+                           placeholder="Tu WhatsApp"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+
+                    <textarea x-model="contacto.mensaje" rows="2" maxlength="500"
+                              placeholder="¿Qué necesitas? (opcional)"
+                              class="w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"></textarea>
+
+                    <p x-show="contactoError" class="text-xs text-red-600" x-text="contactoError"></p>
+
+                    <div class="flex gap-2">
+                        <button type="button" @click="contactoAbierto = false"
+                                class="rounded-lg px-3 py-2 text-sm text-gray-500 transition hover:text-gray-700">
+                            Cancelar
+                        </button>
+                        <button type="submit" :disabled="enviandoContacto"
+                                class="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:bg-gray-300"
+                                x-text="enviandoContacto ? 'Enviando...' : 'Que me contacten'"></button>
+                    </div>
+                </form>
+            </div>
+
             <div x-show="(mostrarWhatsapp || cerrado) && ! esperando" class="pt-1">
                 <a :href="'https://wa.me/' + whatsapp" target="_blank" rel="noopener"
                    class="flex items-center justify-center gap-2 rounded-xl bg-green-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-600">
@@ -451,6 +500,14 @@
             opciones: [],
             mostrarWhatsapp: false,
 
+            /* De que rama viene, para que al llamarle ya se sepa que miraba. */
+            interes: null,
+            contactoAbierto: false,
+            contactoEnviado: false,
+            enviandoContacto: false,
+            contactoError: '',
+            contacto: { nombre: '', telefono: '', mensaje: '' },
+
             guia: @js($guia),
             whatsapp: @js(config('asistente.whatsapp')),
             largoMaximo: @js(config('asistente.limites.largo_maximo')),
@@ -465,6 +522,9 @@
                 this.opciones = [];
                 this.mostrarWhatsapp = false;
                 this.cerrado = false;
+                this.interes = null;
+                this.contactoAbierto = false;
+                this.contactoError = '';
                 this.ir('inicio');
             },
 
@@ -493,7 +553,57 @@
             elegir(opcion) {
                 this.mensajes.push({ rol: 'usuario', texto: opcion.texto });
                 this.opciones = [];
+
+                // La primera eleccion es la que dice a que vino.
+                if (opcion.ir === 'facturacion' || opcion.ir === 'consultas') {
+                    this.interes = opcion.ir;
+                }
+
                 this.ir(opcion.ir);
+            },
+
+            async dejarContacto() {
+                if (this.enviandoContacto) return;
+
+                this.contactoError = '';
+                this.enviandoContacto = true;
+
+                try {
+                    const r = await fetch(@js(route('asistente.contacto')), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': @js(csrf_token()),
+                        },
+                        body: JSON.stringify({
+                            nombre: this.contacto.nombre,
+                            telefono: this.contacto.telefono,
+                            mensaje: this.contacto.mensaje,
+                            interes: this.interes,
+                        }),
+                    });
+
+                    const datos = await r.json().catch(() => ({}));
+
+                    if (! r.ok) {
+                        /* Lo que diga la validacion, no un «algo salio mal»:
+                           si el telefono no vale, hay que decir eso. */
+                        this.contactoError = datos.errors
+                            ? Object.values(datos.errors)[0][0]
+                            : 'No se pudo enviar. Inténtalo de nuevo.';
+                        return;
+                    }
+
+                    this.contactoEnviado = true;
+                    this.contactoAbierto = false;
+                    this.mensajes.push({ rol: 'asistente', texto: datos.texto });
+                    this.$nextTick(() => this.abajo());
+                } catch (e) {
+                    this.contactoError = 'Se interrumpió la conexión. Inténtalo de nuevo.';
+                } finally {
+                    this.enviandoContacto = false;
+                }
             },
 
             alternar() {

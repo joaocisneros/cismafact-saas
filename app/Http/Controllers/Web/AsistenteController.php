@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\ContactoWeb;
 use App\Services\AsistenteWeb;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -75,6 +76,49 @@ class AsistenteController extends Controller
             'texto' => $respuesta['texto'],
             'restantes' => max(0, $tope - ($gastados + 1)),
             'cerrado' => $respuesta['agotado'],
+        ]);
+    }
+
+    /**
+     * Guarda a quien pidio que le escriban.
+     *
+     * Se le pide el numero y no el correo porque aqui se cierra por WhatsApp:
+     * pedir un correo para luego escribirle igual al movil es un paso de mas
+     * que hace que la mitad no lo rellene.
+     */
+    public function contacto(Request $request): JsonResponse
+    {
+        $datos = $request->validate([
+            'nombre' => ['required', 'string', 'min:2', 'max:120'],
+            // Nueve digitos con prefijo o sin el, y se admiten espacios y
+            // guiones porque la gente los escribe.
+            'telefono' => ['required', 'string', 'min:6', 'max:30', 'regex:/^[\d\s\-\+\(\)]+$/'],
+            'mensaje' => ['nullable', 'string', 'max:500'],
+            'interes' => ['nullable', 'string', 'in:facturacion,consultas'],
+        ], [
+            'telefono.regex' => 'El número solo lleva dígitos.',
+            'nombre.min' => 'Escribe tu nombre.',
+        ]);
+
+        $porIp = 'contacto-web:' . $request->ip();
+
+        // Tres al dia por conexion. Un formulario abierto a internet lo
+        // encuentran los robots, y con la bandeja llena de basura se acaba sin
+        // mirar la que si era buena.
+        if (RateLimiter::tooManyAttempts($porIp, 3)) {
+            return response()->json([
+                'texto' => 'Ya recibimos tus datos. Te escribimos en breve.',
+                'guardado' => true,
+            ]);
+        }
+
+        RateLimiter::hit($porIp, 86400);
+
+        $contacto = ContactoWeb::create($datos + ['ip' => $request->ip()]);
+
+        return response()->json([
+            'texto' => "Gracias, {$contacto->nombre}. Te escribimos por WhatsApp lo antes posible.",
+            'guardado' => true,
         ]);
     }
 }

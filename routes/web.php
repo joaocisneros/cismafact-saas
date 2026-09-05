@@ -43,6 +43,12 @@ Route::post('/asistente', [\App\Http\Controllers\Web\AsistenteController::class,
     ->middleware('throttle:20,1')
     ->name('asistente');
 
+// Quien pide que le escriban. El tope de verdad esta en el controlador: tres
+// al dia por conexion, que un formulario abierto lo encuentran los robots.
+Route::post('/asistente/contacto', [\App\Http\Controllers\Web\AsistenteController::class, 'contacto'])
+    ->middleware('throttle:10,1')
+    ->name('asistente.contacto');
+
 // Documentación pública de la API (sin login).
 Route::view('/docs', 'docs')->name('docs');
 
@@ -212,6 +218,15 @@ Route::prefix('super-admin')
         // Tickets de soporte: el contador atiende consultas de clientes. No hay
         // borrado, solo responder, cerrar y reabrir.
         Route::get('/support', [SuperAdminSupportController::class, 'index'])->name('support');
+
+        // Quien dejo su numero en el chat de la web. Va con soporte porque es
+        // lo mismo: gente esperando que alguien le escriba.
+        Route::get('/contactos', [\App\Http\Controllers\Web\SuperAdmin\ContactoWebController::class, 'index'])
+            ->name('contactos.index');
+        Route::post('/contactos/{contacto}/atender', [\App\Http\Controllers\Web\SuperAdmin\ContactoWebController::class, 'atender'])
+            ->name('contactos.atender');
+        Route::delete('/contactos/{contacto}', [\App\Http\Controllers\Web\SuperAdmin\ContactoWebController::class, 'destroy'])
+            ->name('contactos.borrar');
         Route::get('/support/{ticket}', [SuperAdminSupportController::class, 'show'])->name('support.show');
         Route::post('/support/{ticket}/reply', [SuperAdminSupportController::class, 'reply'])->name('support.reply');
         Route::post('/support/{ticket}/priority', [SuperAdminSupportController::class, 'changePriority'])->name('support.priority');
