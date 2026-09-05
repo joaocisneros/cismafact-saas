@@ -32,15 +32,22 @@
         </div>
 
         <div class="relative z-10">
-            <h1 class="text-4xl font-bold leading-tight">Facturación electrónica<br>directo a SUNAT</h1>
-            <p class="mt-4 text-blue-100 max-w-md">Emite facturas, boletas, notas y guías de remisión con tu propio certificado. Sin intermediarios.</p>
+            {{-- Por esta puerta entran los dos servicios.
+
+                 Antes hablaba solo de emitir comprobantes, y quien habia
+                 contratado las consultas de RUC y DNI llegaba a una pantalla
+                 que no mencionaba lo suyo por ningun lado. Se nombran los dos,
+                 sin dejar de decir lo que de verdad distingue: que va directo a
+                 SUNAT y con el certificado de cada uno. --}}
+            <h1 class="text-4xl font-bold leading-tight">Facturación y consultas<br>directo a SUNAT</h1>
+            <p class="mt-4 text-blue-100 max-w-md">Emite tus comprobantes con tu propio certificado y consulta RUC y DNI desde tu sistema. Sin intermediarios.</p>
 
             <ul class="mt-8 space-y-3 text-blue-50">
                 @foreach([
-                    'Todos tus comprobantes en un solo lugar',
+                    'Todos tus comprobantes, con su estado real en SUNAT',
                     'Firmas con tu propio certificado digital',
+                    'Consulta RUC y DNI desde tu sistema',
                     'API REST para integrar tu negocio',
-                    'Consulta el estado real en SUNAT',
                 ] as $item)
                     <li class="flex items-center gap-3">
                         <span class="flex-shrink-0 w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-sm">✓</span>
@@ -61,7 +68,7 @@
                 <img src="{{ config('platform.logo_url', asset('assets/brand/cisma-fact.png')) }}"
                      alt="{{ config('app.name') }}"
                      class="mx-auto h-auto w-40 max-w-full">
-                <p class="mt-2 text-sm text-gray-500">Facturación electrónica compatible con SUNAT</p>
+                <p class="mt-2 text-sm text-gray-500">Facturación electrónica y consultas SUNAT</p>
             </div>
 
             {{-- Tarjeta --}}
