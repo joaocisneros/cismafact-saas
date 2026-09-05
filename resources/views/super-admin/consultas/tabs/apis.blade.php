@@ -241,6 +241,8 @@
 
                     Quien la use dejará de tener acceso al instante, y no quedará constancia de lo que consumió.
 
+                    Si es la única llave de su titular, tampoco podrá volver a entrar al panel.
+
                     ¿Continuar?')">
                                             @csrf
                                             @method('DELETE')

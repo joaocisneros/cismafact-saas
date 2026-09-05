@@ -76,12 +76,37 @@ class ConsultaLlaveController extends Controller
         // pierde tambien la constancia de lo que consumio quien pagaba. Por eso
         // el boton lo avisa antes de borrar.
         $cuantas = $llave->consumo()->count();
+        $titular = $llave->usuario;
+
         $llave->consumo()->delete();
         $llave->delete();
 
-        return back()->with('success', $cuantas
-            ? "«{$nombre}» eliminada, junto con sus {$cuantas} consultas."
-            : "«{$nombre}» eliminada.");
+        /*
+         * Si esa era la unica llave de su titular, se le retira tambien el
+         * acceso al panel: sin llaves no hay nada que mirar ahi dentro, y
+         * dejarle la cuenta abierta solo consigue que entre y vea una pantalla
+         * vacia sin saber por que.
+         *
+         * Si le quedan otras, la cuenta sigue: entra y ve las que le quedan.
+         */
+        $sinAcceso = false;
+
+        if ($titular && ! $titular->llavesDeConsulta()->exists()) {
+            $titular->delete();
+            $sinAcceso = true;
+        }
+
+        $aviso = "«{$nombre}» eliminada";
+
+        if ($cuantas) {
+            $aviso .= ", junto con sus {$cuantas} consultas";
+        }
+
+        if ($sinAcceso) {
+            $aviso .= ". {$titular->name} ya no puede entrar al panel: era su única llave";
+        }
+
+        return back()->with('success', $aviso . '.');
     }
 
     /**
