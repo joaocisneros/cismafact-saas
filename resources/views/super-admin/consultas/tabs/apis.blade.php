@@ -314,6 +314,22 @@
                       limiteDe(slug) { return this.tarifa()?.servicios?.[slug]?.limite ?? 0; },
                       precioDe(slug) { return this.tarifa()?.servicios?.[slug]?.precio ?? 0; },
                       total() { return this.marcados.reduce((s, x) => s + this.precioDe(x), 0); },
+
+                      /* Lo que se le cobra de una vez.
+                         Se calcula desde la fecha y no desde el boton que se
+                         pulso, para que salga igual si la escriben a mano. */
+                      vence: '',
+                      meses() {
+                          if (! this.vence) return 0;
+
+                          const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+                          const fin = new Date(this.vence + 'T00:00:00');
+
+                          if (isNaN(fin) || fin <= hoy) return 0;
+
+                          return Math.max(1, Math.round((fin - hoy) / 86400000 / 30.44));
+                      },
+                      aCobrar() { return this.total() * this.meses(); },
                       soles(n) { return 'S/ ' + Number(n).toFixed(2); },
                       miles(n) { return Number(n).toLocaleString('es-PE'); },
 
@@ -346,6 +362,7 @@
                           this.buscando = false;
                           this.marcados = [];
                           this.plan = @js($primerPlan);
+                          this.vence = '';
                           this.$refs.formulario?.reset();
                       },
 
@@ -393,6 +410,7 @@
                       if (llave) {
                           marcados = llave.servicios ?? [];
                           plan = llave.api_plan_id ?? @js($primerPlan);
+                          vence = llave.expira_en ?? '';
                       } else if (! nueva) {
                           /* El modal se oculta pero no se destruye, asi que sus
                              campos guardaban lo ultimo escrito: al abrir «Nueva
@@ -531,7 +549,7 @@
                              enMeses(n) {
                                  const d = new Date();
                                  d.setMonth(d.getMonth() + n);
-                                 this.$refs.expira.value = d.toISOString().slice(0, 10);
+                                 this.vence = d.toISOString().slice(0, 10);
                              },
                          }">
                         <label for="l_expira" class="mb-1 block text-sm font-medium text-gray-900">
@@ -545,17 +563,44 @@
                                     {{ $etiqueta }}
                                 </button>
                             @endforeach
-                            <button type="button" @click="$refs.expira.value = ''"
+                            <button type="button" @click="vence = ''"
                                     class="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-500 transition hover:bg-gray-50">
                                 Sin caducidad
                             </button>
                         </div>
 
-                        <input type="date" name="expira_en" id="l_expira" x-ref="expira"
-                               :value="llave?.expira_en ?? ''"
+                        <input type="date" name="expira_en" id="l_expira" x-ref="expira" x-model="vence"
                                min="{{ now()->addDay()->format('Y-m-d') }}"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
+                    </div>
+
+                    {{-- Lo que le toca pagar, ya multiplicado.
+
+                         El plan dice cuanto es al mes y la caducidad cuantos
+                         meses son, pero el total habia que sacarlo aparte, y es
+                         justo la cifra que se le dice al cliente. --}}
+                    <div x-show="marcados.length" x-cloak
+                         class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-lg bg-gray-50 px-4 py-3">
+                        <span class="text-sm text-gray-600">
+                            <span x-text="marcados.map(s => s.toUpperCase()).join(' + ')"></span>
+                            <template x-if="! aMedida()">
+                                <span>
+                                    <span class="text-gray-300">·</span>
+                                    <span x-text="soles(total()) + ' al mes'"></span>
+                                    <template x-if="meses()">
+                                        <span x-text="' × ' + meses() + (meses() === 1 ? ' mes' : ' meses')"></span>
+                                    </template>
+                                </span>
+                            </template>
+                        </span>
+
+                        <span class="text-right">
+                            <span class="text-lg font-bold tabular-nums text-gray-900"
+                                  x-text="aMedida() ? 'A convenir' : soles(meses() ? aCobrar() : total())"></span>
+                            <span class="block text-xs text-gray-500"
+                                  x-text="aMedida() ? 'se acuerda aparte' : (meses() ? 'a cobrar ahora' : 'al mes, sin caducidad')"></span>
+                        </span>
                     </div>
                 </div>
 
