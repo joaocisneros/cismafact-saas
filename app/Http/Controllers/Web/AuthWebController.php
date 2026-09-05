@@ -129,6 +129,13 @@ class AuthWebController extends Controller
         if ($user->accedeAlPanelAdmin()) {
             return route('super-admin.dashboard');
         }
+
+        // El cliente de RUC y DNI no tiene empresa, asi que el panel de
+        // empresa lo echaria nada mas llegar.
+        if ($user->esClienteDeConsultas()) {
+            return route('consultas.panel');
+        }
+
         return route('empresa.dashboard');
     }
 }

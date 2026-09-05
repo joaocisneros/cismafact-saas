@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -173,6 +174,29 @@ class User extends Authenticatable
     /**
      * Verificar si el usuario tiene cualquiera de los roles dados
      */
+    /**
+     * Las llaves de RUC y DNI que este usuario puede mirar.
+     *
+     * Van por usuario y no por llave: quien tiene dos de produccion entra una
+     * sola vez y ve las dos, en vez de acabar con dos contraseñas para lo
+     * mismo.
+     */
+    public function llavesDeConsulta(): HasMany
+    {
+        return $this->hasMany(ConsultaLlave::class, 'usuario_id');
+    }
+
+    /**
+     * Si solo entra a ver su llave de RUC y DNI.
+     *
+     * No es una empresa: no factura, no tiene RUC emisor ni certificado. Por
+     * eso el panel de empresa no le sirve y tiene el suyo.
+     */
+    public function esClienteDeConsultas(): bool
+    {
+        return $this->hasRole('cliente_consultas');
+    }
+
     /**
      * Roles que entran al panel de Super Admin: el propio super_admin con
      * acceso total, y el contador, que solo consulta y entra como soporte.
