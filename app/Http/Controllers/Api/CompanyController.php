@@ -214,6 +214,21 @@ class CompanyController extends Controller
             $oldMode = $company->modo_produccion;
             $newMode = $request->modo_produccion;
 
+            /*
+             * Encender produccion pide plan de pago; apagarla no.
+             *
+             * Esta era la otra puerta: el panel lo comprueba, pero por aqui se
+             * activaba con un update a secas y el plan gratuito se colaba.
+             */
+            if ($newMode && ! $oldMode
+                && (! $company->subscription?->plan || (float) $company->subscription->plan->monthly_price <= 0)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El plan gratuito solo permite emitir en el ambiente de pruebas. '
+                        . 'Contrata un plan de pago para emitir con validez tributaria.',
+                ], 403);
+            }
+
             $company->update(['modo_produccion' => $newMode]);
 
             Log::info("Modo de producción cambiado", [

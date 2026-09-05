@@ -206,6 +206,24 @@ class SunatConfigController extends Controller
             return back()->with('error', 'La empresa ya está en producción. Esta acción solo está disponible en modo beta.');
         }
 
+        /*
+         * Con el plan gratuito no se emite de verdad.
+         *
+         * El gratuito es para evaluar en el ambiente de pruebas de SUNAT, y no
+         * habia nada que lo impidiera: bastaba con subir el certificado y pasar
+         * a produccion para emitir con validez tributaria sin pagar nunca.
+         *
+         * Se comprueba al activar y no al emitir: quien ya esta en produccion
+         * sigue como esta, que cortarle la emision de golpe seria dejarle sin
+         * facturar por una regla que no existia cuando entro.
+         */
+        if (! $company->subscription?->plan || (float) $company->subscription->plan->monthly_price <= 0) {
+            return back()->with('error',
+                'Tu plan actual sirve para evaluar en el ambiente de pruebas. Para emitir '
+                . 'comprobantes con validez tributaria necesitas un plan de pago: escríbenos '
+                . 'y lo activamos.');
+        }
+
         // Confirmación explícita: debe escribir PRODUCCION.
         if (strtoupper(trim((string) $request->input('confirmacion'))) !== 'PRODUCCION') {
             return back()->with('error', 'Para confirmar, escribe la palabra PRODUCCION.');
