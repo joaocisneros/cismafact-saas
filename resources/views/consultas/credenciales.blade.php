@@ -46,10 +46,30 @@
         </div>
 
         <div class="space-y-5 p-5">
+            {{-- El titulo de cada campo es lo que se escribe en el codigo
+                 —la direccion, el nombre de la cabecera— y debajo va lo que
+                 significa. Al reves, «Clave — cabecera X-Api-Key» obligaba a
+                 leer la frase entera para dar con el dato. --}}
             <div>
-                <label class="mb-1.5 block text-sm font-semibold text-gray-600">
-                    Clave — cabecera <code class="font-mono">X-Api-Key</code>
-                </label>
+                <div class="mb-1.5 flex flex-wrap items-baseline gap-x-2">
+                    <span class="font-mono text-sm font-semibold text-gray-900">URL base</span>
+                    <span class="text-sm text-gray-500">todas las llamadas empiezan por aquí</span>
+                </div>
+                <div class="flex gap-2">
+                    <code class="flex-1 overflow-x-auto whitespace-nowrap rounded-md border border-gray-200 bg-gray-50 px-3.5 py-2.5 font-mono text-sm">{{ url('/api/consultas') }}</code>
+                    <button type="button"
+                            @click="navigator.clipboard.writeText(@js(url('/api/consultas'))); $el.textContent = 'Copiada'; setTimeout(() => $el.textContent = 'Copiar', 1400)"
+                            class="shrink-0 rounded-md border border-gray-300 px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                        Copiar
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <div class="mb-1.5 flex flex-wrap items-baseline gap-x-2">
+                    <span class="font-mono text-sm font-semibold text-gray-900">X-Api-Key</span>
+                    <span class="text-sm text-gray-500">identifica quién llama · no es secreta</span>
+                </div>
                 <div class="flex gap-2">
                     <code class="flex-1 overflow-x-auto whitespace-nowrap rounded-md border border-gray-200 bg-gray-50 px-3.5 py-2.5 font-mono text-sm">{{ $llave->clave }}</code>
                     <button type="button"
@@ -61,10 +81,13 @@
             </div>
 
             <div>
-                <label class="mb-1.5 block text-sm font-semibold text-gray-600">
-                    Secreto — cabecera <code class="font-mono">X-Api-Secret</code>,
-                    <span class="font-normal text-gray-500">empieza por <code class="font-mono">{{ $llave->secreto_pista }}</code></span>
-                </label>
+                <div class="mb-1.5 flex flex-wrap items-baseline gap-x-2">
+                    <span class="font-mono text-sm font-semibold text-gray-900">X-Api-Secret</span>
+                    <span class="text-sm text-gray-500">
+                        la que firma · no la compartas · el tuyo empieza por
+                        <code class="font-mono text-gray-700">{{ $llave->secreto_pista }}</code>
+                    </span>
+                </div>
                 <div class="flex gap-2">
                     <code class="flex-1 overflow-x-auto whitespace-nowrap rounded-md border border-gray-200 bg-gray-50 px-3.5 py-2.5 font-mono text-sm"
                           x-text="visible ? secreto : '••••••••••••••••••••••••••••••••••••••••'">••••••••••••••••••••••••••••••••••••••••</code>
