@@ -21,9 +21,9 @@
         <div>
             <h2 class="text-sm font-semibold text-gray-900">Qué incluye cada plan</h2>
             <p class="mt-0.5 text-xs text-gray-500">
-                Un plan incluye las dos consultas, cada una con su tope. Para que alguien solo use una,
-                marca solo esa en su API Key. El gratis es el de las llaves de sandbox, y ahí el tope
-                se pone en cada llave.
+                Cada consulta tiene su tope y su precio dentro del plan, así que quien contrata una
+                sola paga solo esa: se elige al crear la API Key. El Free es el de las llaves de
+                Sandbox, y ahí el tope se pone en cada llave.
             </p>
         </div>
         <button type="button" @click="nuevo = true; plan = null"
@@ -60,7 +60,11 @@
                                 @if($plan->a_medida)
                                     A convenir
                                 @elseif($sueltos->isEmpty())
-                                    Gratis
+                                    {{-- El importe, como en las demas columnas. Ponia
+                                         «Gratis» justo debajo de un plan que ya se llama
+                                         «Free»: dos veces lo mismo y ni una el precio. --}}
+                                    S/ 0
+                                    <span class="text-xs font-normal text-gray-400">/mes</span>
                                 @else
                                     <span class="text-xs font-normal text-gray-400">desde</span>
                                     S/ {{ rtrim(rtrim(number_format($sueltos->min(), 2), '0'), '.') }}
@@ -162,7 +166,8 @@
                     @foreach($planesApi as $plan)
                         <td class="border-l border-gray-200 px-4 py-3 text-center">
                             @if($plan->esGratis())
-                                <span class="text-sm text-gray-400">gratis</span>
+                                <span class="text-base font-bold text-gray-400">S/ 0</span>
+                                <span class="text-xs font-normal text-gray-400">/mes</span>
                             @else
                                 <span class="text-base font-bold text-gray-900">
                                     {{ $plan->a_medida
