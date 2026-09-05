@@ -221,7 +221,14 @@
          x-transition:enter-start="opacity-0 translate-y-2"
          x-transition:enter-end="opacity-100 translate-y-0"
          @keydown.escape.window="abierto = false"
-         class="absolute bottom-16 right-0 flex h-[34rem] max-h-[calc(100vh-7rem)] w-[24rem] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-gray-200">
+         {{-- En movil se ancla a la pantalla y no a la burbuja.
+
+              Colgada de la burbuja, que esta a seis rem del borde para dejarle
+              sitio al de WhatsApp, la ventana crecia hacia la izquierda y en un
+              telefono de 375 puntos se salia cuarenta y ocho fuera: el primer
+              boton quedaba cortado. --}}
+         class="fixed inset-x-3 bottom-24 flex h-[34rem] max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-gray-200
+                sm:absolute sm:inset-x-auto sm:bottom-16 sm:right-0 sm:h-[34rem] sm:max-h-[calc(100vh-7rem)] sm:w-[24rem]">
 
         <div class="flex items-center justify-between bg-blue-600 px-4 py-3 text-white">
             <div class="flex items-center gap-2.5">
