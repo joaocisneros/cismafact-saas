@@ -180,6 +180,10 @@ class AsistenteWeb
                También hay comunicación de baja, resumen diario y envío de los comprobantes
                por correo al cliente con su PDF, XML y CDR.
                Planes: {$facturacion}
+               El plan gratuito es para evaluar el sistema en el ambiente de pruebas de
+               SUNAT. Para emitir con validez tributaria hace falta uno de pago, registrar
+               el certificado digital y la clave SOL. No digas que con el gratuito se
+               factura de verdad.
 
             2. API de consultas de RUC y DNI. Devuelve, del RUC: razón social, estado,
                condición y domicilio fiscal. Del DNI: nombre y apellidos por separado.

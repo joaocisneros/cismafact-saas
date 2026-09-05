@@ -15,6 +15,11 @@
      por aqui. --}}
 @php
     $planesFacturacion = \App\Models\Plan::where('active', true)->orderBy('monthly_price')->get();
+
+    // El gratuito es con el que se prueba y los de pago con los que se emite en
+    // produccion. Se separan aqui para no repetir la condicion en cada texto.
+    $planPrueba = $planesFacturacion->first(fn ($p) => (float) $p->monthly_price <= 0);
+    $planesProduccion = $planesFacturacion->filter(fn ($p) => (float) $p->monthly_price > 0);
     $planesConsultas = \App\Models\ApiPlan::with('apis')
         ->where('activo', true)
         ->orderBy('orden')
@@ -47,10 +52,16 @@
         ],
 
         'fact_prueba' => [
-            'texto' => "Puedes evaluarlo sin costo. Creas tu cuenta y emites en el ambiente de "
-                . "pruebas de SUNAT, con datos de prueba, para validar el proceso completo antes de "
-                . "operar.\n\nPara emitir con validez tributaria solo registras tu certificado digital "
-                . "y tu clave SOL.",
+            'texto' => ($planPrueba
+                    ? sprintf("Para eso está el plan %s: %s al mes, con %s comprobantes.\n\n",
+                        $planPrueba->name,
+                        $soles($planPrueba->monthly_price),
+                        number_format((int) $planPrueba->monthly_document_limit))
+                    : "Puedes evaluarlo sin costo.\n\n")
+                . "Creas tu cuenta y emites en el ambiente de pruebas de SUNAT, con datos de prueba, "
+                . "para validar el proceso completo antes de operar.\n\nCuando decidas emitir con "
+                . "validez tributaria, registras tu certificado digital y tu clave SOL, y pasas a un "
+                . "plan de producción.",
             'opciones' => [
                 ['ir' => 'fact_planes', 'texto' => 'Ver planes y precios'],
                 ['enlace' => route('register'), 'texto' => 'Crear cuenta'],
@@ -80,12 +91,20 @@
         ],
 
         'fact_planes' => [
-            'texto' => "Los planes de facturación:\n\n"
-                . $planesFacturacion->map(fn ($p) => sprintf('• %s — %s al mes, %s comprobantes',
+            'texto' => "Planes de facturación electrónica:\n\n"
+                . ($planPrueba
+                    ? sprintf("PARA EVALUAR\n• %s — %s al mes\n   %s comprobantes en ambiente de pruebas\n\n",
+                        $planPrueba->name,
+                        $soles($planPrueba->monthly_price),
+                        number_format((int) $planPrueba->monthly_document_limit))
+                    : '')
+                . "PARA EMITIR EN PRODUCCIÓN\n"
+                . $planesProduccion->map(fn ($p) => sprintf("• %s — %s al mes\n   %s comprobantes",
                     $p->name,
                     $soles($p->monthly_price),
                     number_format((int) $p->monthly_document_limit)))->implode("\n")
-                . "\n\nTodos incluyen la firma con tu propio certificado y el envío directo a SUNAT.",
+                . "\n\nLos de producción incluyen la firma con tu propio certificado y el envío "
+                . "directo a SUNAT. Puedes cambiar de plan cuando lo necesites.",
             'fin' => true,
         ],
 
