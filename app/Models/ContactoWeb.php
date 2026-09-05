@@ -76,6 +76,62 @@ class ContactoWeb extends Model
         return $digitos;
     }
 
+    /**
+     * El primer nombre, que es como se saluda.
+     *
+     * «Hola Juan» y no «Hola Juan Pérez Gutiérrez»: lo segundo suena a carta
+     * del banco.
+     */
+    public function nombrePila(): string
+    {
+        return trim(explode(' ', trim($this->nombre))[0] ?: $this->nombre);
+    }
+
+    /**
+     * El mensaje con el que se le escribe, ya redactado.
+     *
+     * Sin esto habia que escribirlo entero cada vez, y quien atiende acaba
+     * mandando un «hola» a secas que al otro lado no dice nada: han pasado
+     * dias desde que dejo sus datos y no recuerda de que va.
+     *
+     * Se le nombra lo que vino buscando y lo que escribio, para que sepa de
+     * que se le habla desde la primera linea.
+     */
+    public function mensajeWhatsapp(): string
+    {
+        $porLoQueVino = match ($this->interes) {
+            'facturacion' => 'consultando por nuestro sistema de facturación electrónica',
+            'consultas' => 'consultando por nuestra API de RUC y DNI',
+            default => 'dejando tus datos para que te contactáramos',
+        };
+
+        $lineas = [
+            "Hola {$this->nombrePila()}, te escribimos de Cisma Fact.",
+            '',
+            "Nos dejaste tus datos en nuestra web {$porLoQueVino}.",
+        ];
+
+        if (filled($this->mensaje)) {
+            $lineas[] = '';
+            $lineas[] = "Nos comentaste: «{$this->mensaje}»";
+        }
+
+        $lineas[] = '';
+        $lineas[] = $this->interes === 'consultas'
+            ? '¿Qué consultas necesitas —RUC, DNI o ambas— y cuántas al mes? Con eso te preparamos tu API Key.'
+            : '¿En qué podemos ayudarte?';
+
+        return implode("
+", $lineas);
+    }
+
+    /** El enlace a WhatsApp con el mensaje ya puesto. */
+    public function enlaceWhatsapp(): string
+    {
+        return 'https://wa.me/' . $this->paraWhatsapp()
+            . '?text=' . rawurlencode($this->mensajeWhatsapp());
+    }
+
     public function scopePendientes($consulta)
     {
         return $consulta->whereNull('atendido_en');

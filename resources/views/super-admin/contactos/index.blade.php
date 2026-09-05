@@ -126,9 +126,12 @@
 
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-1.5">
-                                        {{-- Escribirle es la accion que se hace aqui, asi que
-                                             abre WhatsApp con su numero ya puesto. --}}
-                                        <a href="https://wa.me/{{ $c->paraWhatsapp() }}" target="_blank" rel="noopener"
+                                        {{-- Escribirle es lo que se hace aqui, asi que abre
+                                             WhatsApp con su numero y con el mensaje ya
+                                             redactado: quien atiende acaba mandando un «hola»
+                                             a secas, y al otro lado han pasado dias y no se
+                                             acuerdan de que iba. --}}
+                                        <a href="{{ $c->enlaceWhatsapp() }}" target="_blank" rel="noopener"
                                            title="Escribirle por WhatsApp"
                                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-green-50 text-green-600 ring-1 ring-inset ring-green-200 transition hover:bg-green-100">
                                             <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -138,7 +141,10 @@
 
                                         <form method="POST" action="{{ route('super-admin.contactos.atender', $c) }}">
                                             @csrf
-                                            <x-icon-action :icon="$c->estaAtendido() ? 'desbloquear' : 'ver'"
+                                            {{-- Un visto, no un ojo: el ojo dice «mirar», y lo
+                                                 que se hace aqui es dar el contacto por
+                                                 zanjado. --}}
+                                            <x-icon-action :icon="$c->estaAtendido() ? 'deshacer' : 'confirmar'"
                                                            :label="$c->estaAtendido() ? 'Devolver a pendientes' : 'Marcar como atendido'"
                                                            :color="$c->estaAtendido() ? 'slate' : 'emerald'" />
                                         </form>
