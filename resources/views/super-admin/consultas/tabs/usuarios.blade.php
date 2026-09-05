@@ -99,18 +99,19 @@
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-1.5">
                                     @if($usuario)
+                                        {{-- Los iconos del sistema, los mismos que en Empresas y
+                                             Usuarios: quien administra ya sabe qué hace cada uno
+                                             sin tener que leerlo. --}}
                                         <form method="POST" action="{{ route('super-admin.consultas.acceso.clave', $usuario->id) }}"
                                               onsubmit="return confirm('Se le pondrá una contraseña nueva y se te mostrará para que se la pases. ¿Seguir?')">
                                             @csrf
-                                            <button class="rounded-md border border-gray-300 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                                                    title="Ponerle una contraseña nueva">Nueva clave</button>
+                                            <x-icon-action icon="clave" label="Ponerle una contraseña nueva" color="amber" />
                                         </form>
                                         <form method="POST" action="{{ route('super-admin.consultas.acceso.quitar', $usuario->id) }}"
                                               onsubmit="return confirm('Dejará de poder entrar. Sus llaves seguirán funcionando: la API no se corta. ¿Seguro?')">
                                             @csrf
                                             @method('DELETE')
-                                            <button class="rounded-md border border-red-300 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
-                                                    title="Quitarle el acceso">Quitar acceso</button>
+                                            <x-icon-action icon="bloquear" label="Quitarle el acceso" color="red" />
                                         </form>
                                     @else
                                         <button type="button"
@@ -133,27 +134,6 @@
             </table>
         </div>
     </div>
-
-    @if(session('acceso_creado'))
-        <div class="mt-4 rounded-lg border border-emerald-300 bg-emerald-50 p-4">
-            <p class="text-sm font-semibold text-emerald-900">
-                Acceso creado para «{{ session('acceso_creado')['titular'] }}»
-            </p>
-            <p class="mb-2 text-xs text-emerald-800">
-                Pásaselo tú. La contraseña no se vuelve a enseñar.
-            </p>
-            <div class="grid gap-2 sm:grid-cols-2">
-                <div class="rounded-md border border-emerald-300 bg-white px-3 py-2">
-                    <p class="text-[11px] text-gray-500">Entra con</p>
-                    <p class="font-mono text-xs">{{ session('acceso_creado')['correo'] }}</p>
-                </div>
-                <div class="rounded-md border border-emerald-300 bg-white px-3 py-2">
-                    <p class="text-[11px] text-gray-500">Contraseña</p>
-                    <p class="font-mono text-xs">{{ session('acceso_creado')['clave'] }}</p>
-                </div>
-            </div>
-        </div>
-    @endif
 
     <div class="mt-4 rounded-lg bg-blue-50 px-4 py-3 text-sm text-gray-700">
         <p class="mb-1">
@@ -222,4 +202,56 @@
             </form>
         </div>
     </div>
+
+    {{-- La contraseña recién creada, en un modal que se abre solo.
+         Debajo de la tabla se perdía: es un dato que se enseña una vez, hay que
+         copiarlo en ese momento y después ya no se puede recuperar. --}}
+    @if(session('acceso_creado'))
+        <div x-data="{ abierto: true }" x-show="abierto" x-cloak
+             @keydown.escape.window="abierto = false"
+             class="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
+            <div @click.outside="abierto = false" class="my-auto w-full max-w-lg rounded-xl bg-white shadow-xl">
+                <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+                    <h3 class="font-semibold text-gray-900">
+                        Acceso listo para &laquo;{{ session('acceso_creado')['titular'] }}&raquo;
+                    </h3>
+                    <button type="button" @click="abierto = false" class="text-2xl leading-none text-gray-400 hover:text-gray-600">&times;</button>
+                </div>
+
+                <div class="space-y-4 p-5">
+                    <p class="text-sm text-gray-600">
+                        P&aacute;saselo t&uacute;. <strong class="text-gray-900">La contrase&ntilde;a no se vuelve a ense&ntilde;ar</strong>,
+                        pero siempre puedes generarle otra desde la tabla.
+                    </p>
+
+                    <div>
+                        <p class="mb-1.5 text-sm font-semibold text-gray-600">Entra con</p>
+                        <div class="flex gap-2">
+                            <code class="flex-1 overflow-x-auto whitespace-nowrap rounded-md border border-gray-200 bg-gray-50 px-3.5 py-2.5 font-mono text-sm">{{ session('acceso_creado')['correo'] }}</code>
+                            <button type="button"
+                                    @click="navigator.clipboard.writeText(@js(session('acceso_creado')['correo'])); $el.textContent = 'Copiado'; setTimeout(() => $el.textContent = 'Copiar', 1400)"
+                                    class="shrink-0 rounded-md border border-gray-300 px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">Copiar</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="mb-1.5 text-sm font-semibold text-gray-600">Contrase&ntilde;a</p>
+                        <div class="flex gap-2">
+                            <code class="flex-1 overflow-x-auto whitespace-nowrap rounded-md border border-gray-200 bg-gray-50 px-3.5 py-2.5 font-mono text-sm">{{ session('acceso_creado')['clave'] }}</code>
+                            <button type="button"
+                                    @click="navigator.clipboard.writeText(@js(session('acceso_creado')['clave'])); $el.textContent = 'Copiada'; setTimeout(() => $el.textContent = 'Copiar', 1400)"
+                                    class="shrink-0 rounded-md border border-gray-300 px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">Copiar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end border-t border-gray-100 px-5 py-4">
+                    <button type="button" @click="abierto = false"
+                            class="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">
+                        Ya lo copi&eacute;
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

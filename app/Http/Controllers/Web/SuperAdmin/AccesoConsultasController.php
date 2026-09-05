@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 /**
  * Da y quita el acceso al panel a los titulares de RUC y DNI.
@@ -27,7 +28,12 @@ class AccesoConsultasController extends Controller
     {
         $datos = $request->validate([
             'nombre' => ['required', 'string', 'max:120'],
-            'correo' => ['required', 'email', 'max:150', 'unique:users,email'],
+            // El correo no puede estar en uso, pero un acceso retirado no cuenta:
+            // a quien se le quito hay que poder devolverselo.
+            'correo' => [
+                'required', 'email', 'max:150',
+                Rule::unique('users', 'email')->whereNull('deleted_at'),
+            ],
             'clave' => ['required', 'string', 'min:8'],
             'llaves' => ['required', 'array', 'min:1'],
             'llaves.*' => ['integer', 'exists:consulta_llaves,id'],
@@ -38,15 +44,34 @@ class AccesoConsultasController extends Controller
 
         $rol = Role::where('name', 'cliente_consultas')->firstOrFail();
 
-        $usuario = User::create([
-            'name' => $datos['nombre'],
-            'email' => $datos['correo'],
-            'password' => Hash::make($datos['clave']),
-            'role_id' => $rol->id,
-            'company_id' => null,
-            'user_type' => 'user',
-            'active' => true,
-        ]);
+        /*
+         * Si ya tuvo acceso y se le quito, se le devuelve la misma cuenta en
+         * vez de crear otra: asi conserva su historial de entradas y no queda
+         * un correo bloqueado para siempre.
+         */
+        $retirado = User::onlyTrashed()->where('email', $datos['correo'])->first();
+
+        if ($retirado) {
+            $retirado->restore();
+            $retirado->update([
+                'name' => $datos['nombre'],
+                'password' => Hash::make($datos['clave']),
+                'role_id' => $rol->id,
+                'active' => true,
+            ]);
+
+            $usuario = $retirado;
+        } else {
+            $usuario = User::create([
+                'name' => $datos['nombre'],
+                'email' => $datos['correo'],
+                'password' => Hash::make($datos['clave']),
+                'role_id' => $rol->id,
+                'company_id' => null,
+                'user_type' => 'user',
+                'active' => true,
+            ]);
+        }
 
         // Solo las de produccion: las de Sandbox son para probar y no dan
         // acceso al sistema, asi que aunque llegaran en la peticion no se
