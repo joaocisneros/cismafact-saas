@@ -24,7 +24,7 @@ class Api extends Model
     public function planes(): BelongsToMany
     {
         return $this->belongsToMany(ApiPlan::class, 'api_plan_limite')
-            ->withPivot('limite_mensual')
+            ->withPivot('limite_mensual', 'precio_mensual')
             ->withTimestamps();
     }
 

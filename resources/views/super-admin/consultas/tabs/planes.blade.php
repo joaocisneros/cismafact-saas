@@ -47,11 +47,25 @@
                     @foreach($planesApi as $i => $plan)
                         <th class="group border-b-2 border-l border-gray-200 px-5 py-4 text-center">
                             <p class="text-sm font-bold {{ $tonos[$i % count($tonos)] }}">{{ $plan->nombre }}</p>
+                            {{-- «Desde», porque el precio depende de lo que se
+                                 contrate: el plan entero esta en la ultima fila y
+                                 cada servicio suelto, en su celda. Poner aqui el
+                                 total hacia creer que era eso o nada. --}}
+                            @php
+                                $sueltos = $apis
+                                    ->map(fn ($a) => (float) ($a->planes->firstWhere('id', $plan->id)?->pivot->precio_mensual ?? 0))
+                                    ->filter(fn ($p) => $p > 0);
+                            @endphp
                             <p class="mt-0.5 text-lg font-bold text-gray-900">
-                                {{ $plan->a_medida ? 'A convenir' : 'S/ ' . rtrim(rtrim(number_format((float) $plan->precio_mensual, 2), '0'), '.') }}
-                                @unless($plan->a_medida)
+                                @if($plan->a_medida)
+                                    A convenir
+                                @elseif($sueltos->isEmpty())
+                                    Gratis
+                                @else
+                                    <span class="text-xs font-normal text-gray-400">desde</span>
+                                    S/ {{ rtrim(rtrim(number_format($sueltos->min(), 2), '0'), '.') }}
                                     <span class="text-xs font-normal text-gray-400">/mes</span>
-                                @endunless
+                                @endif
                             </p>
 
                             <button type="button"
@@ -63,6 +77,9 @@
                                         'a_medida' => (bool) $plan->a_medida,
                                         'cuotas' => $apis->mapWithKeys(fn ($a) => [
                                             $a->id => $a->planes->firstWhere('id', $plan->id)?->pivot->limite_mensual ?? 0,
+                                        ]),
+                                        'precios' => $apis->mapWithKeys(fn ($a) => [
+                                            $a->id => (float) ($a->planes->firstWhere('id', $plan->id)?->pivot->precio_mensual ?? 0),
                                         ]),
                                     ]) }}; nuevo = false"
                                     class="mt-1 text-xs font-normal text-gray-400 opacity-0 transition group-hover:opacity-100 hover:text-blue-600 hover:underline focus:opacity-100">
@@ -115,6 +132,14 @@
                                     <p class="mt-0.5 text-xs text-gray-400">20 por defecto</p>
                                 @elseif($tope > 0)
                                     <span class="text-xl font-bold text-gray-900">{{ number_format($tope) }}</span>
+                                    {{-- El precio de ese servicio suelto, que es lo que se
+                                         cobra a quien contrata solo ese. Sin esto la tabla
+                                         solo servia para comparar volumenes. --}}
+                                    <p class="mt-0.5 text-sm font-semibold {{ $plan->a_medida ? 'text-gray-400' : 'text-gray-700' }}">
+                                        {{ $plan->a_medida
+                                            ? 'a convenir'
+                                            : 'S/ ' . rtrim(rtrim(number_format((float) ($api->planes->firstWhere('id', $plan->id)?->pivot->precio_mensual ?? 0), 2), '0'), '.') }}
+                                    </p>
                                 @else
                                     <span class="text-sm text-gray-300">no incluida</span>
                                 @endif
@@ -122,6 +147,35 @@
                         @endforeach
                     </tr>
                 @endforeach
+
+                {{-- Lo que paga quien se lleva todo.
+
+                     Con el precio en cada servicio, la tabla ya responde sola a
+                     las tres preguntas que se hacen al vender: cuanto es solo
+                     RUC, cuanto solo DNI, y cuanto los dos. --}}
+                <tr class="border-t-2 border-gray-200 bg-gray-50">
+                    <td class="px-5 py-3">
+                        <p class="text-sm font-semibold text-gray-900">Contratando todo</p>
+                        <p class="text-xs text-gray-500">Se puede contratar cada consulta por separado</p>
+                    </td>
+
+                    @foreach($planesApi as $plan)
+                        <td class="border-l border-gray-200 px-4 py-3 text-center">
+                            @if($plan->esGratis())
+                                <span class="text-sm text-gray-400">gratis</span>
+                            @else
+                                <span class="text-base font-bold text-gray-900">
+                                    {{ $plan->a_medida
+                                        ? 'A convenir'
+                                        : 'S/ ' . rtrim(rtrim(number_format((float) $plan->precio_mensual, 2), '0'), '.') }}
+                                </span>
+                                @unless($plan->a_medida)
+                                    <span class="text-xs font-normal text-gray-400">/mes</span>
+                                @endunless
+                            @endif
+                        </td>
+                    @endforeach
+                </tr>
             </tbody>
         </table>
     </section>
@@ -153,8 +207,22 @@
                      comparar con el precio, subir otra vez. Van emparejados los
                      que se miran juntos. --}}
                 <div class="space-y-4 px-5 py-4"
-                     x-data="{ aMedida: false, precio: 0 }"
-                     x-effect="aMedida = plan?.a_medida ?? false; precio = Number(plan?.precio_mensual ?? 0)">
+                     x-data="{
+                         aMedida: false,
+                         precios: {},
+                         total() {
+                             return Object.values(this.precios).reduce((s, v) => s + (Number(v) || 0), 0);
+                         },
+                         soles(n) { return 'S/ ' + Number(n).toFixed(2); },
+                     }"
+                     x-effect="
+                         aMedida = plan?.a_medida ?? false;
+                         precios = Object.assign({}, plan?.precios ?? {});
+                     ">
+                    {{-- El precio ya no se pide aqui: es la suma de lo que valga
+                         cada servicio, mas abajo. Pedirlo aparte dejaba poner el
+                         plan a S/39 con los servicios a cero, y entonces la
+                         pantalla decia una cosa y se cobraba otra. --}}
                     <div class="grid gap-3 sm:grid-cols-3">
                         <div class="sm:col-span-2">
                             <label for="p_nombre" class="mb-1 block text-sm font-medium text-gray-700">Nombre</label>
@@ -165,14 +233,9 @@
                         </div>
 
                         <div>
-                            <label for="p_precio" class="mb-1 block text-sm font-medium text-gray-700">Precio al mes</label>
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-sm text-gray-500">S/</span>
-                                <input type="number" name="precio_mensual" id="p_precio" required min="0" max="99999" step="0.01"
-                                       x-model.number="precio" :disabled="aMedida"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400">
-                            </div>
-                            <label class="mt-1.5 flex items-center gap-2 text-xs text-gray-600">
+                            <span class="mb-1 block text-sm font-medium text-gray-700">Precio</span>
+                            <label class="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition"
+                                   :class="aMedida ? 'border-blue-500 bg-blue-50/50 text-gray-900' : 'border-gray-300 text-gray-600 hover:bg-gray-50'">
                                 <input type="checkbox" name="a_medida" value="1" x-model="aMedida"
                                        class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                                 A convenir
@@ -190,41 +253,73 @@
                                placeholder="Para quien solo consulta empresas">
                     </div>
 
-                    {{-- En un plan gratis estos numeros no rigen.
+                    {{-- Las consultas y su precio en la misma fila.
 
-                         El gratis es el de las llaves de sandbox, y cada llave
-                         lleva su propio tope, que gana al del plan. Aqui se
-                         pedian igual: el free se editaba con 300 y 50 dentro,
-                         se guardaban, y no cambiaban ni una consulta de ninguna
-                         llave. Pedir un dato que no se usa es peor que no
-                         pedirlo, porque el que lo escribe cree que sirvio. --}}
-                    <div class="border-t border-gray-100 pt-4" x-show="precio > 0 || aMedida" x-cloak>
-                        <p class="mb-2 text-sm font-medium text-gray-700">
-                            Qué incluye al mes
-                            <span class="font-normal text-gray-400">— un 0 deja esa consulta fuera</span>
-                        </p>
-                        <div class="grid gap-3 sm:grid-cols-2">
-                            @foreach($apis as $api)
-                                <div>
-                                    <label for="q_{{ $api->id }}" class="mb-1 block text-xs text-gray-600">{{ $api->nombre }}</label>
-                                    {{-- Deshabilitados no se envian: asi un plan sin
-                                         precio no guarda cuotas que no van a regir. --}}
-                                    <input type="number" min="0" max="10000000"
-                                           id="q_{{ $api->id }}" name="cuotas[{{ $api->id }}]"
-                                           :value="plan?.cuotas?.[{{ $api->id }}] ?? 0"
-                                           :disabled="precio <= 0 && ! aMedida"
-                                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-right text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                                </div>
-                            @endforeach
+                         Iban por separado —el precio arriba, las cuotas abajo—
+                         y no se veia lo que de verdad importa al armar un plan:
+                         cuanto sale cada consulta. Ahora se leen juntas.
+
+                         En un plan sin precio estos numeros no rigen: ese es el
+                         de las llaves de sandbox, y cada llave lleva su propio
+                         tope, que gana al del plan. --}}
+                    <div class="border-t border-gray-100 pt-4">
+                        <div class="mb-2 flex flex-wrap items-baseline justify-between gap-x-3">
+                            <p class="text-sm font-medium text-gray-700">Qué incluye y cuánto cuesta</p>
+                            <p class="text-xs text-gray-400">Un 0 en consultas deja el servicio fuera</p>
                         </div>
-                    </div>
 
-                    <div class="border-t border-gray-100 pt-4" x-show="precio <= 0 && ! aMedida" x-cloak>
-                        <p class="text-sm font-medium text-gray-700">Qué incluye al mes</p>
-                        <p class="mt-1 text-xs text-gray-500">
-                            Un plan sin precio es el de las llaves de sandbox, y ahí el tope se pone
-                            al crear cada llave —20 por defecto—, así que lo que se escriba aquí no
-                            llegaría a aplicarse. Ponle precio si quieres fijar cuotas.
+                        <div class="overflow-hidden rounded-lg border border-gray-200">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="border-b border-gray-200 bg-gray-50 text-[11px] uppercase tracking-wide text-gray-500">
+                                        <th class="px-3 py-2 text-left font-semibold">Servicio</th>
+                                        <th class="px-3 py-2 text-right font-semibold">Consultas al mes</th>
+                                        <th class="px-3 py-2 text-right font-semibold">Precio al mes</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody class="divide-y divide-gray-100">
+                                    @foreach($apis as $api)
+                                        <tr>
+                                            <td class="px-3 py-2 font-medium text-gray-900">{{ $api->nombre }}</td>
+                                            <td class="py-1.5 pl-2 pr-1">
+                                                <input type="number" min="0" max="10000000"
+                                                       id="q_{{ $api->id }}" name="cuotas[{{ $api->id }}]"
+                                                       :value="plan?.cuotas?.[{{ $api->id }}] ?? 0"
+                                                       class="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-right text-sm tabular-nums outline-none focus:ring-2 focus:ring-blue-500">
+                                            </td>
+                                            <td class="py-1.5 pl-1 pr-2">
+                                                <div class="flex items-center gap-1">
+                                                    <span class="text-xs text-gray-400">S/</span>
+                                                    {{-- Deshabilitado no se envia: un plan a convenir
+                                                         no guarda precios que no rigen. --}}
+                                                    <input type="number" min="0" max="99999" step="0.01"
+                                                           name="precios[{{ $api->id }}]"
+                                                           x-model.number="precios[{{ $api->id }}]"
+                                                           :disabled="aMedida"
+                                                           class="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-right text-sm tabular-nums outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400">
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+
+                                <tfoot>
+                                    <tr class="border-t border-gray-200 bg-gray-50">
+                                        <td colspan="2" class="px-3 py-2 text-right text-xs text-gray-600">
+                                            Contratando todo
+                                        </td>
+                                        <td class="px-3 py-2 text-right text-sm font-bold tabular-nums text-gray-900"
+                                            x-text="aMedida ? 'A convenir' : soles(total())"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <p class="mt-2 text-xs text-gray-500" x-show="! aMedida && total() <= 0" x-cloak>
+                            Un plan sin precio es el de las llaves de Sandbox, y ahí el tope se pone al
+                            crear cada llave —20 por defecto—, así que estas consultas no llegarían a
+                            aplicarse. Ponle precio a algún servicio para que las cuotas rijan.
                         </p>
                     </div>
                 </div>

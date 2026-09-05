@@ -3,6 +3,27 @@
      facturar, y bloquearle una cosa no debe cortarle la otra. Un mismo titular
      quiere varias —una por sistema suyo— para poder cortar una sin dejar las
      demas sin servicio. --}}
+@php
+    /*
+     * Las tarifas tal como las necesita el modal: por plan, el tope y el
+     * precio de cada servicio. El importe se calcula ahi sumando lo que se
+     * marque, en vez de traer un precio de plan que solo valdria si contratara
+     * todo.
+     */
+    $tarifas = $planesApi->mapWithKeys(fn ($p) => [$p->id => [
+        'nombre' => $p->nombre,
+        'aMedida' => (bool) $p->a_medida,
+        'servicios' => $p->apis->mapWithKeys(fn ($a) => [$a->slug => [
+            'limite' => (int) $a->pivot->limite_mensual,
+            'precio' => (float) $a->pivot->precio_mensual,
+        ]])->all(),
+    ]])->all();
+
+    // Los de pago y los de a convenir; lo gratis se reparte desde Sandbox.
+    $planesDePago = $planesApi->filter(fn ($p) => $p->a_medida || (float) $p->precio_mensual > 0);
+    $primerPlan = $planesDePago->first()?->id;
+@endphp
+
 <div x-data="{ llave: null, nueva: false, detalle: null }">
 
     @if($nueva = session('llave_creada'))
@@ -281,6 +302,37 @@
                               : this.marcados.filter(s => s !== slug);
                       },
 
+                      /* El precio vive en cada servicio, no en el plan: el RUC
+                         es publico y lo da la propia SUNAT, mientras que el de
+                         RENIEC hay que conseguirlo, asi que cuesta el doble.
+                         Se cobra la suma de lo que se marque. */
+                      plan: @js($primerPlan),
+                      tarifas: @js($tarifas),
+
+                      tarifa() { return this.tarifas[this.plan] ?? null; },
+                      aMedida() { return !! this.tarifa()?.aMedida; },
+                      limiteDe(slug) { return this.tarifa()?.servicios?.[slug]?.limite ?? 0; },
+                      precioDe(slug) { return this.tarifa()?.servicios?.[slug]?.precio ?? 0; },
+                      total() { return this.marcados.reduce((s, x) => s + this.precioDe(x), 0); },
+                      soles(n) { return 'S/ ' + Number(n).toFixed(2); },
+                      miles(n) { return Number(n).toLocaleString('es-PE'); },
+
+                      etiquetaPlan(id) {
+                          const t = this.tarifas[id];
+                          if (! t) return '';
+
+                          /* Sin nada marcado se enseña el plan entero; con algo
+                             marcado, solo eso: quien contrata RUC no tiene por
+                             que ver un tope de DNI que no va a poder gastar. */
+                          const cuales = this.marcados.length ? this.marcados : Object.keys(t.servicios);
+                          const topes = cuales.map(s => this.miles(t.servicios[s]?.limite ?? 0) + ' ' + s.toUpperCase()).join(' · ');
+                          const importe = t.aMedida
+                              ? 'a convenir'
+                              : 'S/ ' + cuales.reduce((a, s) => a + (t.servicios[s]?.precio ?? 0), 0).toFixed(2) + ' al mes';
+
+                          return t.nombre + ' — ' + topes + ' · ' + importe;
+                      },
+
                       buscando: false,
                       aviso: '',
                       avisoTipo: '',
@@ -290,6 +342,7 @@
                           this.avisoTipo = '';
                           this.buscando = false;
                           this.marcados = [];
+                          this.plan = @js($primerPlan);
                           this.$refs.formulario?.reset();
                       },
 
@@ -336,6 +389,7 @@
                   x-effect="
                       if (llave) {
                           marcados = llave.servicios ?? [];
+                          plan = llave.api_plan_id ?? @js($primerPlan);
                       } else if (! nueva) {
                           /* El modal se oculta pero no se destruye, asi que sus
                              campos guardaban lo ultimo escrito: al abrir «Nueva
@@ -418,11 +472,17 @@
                                            :checked="marcados.includes('{{ $api->slug }}')"
                                            @change="alterna('{{ $api->slug }}', $event.target.checked)"
                                            class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="min-w-0">
-                                        <span class="block text-sm font-medium text-gray-900">{{ $api->nombre }}</span>
-                                        @if($api->descripcion)
-                                            <span class="block truncate text-xs text-gray-500" title="{{ $api->descripcion }}">{{ $api->descripcion }}</span>
-                                        @endif
+                                    <span class="min-w-0 flex-1">
+                                        <span class="flex items-baseline justify-between gap-2">
+                                            <span class="text-sm font-medium text-gray-900">{{ $api->nombre }}</span>
+                                            {{-- Lo que cuesta ese servicio suelto, para no tener
+                                                 que abrir Planes en mitad de un alta. --}}
+                                            <span class="shrink-0 text-xs font-semibold tabular-nums"
+                                                  :class="marcados.includes('{{ $api->slug }}') ? 'text-blue-700' : 'text-gray-400'"
+                                                  x-text="aMedida() ? 'a convenir' : soles(precioDe('{{ $api->slug }}'))"></span>
+                                        </span>
+                                        <span class="block truncate text-xs text-gray-500"
+                                              x-text="miles(limiteDe('{{ $api->slug }}')) + ' consultas al mes'"></span>
                                     </span>
                                 </label>
                             @endforeach
@@ -442,21 +502,30 @@
                              Los de a convenir si salen: cuestan cero en la ficha
                              porque el precio se acuerda aparte, no porque sean
                              gratis. --}}
-                        <select name="api_plan_id" id="l_plan" required
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                            @foreach($planesApi->filter(fn ($p) => $p->a_medida || (float) $p->precio_mensual > 0) as $p)
-                                {{-- Las cuotas y no el precio.
+                        {{-- Con el precio delante.
 
-                                     Esta pantalla se abre delante de clientes y
-                                     el importe no pinta nada en ella. Ademas al
-                                     elegir plan lo que se compara es cuanto da
-                                     cada uno; la tarifa esta en Planes, que es
-                                     donde se mira cuando toca cobrar. --}}
-                                <option value="{{ $p->id }}" :selected="llave?.api_plan_id == {{ $p->id }}">
-                                    {{ $p->nombre }} — {{ $apis->map(fn ($a) => number_format($a->limiteDelPlan($p->id)) . ' ' . strtoupper($a->slug))->join(' · ') }}
-                                </option>
+                             Antes se escondia porque esta pantalla se abre con
+                             el cliente al lado, pero eso valia para lo que
+                             facturas tu, no para lo que va a pagar el: la
+                             tarifa se la dices igual, y teniendola aqui se deja
+                             de cobrar de memoria. --}}
+                        <select name="api_plan_id" id="l_plan" required x-model="plan"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                            @foreach($planesDePago as $p)
+                                <option value="{{ $p->id }}" x-text="etiquetaPlan({{ $p->id }})">{{ $p->nombre }}</option>
                             @endforeach
                         </select>
+
+                        {{-- El total de lo marcado, que es lo que se le cobra.
+                             Sin esto habia que sumar de cabeza los servicios. --}}
+                        <p class="mt-1.5 flex items-baseline justify-between text-xs">
+                            <span class="text-gray-500" x-text="marcados.length
+                                ? marcados.map(s => s.toUpperCase()).join(' + ')
+                                : 'Marca los servicios'"></span>
+                            <span class="font-semibold tabular-nums"
+                                  :class="marcados.length ? 'text-gray-900' : 'text-gray-400'"
+                                  x-text="! marcados.length ? '—' : (aMedida() ? 'A convenir' : soles(total()) + ' al mes')"></span>
+                        </p>
                     </div>
 
                     {{-- Se piensa en cuanto dura el contrato, no en el dia del

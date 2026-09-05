@@ -38,7 +38,18 @@
         <div class="rounded-xl border border-gray-200 bg-white p-5">
             <p class="text-sm text-gray-500">Tu plan</p>
             <p class="mt-1 text-2xl font-semibold text-gray-900">{{ $produccion?->plan?->nombre ?? '—' }}</p>
-            <p class="mt-0.5 text-sm text-gray-500">{{ collect($produccion?->servicios ?? [])->map(fn($s) => strtoupper($s))->join(' y ') }}</p>
+            {{-- Lo que paga, no solo el nombre del plan.
+
+                 El precio va por servicio, asi que dos llaves del mismo plan
+                 pagan distinto segun lleven RUC, DNI o los dos: el nombre solo
+                 no le decia cuanto le toca. --}}
+            <p class="mt-0.5 text-sm text-gray-500">
+                {{ collect($produccion?->servicios ?? [])->map(fn($s) => strtoupper($s))->join(' y ') }}
+                @if($produccion?->plan && ! $produccion->plan->esGratis())
+                    <span class="text-gray-300">·</span>
+                    <span class="font-medium text-gray-700">{{ $produccion->precioTexto() }} al mes</span>
+                @endif
+            </p>
         </div>
         <div class="rounded-xl border border-gray-200 bg-white p-5">
             <p class="text-sm text-gray-500">Tus llaves</p>

@@ -125,6 +125,11 @@
                 <div>
                     <dt class="text-sm text-gray-500">Plan</dt>
                     <dd class="text-[15px] font-semibold text-gray-900">{{ $llave->plan?->nombre ?? '—' }}</dd>
+                    {{-- El importe de esta llave en concreto: se cobra por los
+                         servicios que tiene, no por el plan entero. --}}
+                    @if($llave->plan && ! $llave->plan->esGratis())
+                        <dd class="text-sm text-gray-500">{{ $llave->precioTexto() }} al mes</dd>
+                    @endif
                 </div>
                 <div>
                     <dt class="text-sm text-gray-500">Servicios</dt>
