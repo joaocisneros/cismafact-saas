@@ -81,9 +81,16 @@ class PanelController extends Controller
         ]);
     }
 
+    /**
+     * Ya no hay pantalla de cuenta.
+     *
+     * Los datos y la contraseña se cambian en los modales del avatar, que
+     * estan en todas las pantallas: no son un modulo del servicio, son de
+     * quien entra. Esta ruta queda para quien llegue por la direccion vieja.
+     */
     public function cuenta()
     {
-        return view('consultas.cuenta', ['usuario' => Auth::user()]);
+        return redirect()->route('consultas.panel');
     }
 
     public function guardarCuenta(Request $request)

@@ -55,14 +55,13 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h4M5 4h9l5 5v11a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1z"/>
             </x-consultas-enlace>
 
-            <x-consultas-enlace ruta="consultas.cuenta" texto="Mi cuenta">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8a4 4 0 11-8 0 4 4 0 018 0zM4 21a8 8 0 0116 0"/>
-            </x-consultas-enlace>
         </nav>
 
     </aside>
 
-    <div class="flex min-w-0 flex-1 flex-col">
+    {{-- El avatar y los modales comparten estado: se abren desde el menu
+         de la cuenta, esten en la pantalla que esten. --}}
+    <div x-data="{ modal: @js(session('abrir_modal')) }" @keydown.escape.window="modal = null" class="flex min-w-0 flex-1 flex-col">
 
         {{-- Barra superior: el avatar va aquí y no al fondo del menú, porque es
              donde está en el resto del sistema y donde se busca. --}}
@@ -98,21 +97,21 @@
                         <p class="truncate text-xs text-gray-500">{{ auth()->user()->email }}</p>
                     </div>
 
-                    <a href="{{ route('consultas.cuenta') }}"
-                       class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                    <button type="button" @click="cuenta = false; modal = 'datos'"
+                            class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50">
                         <svg class="h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path fill-rule="evenodd" clip-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z"/>
                         </svg>
                         Editar mis datos
-                    </a>
+                    </button>
 
-                    <a href="{{ route('consultas.cuenta') }}#clave"
-                       class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                    <button type="button" @click="cuenta = false; modal = 'clave'"
+                            class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50">
                         <svg class="h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path fill-rule="evenodd" clip-rule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z"/>
                         </svg>
                         Cambiar contraseña
-                    </a>
+                    </button>
 
                     <a href="{{ route('consultas.credenciales') }}"
                        class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
@@ -146,7 +145,6 @@
                 'consultas.consumo' => 'Consumo',
                 'consultas.consultas' => 'Consultas',
                 'consultas.documentacion' => 'Docs',
-                'consultas.cuenta' => 'Cuenta',
             ] as $ruta => $texto)
                 <a href="{{ route($ruta) }}"
                    class="whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium {{ request()->routeIs($ruta) ? 'bg-blue-50 text-blue-700' : 'text-gray-600' }}">
@@ -170,6 +168,86 @@
 
             @yield('content')
         </main>
+
+        {{-- Los datos de la cuenta y la contraseña, detrás del avatar.
+             Viven en el armazón y no en una pantalla suya porque no son un
+             módulo del servicio: se abren desde donde estés. --}}
+        <div x-show="modal === 'datos'" x-cloak
+             class="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
+            <div @click.outside="modal = null" class="my-auto w-full max-w-md rounded-xl bg-white shadow-xl">
+                <form method="POST" action="{{ route('consultas.cuenta.guardar') }}">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+                        <h3 class="font-semibold text-gray-900">Editar mis datos</h3>
+                        <button type="button" @click="modal = null" class="text-2xl leading-none text-gray-400 hover:text-gray-600">&times;</button>
+                    </div>
+
+                    <div class="space-y-4 p-5">
+                        <label class="block">
+                            <span class="mb-1.5 block text-sm font-semibold text-gray-600">Nombre</span>
+                            <input name="name" value="{{ old('name', auth()->user()->name) }}" required maxlength="120"
+                                   class="w-full rounded-md border border-gray-300 px-3.5 py-2.5 text-[15px]">
+                        </label>
+
+                        <label class="block">
+                            <span class="mb-1.5 block text-sm font-semibold text-gray-600">Correo &mdash; con este entras</span>
+                            <input name="email" type="email" value="{{ old('email', auth()->user()->email) }}" required maxlength="150"
+                                   class="w-full rounded-md border border-gray-300 px-3.5 py-2.5 text-[15px]">
+                        </label>
+                    </div>
+
+                    <div class="flex justify-end gap-2 border-t border-gray-100 px-5 py-4">
+                        <button type="button" @click="modal = null"
+                                class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Cancelar</button>
+                        <button class="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div x-show="modal === 'clave'" x-cloak
+             class="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
+            <div @click.outside="modal = null" class="my-auto w-full max-w-md rounded-xl bg-white shadow-xl">
+                <form method="POST" action="{{ route('consultas.cuenta.clave') }}">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+                        <h3 class="font-semibold text-gray-900">Cambiar contrase&ntilde;a</h3>
+                        <button type="button" @click="modal = null" class="text-2xl leading-none text-gray-400 hover:text-gray-600">&times;</button>
+                    </div>
+
+                    <div class="space-y-4 p-5">
+                        <label class="block">
+                            <span class="mb-1.5 block text-sm font-semibold text-gray-600">Contrase&ntilde;a actual</span>
+                            <input name="actual" type="password" required autocomplete="current-password"
+                                   class="w-full rounded-md border border-gray-300 px-3.5 py-2.5 text-[15px]">
+                        </label>
+
+                        <label class="block">
+                            <span class="mb-1.5 block text-sm font-semibold text-gray-600">Contrase&ntilde;a nueva</span>
+                            <input name="nueva" type="password" required minlength="8" autocomplete="new-password"
+                                   placeholder="Al menos 8 caracteres"
+                                   class="w-full rounded-md border border-gray-300 px-3.5 py-2.5 text-[15px]">
+                        </label>
+
+                        <label class="block">
+                            <span class="mb-1.5 block text-sm font-semibold text-gray-600">Repite la nueva</span>
+                            <input name="nueva_confirmation" type="password" required minlength="8" autocomplete="new-password"
+                                   class="w-full rounded-md border border-gray-300 px-3.5 py-2.5 text-[15px]">
+                        </label>
+                    </div>
+
+                    <div class="flex justify-end gap-2 border-t border-gray-100 px-5 py-4">
+                        <button type="button" @click="modal = null"
+                                class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Cancelar</button>
+                        <button class="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">Cambiar contrase&ntilde;a</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
