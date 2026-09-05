@@ -27,7 +27,8 @@
     // seguir; el que lleva 'fin' cierra con los enlaces de siempre.
     $guia = [
         'inicio' => [
-            'texto' => "Hola, soy el asistente de Cisma Fact.\n\n¿Con cuál de los dos te ayudo?",
+            'texto' => "Bienvenido a Cisma Fact.\n\nTe oriento sobre nuestros servicios, planes y "
+                . "precios.\n\n¿Cuál necesitas?",
             'opciones' => [
                 ['ir' => 'facturacion', 'texto' => 'Facturación electrónica'],
                 ['ir' => 'consultas', 'texto' => 'Consultas de RUC y DNI'],
@@ -35,46 +36,46 @@
         ],
 
         'facturacion' => [
-            'texto' => "Con Cisma Fact emites facturas, boletas, notas de crédito y débito, y guías "
-                . "de remisión, firmadas con tu propio certificado y enviadas directo a SUNAT.\n\n"
-                . "¿Cómo lo vas a usar?",
+            'texto' => "Emite facturas, boletas, notas de crédito y débito, y guías de remisión "
+                . "electrónicas, firmadas con tu propio certificado digital y enviadas directo a "
+                . "SUNAT.\n\n¿De qué forma planeas usarlo?",
             'opciones' => [
-                ['ir' => 'fact_prueba', 'texto' => 'Quiero probarlo primero'],
-                ['ir' => 'fact_sistema', 'texto' => 'Facturar desde el sistema'],
-                ['ir' => 'fact_api', 'texto' => 'Integrarlo con mi programa (API)'],
+                ['ir' => 'fact_prueba', 'texto' => 'Evaluarlo antes de contratar'],
+                ['ir' => 'fact_sistema', 'texto' => 'Emitir desde el panel web'],
+                ['ir' => 'fact_api', 'texto' => 'Integrar con mi sistema (API)'],
             ],
         ],
 
         'fact_prueba' => [
-            'texto' => "Puedes probar sin pagar nada: creas tu cuenta y emites contra el ambiente "
-                . "de pruebas de SUNAT, con datos de prueba, para ver cómo queda todo antes de "
-                . "usarlo de verdad.\n\nCuando quieras emitir en producción solo subes tu certificado "
-                . "digital y tu clave SOL, y ya emites con validez tributaria.",
+            'texto' => "Puedes evaluarlo sin costo. Creas tu cuenta y emites en el ambiente de "
+                . "pruebas de SUNAT, con datos de prueba, para validar el proceso completo antes de "
+                . "operar.\n\nPara emitir con validez tributaria solo registras tu certificado digital "
+                . "y tu clave SOL.",
             'opciones' => [
-                ['ir' => 'fact_planes', 'texto' => 'Ver los planes'],
-                ['enlace' => route('register'), 'texto' => 'Crear mi cuenta'],
+                ['ir' => 'fact_planes', 'texto' => 'Ver planes y precios'],
+                ['enlace' => route('register'), 'texto' => 'Crear cuenta'],
             ],
         ],
 
         'fact_sistema' => [
-            'texto' => "Desde el panel emites todo sin instalar nada: cargas tus clientes y "
-                . "productos, emites el comprobante y se envía a SUNAT en el momento. Ves el estado "
-                . "real de cada uno, y le mandas al cliente su PDF, XML y CDR por correo.\n\n"
-                . "También tienes comunicación de baja, resumen diario y notas.",
+            'texto' => "Gestionas todo desde el panel, sin instalar nada. Registras clientes y "
+                . "productos, emites el comprobante y se envía a SUNAT en el momento. Consultas el "
+                . "estado real de cada uno y remites al cliente su PDF, XML y CDR por correo.\n\n"
+                . "Incluye comunicación de baja, resumen diario y notas de crédito y débito.",
             'opciones' => [
-                ['ir' => 'fact_planes', 'texto' => 'Ver los planes'],
-                ['enlace' => route('register'), 'texto' => 'Crear mi cuenta'],
+                ['ir' => 'fact_planes', 'texto' => 'Ver planes y precios'],
+                ['enlace' => route('register'), 'texto' => 'Crear cuenta'],
             ],
         ],
 
         'fact_api' => [
-            'texto' => "Hay una API REST para emitir desde tu propio sistema, en cualquier lenguaje. "
-                . "Mandas el comprobante y te devuelve la respuesta de SUNAT con su CDR.\n\n"
-                . "Tienes un entorno de pruebas para desarrollar sin gastar comprobantes reales, y la "
-                . "documentación con los ejemplos.",
+            'texto' => "Disponemos de una API REST para emitir desde tu propio sistema, en "
+                . "cualquier lenguaje de programación. Envías el comprobante y recibes la respuesta de "
+                . "SUNAT con su CDR.\n\nCuentas con un entorno de pruebas para desarrollar sin "
+                . "consumir comprobantes reales, y documentación con ejemplos de integración.",
             'opciones' => [
-                ['enlace' => url('/docs'), 'texto' => 'Ver la documentación'],
-                ['ir' => 'fact_planes', 'texto' => 'Ver los planes'],
+                ['enlace' => url('/docs'), 'texto' => 'Ver documentación'],
+                ['ir' => 'fact_planes', 'texto' => 'Ver planes y precios'],
             ],
         ],
 
@@ -84,24 +85,24 @@
                     $p->name,
                     $soles($p->monthly_price),
                     number_format((int) $p->monthly_document_limit)))->implode("\n")
-                . "\n\nTodos incluyen la firma con tu certificado y el envío directo a SUNAT.",
+                . "\n\nTodos incluyen la firma con tu propio certificado y el envío directo a SUNAT.",
             'fin' => true,
         ],
 
         'consultas' => [
-            'texto' => "La API de RUC y DNI es aparte de la facturación: se contrata sola y se paga "
-                . "por lo que uses.\n\nDel RUC te devuelve razón social, estado, condición y domicilio "
-                . "fiscal. Del DNI, el nombre y los apellidos por separado.\n\n¿Qué necesitas?",
+            'texto' => "La API de consultas es independiente de la facturación y se contrata por "
+                . "separado.\n\nDel RUC obtienes razón social, estado, condición y domicilio fiscal. "
+                . "Del DNI, nombres y apellidos por separado.\n\n¿Qué necesitas?",
             'opciones' => [
-                ['ir' => 'cons_planes', 'texto' => 'Ver precios'],
-                ['ir' => 'cons_produccion', 'texto' => 'Contratar para producción'],
-                ['ir' => 'cons_prueba', 'texto' => 'Probar antes (Sandbox)'],
+                ['ir' => 'cons_planes', 'texto' => 'Ver planes y precios'],
+                ['ir' => 'cons_produccion', 'texto' => 'Contratar producción'],
+                ['ir' => 'cons_prueba', 'texto' => 'Probar en Sandbox'],
             ],
         ],
 
         'cons_planes' => [
-            'texto' => "Cada consulta se contrata por separado, así que si solo necesitas RUC pagas "
-                . "solo el RUC:\n\n"
+            'texto' => "Cada consulta se contrata por separado: si solo requieres RUC, pagas "
+                . "únicamente RUC.\n\n"
                 . $planesConsultas->map(function ($p) use ($soles) {
                     $lineas = $p->apis
                         ->filter(fn ($a) => (int) $a->pivot->limite_mensual > 0)
@@ -115,25 +116,25 @@
                         $p->a_medida ? 'a convenir' : $soles($p->precio_mensual));
                 })->implode("\n\n"),
             'opciones' => [
-                ['ir' => 'cons_produccion', 'texto' => 'Quiero contratarlo'],
+                ['ir' => 'cons_produccion', 'texto' => 'Contratar'],
             ],
         ],
 
         'cons_produccion' => [
-            'texto' => "Para producción lo coordinamos contigo por WhatsApp: te preparamos la API Key "
-                . "con el plan que elijas y te la entregamos en el momento.\n\nEscríbenos diciendo qué "
-                . "consultas necesitas —RUC, DNI o las dos— y cuántas al mes, y te decimos el plan que "
-                . "te conviene.",
+            'texto' => "Las credenciales de producción se entregan de forma coordinada por "
+                . "WhatsApp: preparamos tu API Key con el plan que elijas y te la enviamos en el "
+                . "momento.\n\nIndícanos qué consultas necesitas —RUC, DNI o ambas— y el volumen "
+                . "mensual estimado, y te recomendamos el plan que corresponde.",
             'fin' => true,
             'destacar_whatsapp' => true,
         ],
 
         'cons_prueba' => [
-            'texto' => "Tenemos un entorno Sandbox gratuito para que pruebes la integración antes de "
-                . "contratar: mismas respuestas y mismo formato, con datos de prueba.\n\nEscríbenos por "
-                . "WhatsApp y te damos las credenciales de prueba.",
+            'texto' => "Disponemos de un entorno Sandbox sin costo para que valides la integración "
+                . "antes de contratar: mismas respuestas y mismo formato, con datos de prueba.\n\n"
+                . "Escríbenos por WhatsApp y te entregamos las credenciales.",
             'opciones' => [
-                ['enlace' => url('/docs'), 'texto' => 'Ver la documentación'],
+                ['enlace' => url('/docs'), 'texto' => 'Ver documentación'],
             ],
             'destacar_whatsapp' => true,
         ],
@@ -164,7 +165,7 @@
                 </span>
                 <div>
                     <p class="text-sm font-semibold leading-tight">Asistente de Cisma Fact</p>
-                    <p class="text-xs text-blue-100">Respuestas al momento</p>
+                    <p class="text-xs text-blue-100">Atención inmediata</p>
                 </div>
             </div>
             <button type="button" @click="abierto = false"
@@ -218,7 +219,7 @@
 
             <div x-show="mensajes.length > 1 && ! esperando" class="pt-0.5 text-center">
                 <button type="button" @click="empezar" class="text-xs text-gray-400 underline hover:text-gray-600">
-                    Empezar de nuevo
+                    Volver al inicio
                 </button>
             </div>
         </div>
@@ -229,7 +230,7 @@
                           :disabled="esperando || cerrado"
                           @keydown.enter.prevent="if (! $event.shiftKey) enviar()"
                           @input="$el.style.height = 'auto'; $el.style.height = Math.min($el.scrollHeight, 96) + 'px'"
-                          placeholder="O escribe tu pregunta..."
+                          placeholder="O escribe tu consulta"
                           class="max-h-24 flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"></textarea>
                 <button type="submit" :disabled="esperando || cerrado || ! borrador.trim()"
                         class="shrink-0 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300">
@@ -237,7 +238,7 @@
                 </button>
             </div>
             <p class="mt-1.5 text-center text-[11px] text-gray-400">
-                Para tu cuenta o soporte, escríbenos por WhatsApp.
+                Para consultas sobre tu cuenta o soporte, escríbenos por WhatsApp.
             </p>
         </form>
     </div>
@@ -338,7 +339,7 @@
                 if (! this.conModelo) {
                     this.mensajes.push({
                         rol: 'asistente',
-                        texto: 'Para eso te atiende mejor una persona. Escríbenos por WhatsApp.',
+                        texto: 'Para esa consulta te atenderá mejor una persona. Escríbenos por WhatsApp.',
                     });
                     this.mostrarWhatsapp = true;
                     this.$nextTick(() => this.abajo());
@@ -366,7 +367,7 @@
                     this.mensajes.push({
                         rol: 'asistente',
                         texto: datos.texto
-                            || 'No pude responderte. Escríbenos por WhatsApp y te atendemos.',
+                            || 'No fue posible procesar tu consulta. Escríbenos por WhatsApp y te atendemos.',
                     });
 
                     this.mostrarWhatsapp = true;
@@ -375,7 +376,7 @@
                 } catch (e) {
                     this.mensajes.push({
                         rol: 'asistente',
-                        texto: 'Se cortó la conexión. Revisa tu internet o escríbenos por WhatsApp.',
+                        texto: 'Se interrumpió la conexión. Verifica tu red o escríbenos por WhatsApp.',
                     });
                     this.mostrarWhatsapp = true;
                 } finally {
