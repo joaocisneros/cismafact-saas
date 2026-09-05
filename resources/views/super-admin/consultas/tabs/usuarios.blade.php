@@ -7,23 +7,12 @@
     El acceso cuelga del titular y no de la llave: quien tiene dos llaves de
     producción entra una vez y ve las dos, en vez de acabar con dos
     contraseñas para lo mismo.
+
+    Sin aviso de «hay titulares sin acceso»: si se lo acabas de quitar tú, el
+    sistema te estaría regañando por una decisión tuya. La columna Estado ya
+    lo dice en su fila.
 --}}
-@php
-    $sinAcceso = $titulares->filter(fn ($t) => ! $t['usuario'])->count();
-@endphp
-
 <div x-data="{ alta: null }">
-
-    @if($sinAcceso > 0)
-        <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            <span>
-                <strong>{{ $sinAcceso }}
-                {{ \Illuminate\Support\Str::plural('titular', $sinAcceso) }}
-                {{ $sinAcceso === 1 ? 'no puede' : 'no pueden' }} entrar.</strong>
-                Tendrán que escribirte cada vez que quieran saber su consumo o recuperar su secreto.
-            </span>
-        </div>
-    @endif
 
     <div class="rounded-lg border border-gray-200 bg-white">
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 px-4 py-3">
