@@ -24,7 +24,7 @@
         <p class="mt-1 text-sm text-amber-800">Escríbenos y te la damos de alta.</p>
     </div>
 @else
-    <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div class="rounded-xl border border-gray-200 bg-white p-4">
             <p class="text-xs text-gray-500">Consultas del mes</p>
             <p class="text-2xl font-semibold tabular-nums text-gray-900">{{ number_format($gastadas) }}</p>
@@ -47,8 +47,8 @@
         </div>
     </div>
 
-    <div class="grid gap-4 lg:grid-cols-5">
-        <div class="rounded-xl border border-gray-200 bg-white lg:col-span-2">
+    <div class="grid gap-4 xl:grid-cols-3">
+        <div class="rounded-xl border border-gray-200 bg-white">
             <div class="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                 <h2 class="text-[11px] font-semibold uppercase tracking-widest text-gray-400">
                     Consumo de {{ now()->translatedFormat('F') }}
@@ -62,7 +62,7 @@
             </div>
         </div>
 
-        <div class="rounded-xl border border-gray-200 bg-white lg:col-span-3">
+        <div class="rounded-xl border border-gray-200 bg-white xl:col-span-2">
             <div class="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                 <h2 class="text-[11px] font-semibold uppercase tracking-widest text-gray-400">Últimas consultas</h2>
                 <a href="{{ route('consultas.consultas') }}" class="text-xs font-semibold text-blue-700 hover:underline">Ver todas</a>

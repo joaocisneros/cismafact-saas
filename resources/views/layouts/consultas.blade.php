@@ -88,7 +88,7 @@
             @endforeach
         </div>
 
-        <main class="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+        <main class="p-4 lg:p-6">
             @if(session('success'))
                 <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
                     {{ session('success') }}
