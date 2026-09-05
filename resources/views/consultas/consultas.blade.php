@@ -4,13 +4,13 @@
 
 @section('content')
 <div class="mb-5">
-    <h1 class="text-xl font-semibold text-gray-900">Mis consultas</h1>
-    <p class="text-sm text-gray-600">Todo lo que has preguntado, para que puedas cuadrar tu gasto.</p>
+    <h1 class="text-2xl font-semibold text-gray-900">Mis consultas</h1>
+    <p class="text-[15px] text-gray-600">Todo lo que has preguntado, para que puedas cuadrar tu gasto.</p>
 </div>
 
 <div class="rounded-xl border border-gray-200 bg-white">
-    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-4 py-3">
-        <h2 class="text-[11px] font-semibold uppercase tracking-widest text-gray-400">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-3.5">
+        <h2 class="text-xs font-semibold uppercase tracking-widest text-gray-400">
             {{ $consultas->total() }} consultas
         </h2>
 
