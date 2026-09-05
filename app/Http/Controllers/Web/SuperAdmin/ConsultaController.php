@@ -526,8 +526,10 @@ class ConsultaController extends Controller
              *
              * Se cuentan titulares y no llaves: quien tiene dos entra una vez.
              */
+            // whereHas y no whereNotNull: una llave puede apuntar a un usuario
+            // que ya no existe, y ese no puede entrar aunque su id siga ahi.
             'titulares_con_acceso' => \App\Models\ConsultaLlave::where('entorno', 'produccion')
-                ->whereNotNull('usuario_id')
+                ->whereHas('usuario')
                 ->distinct()
                 ->count('usuario_id'),
             'titulares_sin_acceso' => \App\Models\ConsultaLlave::where('entorno', 'produccion')

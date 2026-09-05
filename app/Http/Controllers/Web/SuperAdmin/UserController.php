@@ -19,10 +19,22 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
+        /*
+         * Sin los clientes de RUC y DNI: esos tienen su propia pantalla.
+         *
+         * Salian aqui mezclados con los de empresa y se podian gestionar desde
+         * dos sitios con reglas distintas. Borrar uno desde aqui hacia un
+         * delete a secas y dejaba su llave apuntando a un usuario que ya no
+         * existe; desde su modulo, ademas, se le desasignan las llaves.
+         *
+         * Se les da acceso, se les cambia la clave y se les quita desde
+         * «API RUC y DNI · Usuarios», que es donde se ve lo que tienen
+         * contratado.
+         */
         $query = User::with([
             'company:id,razon_social',
             'role:id,name,display_name',
-        ]);
+        ])->whereDoesntHave('role', fn ($r) => $r->where('name', 'cliente_consultas'));
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
