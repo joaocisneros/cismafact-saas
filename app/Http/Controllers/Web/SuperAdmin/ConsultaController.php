@@ -515,6 +515,25 @@ class ConsultaController extends Controller
                 ->whereBetween('expira_en', [now(), now()->addDays(30)])
                 ->count(),
             'cerca_del_tope' => $cercaDelTope,
+
+            /*
+             * Quien puede entrar a mirar lo suyo.
+             *
+             * La cabecera se quedo atras cuando se añadio la pestaña de
+             * Usuarios: resumia las llaves y el consumo, pero no si sus
+             * titulares pueden entrar. Y el que no puede escribe para saber su
+             * consumo o recuperar su secreto, asi que cuantos son se nota.
+             *
+             * Se cuentan titulares y no llaves: quien tiene dos entra una vez.
+             */
+            'titulares_con_acceso' => \App\Models\ConsultaLlave::where('entorno', 'produccion')
+                ->whereNotNull('usuario_id')
+                ->distinct()
+                ->count('usuario_id'),
+            'titulares_sin_acceso' => \App\Models\ConsultaLlave::where('entorno', 'produccion')
+                ->whereNull('usuario_id')
+                ->distinct()
+                ->count('titular'),
         ];
     }
 

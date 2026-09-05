@@ -44,7 +44,7 @@
          casa" y "fueron al proveedor": eso es como esta hecho por dentro, no
          algo sobre lo que se actue. Y el padron no es una cifra, es un aviso.
          Van con el componente del Dashboard, no unas parecidas a mano. --}}
-    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <x-stat-card title="Consultas este mes" :value="number_format($cabecera['mes'])"
                      :subtitle="number_format($cabecera['mes_externo']) . ' de clientes · ' . number_format($cabecera['mes_interno']) . ' desde el panel'"
                      color="blue">
@@ -84,6 +84,24 @@
             <x-slot:icon>
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </x-slot:icon>
+        </x-stat-card>
+
+        {{-- Quien puede entrar a ver lo suyo.
+
+             La cabecera resumia las llaves y el consumo pero no el acceso, que
+             es la pestaña de al lado: el titular que no puede entrar escribe
+             cada vez que quiere saber su consumo o recuperar su secreto. --}}
+        <x-stat-card title="Clientes con acceso" :value="number_format($cabecera['titulares_con_acceso'])"
+                     :subtitle="$cabecera['titulares_sin_acceso']
+                        ? number_format($cabecera['titulares_sin_acceso']) . ' ' . \Illuminate\Support\Str::plural('titular', $cabecera['titulares_sin_acceso']) . ' sin acceso'
+                        : 'Todos los titulares entran'"
+                     :color="$cabecera['titulares_sin_acceso'] ? 'indigo' : 'green'">
+            <x-slot:icon>
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
             </x-slot:icon>
         </x-stat-card>
