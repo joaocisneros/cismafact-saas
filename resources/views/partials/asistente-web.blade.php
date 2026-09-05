@@ -387,23 +387,50 @@
 
             {{-- El WhatsApp: siempre disponible al final de una rama, y
                  destacado cuando lo que pidio se resuelve hablando. --}}
-            {{-- Que le escribas tu.
+            {{-- Las dos formas de que le atienda una persona, juntas y en
+                 segundo plano.
 
-                 Va antes del WhatsApp y no en su lugar: quien quiere escribir
-                 ahora lo tiene igual, y quien no —que son casi todos, porque
-                 abrir una conversacion con un numero desconocido cuesta— deja
-                 su numero y se va. --}}
-            <div x-show="(mostrarWhatsapp || cerrado) && ! esperando && ! contactoEnviado" class="pt-1">
-                <div x-show="! contactoAbierto">
+                 Iban sueltas y del tamaño del boton principal: tres botones
+                 apilados en tres colores, sin que se viera cual era el paso
+                 siguiente. Son lo mismo visto de dos maneras —hablar con
+                 alguien— asi que comparten fila y ceden el sitio a la accion
+                 que cierra la rama. --}}
+            <div x-show="(mostrarWhatsapp || cerrado) && ! esperando" class="space-y-2 pt-1">
+
+                <div x-show="! contactoAbierto && ! contactoEnviado" class="flex items-center gap-2">
                     <button type="button" @click="contactoAbierto = true"
-                            class="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50/50">
-                        <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor"
-                             stroke-width="1.8" viewBox="0 0 24 24">
+                            class="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50/50">
+                        <svg class="h-3.5 w-3.5 text-blue-600" fill="none" stroke="currentColor"
+                             stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                   d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                         </svg>
-                        Prefiero que me escriban
+                        Que me escriban
                     </button>
+
+                    <a :href="'https://wa.me/' + whatsapp" target="_blank" rel="noopener"
+                       class="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 shadow-sm transition hover:border-green-300 hover:bg-green-50/50">
+                        <svg class="h-3.5 w-3.5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5 0-.2 0-.4 0-.5 0-.2-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2z"/>
+                        </svg>
+                        WhatsApp
+                    </a>
+                </div>
+
+                {{-- Ya dejo sus datos: no se le vuelve a ofrecer, se le
+                     confirma y se le deja el WhatsApp por si no quiere esperar. --}}
+                <div x-show="contactoEnviado" class="flex items-center justify-between gap-2 rounded-xl bg-emerald-50 px-3.5 py-2.5">
+                    <span class="flex items-center gap-2 text-xs font-medium text-emerald-800">
+                        <svg class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                  d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"/>
+                        </svg>
+                        Te escribiremos en breve
+                    </span>
+                    <a :href="'https://wa.me/' + whatsapp" target="_blank" rel="noopener"
+                       class="shrink-0 text-xs font-semibold text-emerald-700 underline hover:text-emerald-900">
+                        o escríbenos ya
+                    </a>
                 </div>
 
                 <form x-show="contactoAbierto" @submit.prevent="dejarContacto"
@@ -434,16 +461,6 @@
                                 x-text="enviandoContacto ? 'Enviando...' : 'Que me contacten'"></button>
                     </div>
                 </form>
-            </div>
-
-            <div x-show="(mostrarWhatsapp || cerrado) && ! esperando" class="pt-1">
-                <a :href="'https://wa.me/' + whatsapp" target="_blank" rel="noopener"
-                   class="flex items-center justify-center gap-2 rounded-xl bg-green-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-600">
-                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5 0-.2 0-.4 0-.5 0-.2-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2z"/>
-                    </svg>
-                    Escríbenos por WhatsApp
-                </a>
             </div>
 
             <div x-show="mensajes.length > 1 && ! esperando" class="pt-0.5 text-center">
