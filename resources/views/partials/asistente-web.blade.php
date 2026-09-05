@@ -74,6 +74,7 @@
         ],
 
         'fact_prueba' => [
+            'interes' => 'facturacion_prueba',
             'texto' => ($planPrueba
                     ? sprintf("Para eso está el plan %s: %s al mes, con %s comprobantes.\n\n",
                         $planPrueba->name,
@@ -91,6 +92,7 @@
         ],
 
         'fact_sistema' => [
+            'interes' => 'facturacion',
             'texto' => "Gestionas todo desde el panel, sin instalar nada:",
             'lista' => [
                 'Registras clientes y productos una sola vez',
@@ -106,6 +108,7 @@
         ],
 
         'fact_api' => [
+            'interes' => 'facturacion',
             'texto' => "Disponemos de una API REST para emitir desde tu propio sistema, en "
                 . "cualquier lenguaje de programación. Envías el comprobante y recibes la respuesta de "
                 . "SUNAT con su CDR.\n\nCuentas con un entorno de pruebas para desarrollar sin "
@@ -117,6 +120,7 @@
         ],
 
         'fact_planes' => [
+            'interes' => 'facturacion',
             'texto' => 'Planes de facturación electrónica:',
             'grupos' => array_values(array_filter([
                 $planPrueba ? [
@@ -172,6 +176,7 @@
         ],
 
         'cons_planes' => [
+            'interes' => 'consultas',
             'texto' => 'Si solo requieres RUC, pagas únicamente RUC:',
             'grupos' => $planesConsultas->map(fn ($p) => [
                 'titulo' => $p->nombre,
@@ -190,6 +195,7 @@
         ],
 
         'cons_produccion' => [
+            'interes' => 'consultas',
             'texto' => "Las credenciales de producción se entregan de forma coordinada por "
                 . "WhatsApp: preparamos tu API Key con el plan que elijas y te la enviamos en el "
                 . "momento.\n\nIndícanos:",
@@ -203,6 +209,7 @@
         ],
 
         'cons_prueba' => [
+            'interes' => 'consultas_prueba',
             'texto' => "Disponemos de un entorno Sandbox sin costo para que valides la integración "
                 . "antes de contratar: mismas respuestas y mismo formato, con datos de prueba.\n\n"
                 . "Escríbenos por WhatsApp y te entregamos las credenciales.",
@@ -545,6 +552,13 @@
                 this.opciones = p.opciones ?? [];
                 this.mostrarWhatsapp = !! (p.destacar_whatsapp || p.fin);
 
+                /* Por donde va, para escribirle sabiendo si viene a probar o a
+                   contratar. Manda el ultimo paso que pise: quien entra por
+                   facturacion y acaba en «evaluar» viene a probar. */
+                if (p.interes) {
+                    this.interes = p.interes;
+                }
+
                 this.$nextTick(() => this.abajo());
             },
 
@@ -553,12 +567,6 @@
             elegir(opcion) {
                 this.mensajes.push({ rol: 'usuario', texto: opcion.texto });
                 this.opciones = [];
-
-                // La primera eleccion es la que dice a que vino.
-                if (opcion.ir === 'facturacion' || opcion.ir === 'consultas') {
-                    this.interes = opcion.ir;
-                }
-
                 this.ir(opcion.ir);
             },
 

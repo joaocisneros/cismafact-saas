@@ -94,7 +94,7 @@ class AsistenteController extends Controller
             // guiones porque la gente los escribe.
             'telefono' => ['required', 'string', 'min:6', 'max:30', 'regex:/^[\d\s\-\+\(\)]+$/'],
             'mensaje' => ['nullable', 'string', 'max:500'],
-            'interes' => ['nullable', 'string', 'in:facturacion,consultas'],
+            'interes' => ['nullable', 'string', 'in:' . implode(',', array_keys(ContactoWeb::INTERESES))],
         ], [
             'telefono.regex' => 'El número solo lleva dígitos.',
             'nombre.min' => 'Escribe tu nombre.',

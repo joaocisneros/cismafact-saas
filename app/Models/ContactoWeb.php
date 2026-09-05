@@ -35,10 +35,18 @@ class ContactoWeb extends Model
         'atendido_en' => 'datetime',
     ];
 
-    /** Como se llama la rama del chat de la que salio. */
+    /**
+     * La rama del chat de la que salio.
+     *
+     * Separadas por prueba y produccion porque no se le escribe igual a quien
+     * viene a evaluar que a quien ya va a emitir: al primero se le acompaña a
+     * crear la cuenta, al segundo se le pregunta el volumen.
+     */
     public const INTERESES = [
-        'facturacion' => 'Facturación electrónica',
-        'consultas' => 'Consultas de RUC y DNI',
+        'facturacion_prueba' => 'Facturación · evaluar',
+        'facturacion' => 'Facturación · producción',
+        'consultas_prueba' => 'Consultas · Sandbox',
+        'consultas' => 'Consultas · producción',
     ];
 
     public function atendidoPor(): BelongsTo
@@ -100,9 +108,11 @@ class ContactoWeb extends Model
     public function mensajeWhatsapp(): string
     {
         $porLoQueVino = match ($this->interes) {
+            'facturacion_prueba' => 'para evaluar nuestro sistema de facturación electrónica',
             'facturacion' => 'consultando por nuestro sistema de facturación electrónica',
+            'consultas_prueba' => 'para probar nuestra API de RUC y DNI',
             'consultas' => 'consultando por nuestra API de RUC y DNI',
-            default => 'dejando tus datos para que te contactáramos',
+            default => 'para que te contactáramos',
         };
 
         $lineas = [
@@ -119,10 +129,37 @@ class ContactoWeb extends Model
             $lineas[] = "Nos comentaste: \"{$this->mensaje}\"";
         }
 
+        /*
+         * Lo que falta saber de cada uno, preguntado ya, para no gastar el
+         * primer mensaje en averiguar algo que el chat podia haber dicho.
+         *
+         * Pero solo si no lo conto el: a quien escribio «emito unas 300
+         * boletas al mes» se le preguntaba justo cuantas emite, y eso se lee
+         * como que nadie miro lo que dejo escrito.
+         */
+        $yaLoConto = filled($this->mensaje);
+
         $lineas[] = '';
-        $lineas[] = $this->interes === 'consultas'
-            ? '¿Qué consultas necesitas (RUC, DNI o ambas) y cuántas al mes? Con eso te preparamos tu API Key.'
-            : '¿En qué podemos ayudarte?';
+        $lineas[] = match ($this->interes) {
+            'facturacion_prueba' => 'Te acompañamos a crear tu cuenta y emitir tus primeros '
+                . 'comprobantes de prueba. ¿Cuándo te viene bien?',
+
+            'facturacion' => $yaLoConto
+                ? 'Con eso te decimos el plan que te conviene y te ayudamos con el certificado '
+                    . 'digital. ¿Lo vemos ahora?'
+                : '¿Cuántos comprobantes emites al mes? Con eso te decimos el plan que te '
+                    . 'conviene y te ayudamos con el certificado digital.',
+
+            'consultas_prueba' => 'Te enviamos las credenciales del Sandbox para que pruebes la '
+                . 'integración. ¿A qué correo te las mandamos?',
+
+            'consultas' => $yaLoConto
+                ? 'Con eso te preparamos tu API Key. ¿Te la dejamos lista hoy?'
+                : '¿Qué consultas necesitas (RUC, DNI o ambas) y cuántas al mes? Con eso te '
+                    . 'preparamos tu API Key.',
+
+            default => '¿En qué podemos ayudarte?',
+        };
 
         return implode("
 ", $lineas);
