@@ -112,13 +112,16 @@ class ContactoWeb extends Model
         ];
 
         if (filled($this->mensaje)) {
+            // Comillas rectas y no angulares: esto se lee en WhatsApp, donde
+            // las « » salen de otra fuente y quedan como un simbolo raro en
+            // mitad de la frase.
             $lineas[] = '';
-            $lineas[] = "Nos comentaste: «{$this->mensaje}»";
+            $lineas[] = "Nos comentaste: \"{$this->mensaje}\"";
         }
 
         $lineas[] = '';
         $lineas[] = $this->interes === 'consultas'
-            ? '¿Qué consultas necesitas —RUC, DNI o ambas— y cuántas al mes? Con eso te preparamos tu API Key.'
+            ? '¿Qué consultas necesitas (RUC, DNI o ambas) y cuántas al mes? Con eso te preparamos tu API Key.'
             : '¿En qué podemos ayudarte?';
 
         return implode("
