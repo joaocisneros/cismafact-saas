@@ -71,6 +71,23 @@ class ImpersonationController extends Controller
             return back()->with('error', "«{$usuario->name}» tiene el acceso retirado: primero devuélveselo.");
         }
 
+        /*
+         * Las dos direcciones se calculan antes de tocar la sesion.
+         *
+         * Estaban despues, y cuando una de ellas fallo —el nombre de la ruta
+         * estaba mal escrito— el cambio de usuario ya se habia hecho: la sesion
+         * quedaba a medias, con el Super Admin convertido en el cliente, sin
+         * vuelta anotada y con un 500 en la pantalla. El navegador se quedaba
+         * dando vueltas. Si algo tiene que romperse, que se rompa antes de
+         * tocar la sesion.
+         *
+         * Al salir se vuelve a la pestaña de donde se entro, y no al listado de
+         * empresas: este cliente no esta ahi, y aterrizar en otra pantalla deja
+         * buscando la fila que se estaba mirando.
+         */
+        $volverA = route('super-admin.consultas', ['tab' => 'usuarios']);
+        $suPanel = route('consultas.panel');
+
         $this->registrar($request, 'impersonate_start', null, $superAdmin->id, [
             'cliente_consultas' => $usuario->name,
             'usuario_destino_id' => $usuario->id,
@@ -81,13 +98,9 @@ class ImpersonationController extends Controller
 
         Impersonation::iniciar($superAdmin);
 
-        // Al salir se vuelve a la pestaña de donde se entro, y no al listado de
-        // empresas: este cliente no esta ahi y aterrizar en otra pantalla deja
-        // buscando la fila que se estaba mirando.
-        $request->session()->put('impersonate_volver_a',
-            route('super-admin.consultas', ['tab' => 'usuarios']));
+        $request->session()->put('impersonate_volver_a', $volverA);
 
-        return redirect()->route('consultas.panel')
+        return redirect()->to($suPanel)
             ->with('success', "Estás viendo el panel de «{$usuario->name}». Recuerda salir cuando termines.");
     }
 

@@ -18,6 +18,13 @@
 </head>
 <body class="bg-gray-100 text-gray-900 antialiased">
 
+{{-- La barra para volver a la propia cuenta.
+
+     Faltaba, y este panel se puede mirar como soporte igual que el de una
+     empresa: se entraba a ver como le habia quedado al cliente y no habia por
+     donde salir, salvo borrando las cookies. --}}
+@include('partials.impersonation-banner')
+
 <div class="flex min-h-screen">
 
     {{-- Menú --}}
