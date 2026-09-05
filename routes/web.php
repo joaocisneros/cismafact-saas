@@ -33,6 +33,16 @@ use App\Http\Controllers\Web\Consultas\PanelController as ConsultasPanelControll
 // Landing publica (si no hay sesion muestra la pagina de ventas; si hay, va al panel)
 Route::get('/', [\App\Http\Controllers\Web\LandingController::class, 'index'])->name('landing');
 
+/*
+ * El chat de la web. Abierto, porque quien pregunta todavia no tiene cuenta.
+ *
+ * El tope de verdad esta en el controlador, que cuenta por sesion ademas de
+ * por IP: una oficina entera sale por la misma IP y no puede compartir cupo.
+ */
+Route::post('/asistente', [\App\Http\Controllers\Web\AsistenteController::class, 'responder'])
+    ->middleware('throttle:20,1')
+    ->name('asistente');
+
 // Documentación pública de la API (sin login).
 Route::view('/docs', 'docs')->name('docs');
 

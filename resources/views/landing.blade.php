@@ -318,6 +318,8 @@
         </div>
     </footer>
 
+    @include('partials.asistente-web')
+
     {{-- WhatsApp flotante --}}
     <a href="https://wa.me/51921676408" target="_blank" rel="noopener"
        class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-green-500 text-white text-2xl shadow-lg hover:bg-green-600 transition"
