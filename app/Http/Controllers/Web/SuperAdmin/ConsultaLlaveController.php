@@ -51,7 +51,7 @@ class ConsultaLlaveController extends Controller
     {
         $llave->update($this->validar($request, $llave));
 
-        return back()->with('success', "«{$llave->nombre}» actualizada.");
+        return back()->with('success', 'Cambios guardados en «' . $llave->paraAvisos() . '».');
     }
 
     /** Bloquear o desbloquear. */
@@ -60,13 +60,13 @@ class ConsultaLlaveController extends Controller
         $llave->update(['activa' => ! $llave->activa]);
 
         return back()->with('success', $llave->activa
-            ? "«{$llave->nombre}» desbloqueada."
-            : "«{$llave->nombre}» bloqueada: deja de responder ahora mismo.");
+            ? '«' . $llave->paraAvisos() . '» vuelve a responder.'
+            : '«' . $llave->paraAvisos() . '» queda bloqueada: deja de responder ahora mismo.');
     }
 
     public function destroy(ConsultaLlave $llave)
     {
-        $nombre = $llave->nombre;
+        $nombre = $llave->paraAvisos();
 
         // El historial se va con la llave. Conservarlo dejaba filas sueltas en
         // el consumo que ponian «llave eliminada» y no decian de quien fueron:
@@ -96,7 +96,7 @@ class ConsultaLlaveController extends Controller
             $sinAcceso = true;
         }
 
-        $aviso = "«{$nombre}» eliminada";
+        $aviso = 'Se eliminó la API Key de «' . $nombre . '»';
 
         if ($cuantas) {
             $aviso .= ", junto con sus {$cuantas} consultas";

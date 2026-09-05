@@ -176,6 +176,43 @@ class ConsultaLlave extends Model
     }
 
     /**
+     * Como nombrarla en un aviso.
+     *
+     * El nombre completo no vale: lleva delante «Producción · », que en un
+     * aviso sobra —ya se sabe desde donde se pulso— y detras una razon social
+     * de SUNAT que puede tener noventa caracteres en mayusculas. Junto y entre
+     * comillas quedaba un mensaje ilegible.
+     */
+    public function paraAvisos(int $largo = 34): string
+    {
+        $nombre = trim($this->titular
+            ?: preg_replace('/^(Producción|Sandbox)\s*·\s*/u', '', (string) $this->nombre));
+
+        if ($nombre === '') {
+            return 'la API Key';
+        }
+
+        if (mb_strlen($nombre) <= $largo) {
+            return $nombre;
+        }
+
+        /*
+         * Se corta por la ultima palabra entera que quepa, no por la letra que
+         * toque: «PF- NO INSCRITO EN LA SMV, DIRIGID...» se lee como una
+         * erratra, y con los puntos suspensivos pegados al punto de la frase
+         * salian cuatro seguidos.
+         */
+        $corto = mb_substr($nombre, 0, $largo);
+        $espacio = mb_strrpos($corto, ' ');
+
+        if ($espacio !== false && $espacio > $largo * 0.6) {
+            $corto = mb_substr($corto, 0, $espacio);
+        }
+
+        return rtrim($corto, " ,.;:-·") . '…';
+    }
+
+    /**
      * Cuantos meses se le contrataron.
      *
      * De cuando se dio de alta hasta que caduca. Sin caducidad no son meses:

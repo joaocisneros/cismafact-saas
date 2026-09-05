@@ -122,7 +122,8 @@ class AccesoConsultasController extends Controller
         ConsultaLlave::where('usuario_id', $cliente->id)->update(['usuario_id' => null]);
         $cliente->delete();
 
-        return back()->with('success', "«{$cliente->name}» ya no puede entrar. Sus llaves siguen funcionando.");
+        return back()->with('success', Str::limit($cliente->name, 34)
+            . ' ya no puede entrar. Sus llaves siguen funcionando.');
     }
 
     /**
