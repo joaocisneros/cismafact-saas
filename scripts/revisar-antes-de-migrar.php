@@ -16,8 +16,6 @@ require __DIR__ . '/../vendor/autoload.php';
 $app = require __DIR__ . '/../bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
-use App\Models\ApiPlan;
-use App\Models\ConsultaLlave;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -39,16 +37,29 @@ printf("\n  Estado: %s\n\n", $yaEstaba
 // ------------------------------------------------------------- Los planes
 echo "  LOS PLANES DE CONSULTAS AHORA MISMO\n\n";
 
-foreach (ApiPlan::with('apis')->orderBy('orden')->get() as $plan) {
+/*
+ * Se lee la base a pelo y no con el modelo.
+ *
+ * El modelo ya cuenta con la columna de precio por servicio, y este script
+ * corre justo antes de que exista: con el reventaba con «Unknown column
+ * precio_mensual» en el servidor que aun no habia migrado, que es justo
+ * donde hacia falta.
+ */
+foreach (DB::table('api_planes')->orderBy('orden')->get() as $plan) {
     printf("    %-14s slug=%-14s %s\n",
         $plan->nombre,
         $plan->slug,
         $plan->a_medida ? 'a convenir' : 'S/ ' . number_format((float) $plan->precio_mensual, 2));
 
-    foreach ($plan->apis as $api) {
-        printf("       %-4s %s consultas\n",
-            strtoupper($api->slug),
-            number_format((int) $api->pivot->limite_mensual));
+    $servicios = DB::table('api_plan_limite as l')
+        ->join('apis as a', 'a.id', '=', 'l.api_id')
+        ->where('l.api_plan_id', $plan->id)
+        ->select('a.slug', 'l.limite_mensual')
+        ->get();
+
+    foreach ($servicios as $s) {
+        printf("       %-4s %s consultas
+", strtoupper($s->slug), number_format((int) $s->limite_mensual));
     }
 }
 
@@ -69,7 +80,7 @@ $linea();
 echo "\n";
 
 foreach ($topesNuevos as $slug => $nuevos) {
-    $plan = ApiPlan::with('apis')
+    $plan = DB::table('api_planes')
         ->where('slug', $slug)
         ->orWhereRaw('LOWER(nombre) = ?', [$slug])
         ->first();
@@ -84,7 +95,11 @@ foreach ($topesNuevos as $slug => $nuevos) {
     }
 
     foreach ($nuevos as $api => $tope) {
-        $actual = (int) ($plan->apis->firstWhere('slug', $api)?->pivot->limite_mensual ?? 0);
+        $actual = (int) (DB::table('api_plan_limite as l')
+            ->join('apis as a', 'a.id', '=', 'l.api_id')
+            ->where('l.api_plan_id', $plan->id)
+            ->where('a.slug', $api)
+            ->value('l.limite_mensual') ?? 0);
 
         printf("    %-14s %-4s  %s  →  %s%s\n",
             $plan->nombre,
@@ -105,15 +120,20 @@ echo "\n";
 $mes = now()->startOfMonth();
 $afectados = [];
 
-foreach (ConsultaLlave::with('plan.apis')->where('entorno', 'produccion')->get() as $llave) {
-    $slug = $llave->plan?->slug;
-    $nuevos = $topesNuevos[$slug] ?? null;
+$llaves = DB::table('consulta_llaves as k')
+    ->leftJoin('api_planes as p', 'p.id', '=', 'k.api_plan_id')
+    ->where('k.entorno', 'produccion')
+    ->select('k.id', 'k.nombre', 'k.titular', 'k.servicios', 'p.slug')
+    ->get();
+
+foreach ($llaves as $llave) {
+    $nuevos = $topesNuevos[$llave->slug ?? ''] ?? null;
 
     if (! $nuevos) {
         continue;
     }
 
-    foreach ((array) $llave->servicios as $servicio) {
+    foreach ((array) json_decode($llave->servicios ?? '[]', true) as $servicio) {
         $tope = $nuevos[$servicio] ?? null;
 
         if ($tope === null) {
