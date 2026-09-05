@@ -92,7 +92,17 @@
                                     @if($usuario)
                                         {{-- Los iconos del sistema, los mismos que en Empresas y
                                              Usuarios: quien administra ya sabe qué hace cada uno
-                                             sin tener que leerlo. --}}
+                                             sin tener que leerlo.
+
+                                             El ojo entra a su panel, igual que se entra al de una
+                                             empresa: se ve lo mismo que ve el, que es la unica
+                                             forma de comprobar de verdad como le quedo. Solo con
+                                             acceso, que sin cuenta no hay panel al que entrar. --}}
+                                        <form method="POST" action="{{ route('super-admin.consultas.acceso.entrar', $usuario->id) }}"
+                                              onsubmit="return confirm('Vas a ver el sistema como lo ve «{{ $fila['titular'] }}». Sal cuando termines para volver a tu cuenta.')">
+                                            @csrf
+                                            <x-icon-action icon="ver" label="Ver su panel como lo ve él" />
+                                        </form>
                                         <form method="POST" action="{{ route('super-admin.consultas.acceso.clave', $usuario->id) }}"
                                               onsubmit="return confirm('Se le pondrá una contraseña nueva y se te mostrará para que se la pases. ¿Seguir?')">
                                             @csrf

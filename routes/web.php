@@ -266,7 +266,12 @@ Route::prefix('super-admin')
         Route::post('/consultas/acceso/{usuario}/clave', [\App\Http\Controllers\Web\SuperAdmin\AccesoConsultasController::class, 'nuevaClave'])
             ->name('consultas.acceso.clave');
         Route::delete('/consultas/acceso/{usuario}', [\App\Http\Controllers\Web\SuperAdmin\AccesoConsultasController::class, 'quitar'])
-            ->name('consultas.acceso.quitar');
+            ->name('consultas.acceso.quitar');
+
+        // Ver su panel como lo ve el, igual que se entra a una empresa. Al
+        // salir se vuelve a esta pestaña y no al listado de empresas.
+        Route::post('/consultas/acceso/{usuario}/entrar', [\App\Http\Controllers\Web\SuperAdmin\ImpersonationController::class, 'startCliente'])
+            ->name('consultas.acceso.entrar');
 
         // Limpieza de las llaves de prueba caducadas, que se acumulan.
         Route::delete('/consultas/llaves-vencidas', [\App\Http\Controllers\Web\SuperAdmin\ConsultaLlaveController::class, 'limpiarVencidas'])

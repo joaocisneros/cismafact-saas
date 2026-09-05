@@ -49,9 +49,53 @@ class ImpersonationController extends Controller
             ->with('success', "Entraste como soporte a {$company->razon_social}. Recuerda salir cuando termines.");
     }
 
+    /**
+     * Entra al panel de un cliente de RUC y DNI, como lo ve el.
+     *
+     * Aparte de la de empresas porque no hay empresa de por medio: estos
+     * clientes compran consultas y no facturan, asi que su usuario no cuelga de
+     * ninguna. Lo demas es igual, registro en audit_logs incluido.
+     */
+    public function startCliente(Request $request, User $usuario)
+    {
+        $superAdmin = $request->user();
+
+        if (Impersonation::activa()) {
+            return back()->with('error', 'Ya tienes una sesión de soporte abierta. Ciérrala antes de abrir otra.');
+        }
+
+        abort_unless($usuario->esClienteDeConsultas(), 403,
+            'Ese usuario no es un cliente de RUC y DNI.');
+
+        if (! $usuario->active) {
+            return back()->with('error', "«{$usuario->name}» tiene el acceso retirado: primero devuélveselo.");
+        }
+
+        $this->registrar($request, 'impersonate_start', null, $superAdmin->id, [
+            'cliente_consultas' => $usuario->name,
+            'usuario_destino_id' => $usuario->id,
+            'usuario_destino_email' => $usuario->email,
+        ]);
+
+        $this->cambiarDeUsuarioConservandoElToken($request, $usuario);
+
+        Impersonation::iniciar($superAdmin);
+
+        // Al salir se vuelve a la pestaña de donde se entro, y no al listado de
+        // empresas: este cliente no esta ahi y aterrizar en otra pantalla deja
+        // buscando la fila que se estaba mirando.
+        $request->session()->put('impersonate_volver_a',
+            route('super-admin.consultas', ['tab' => 'usuarios']));
+
+        return redirect()->route('consultas.panel')
+            ->with('success', "Estás viendo el panel de «{$usuario->name}». Recuerda salir cuando termines.");
+    }
+
     /** Vuelve a la cuenta del Super Admin. */
     public function stop(Request $request)
     {
+        $volverA = $request->session()->pull('impersonate_volver_a');
+
         if (! Impersonation::activa()) {
             return redirect()->route('dashboard');
         }
@@ -86,7 +130,7 @@ class ImpersonationController extends Controller
         // token CSRF válido (el anterior murió al cambiar de usuario).
         $nombre = $company?->razon_social;
 
-        return redirect()->route('super-admin.companies.index')
+        return redirect()->to($volverA ?? route('super-admin.companies.index'))
             ->with('success', $nombre
                 ? "Saliste de la sesión de soporte de {$nombre} y volviste a tu cuenta."
                 : 'Saliste de la sesión de soporte y volviste a tu cuenta.');
