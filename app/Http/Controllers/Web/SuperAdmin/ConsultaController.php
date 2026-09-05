@@ -104,12 +104,12 @@ class ConsultaController extends Controller
                 ->map(fn ($filas) => $filas->pluck('total', 'api_id')),
             // Separadas por entorno: las de prueba tienen su pestaña. Mezclarlas
             // con las que cobran confunde al mirar quien gasta que.
-            'llaves' => \App\Models\ConsultaLlave::with(['empresa:id,razon_social,ruc', 'plan'])
+            'llaves' => \App\Models\ConsultaLlave::with(['empresa:id,razon_social,ruc', 'plan.apis'])
                 ->withCount(['consumo as usadas_mes' => fn ($q) => $q->where('created_at', '>=', now()->startOfMonth())])
                 ->where('entorno', 'produccion')
                 ->latest('id')
                 ->get(),
-            'sandbox' => \App\Models\ConsultaLlave::with(['empresa:id,razon_social,ruc', 'plan'])
+            'sandbox' => \App\Models\ConsultaLlave::with(['empresa:id,razon_social,ruc', 'plan.apis'])
                 ->withCount('consumo')
                 ->where('entorno', 'sandbox')
                 ->latest('id')

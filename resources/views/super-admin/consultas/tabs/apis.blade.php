@@ -139,6 +139,17 @@
                                 <td class="px-5 py-3">
                                     @if($l->plan)
                                         <span class="text-gray-700">{{ $l->plan->nombre }}</span>
+                                        {{-- Y lo que paga, debajo.
+
+                                             Dos llaves del mismo plan no cuestan lo mismo si
+                                             una lleva RUC y DNI y la otra solo RUC, asi que el
+                                             nombre del plan no bastaba para saber lo que se le
+                                             cobra: habia que abrir la ficha y sumar. --}}
+                                        @unless($l->plan->esGratis())
+                                            <span class="mt-0.5 block whitespace-nowrap text-xs tabular-nums text-gray-500">
+                                                {{ $l->plan->a_medida ? 'a convenir' : $l->precioTexto() . ' / mes' }}
+                                            </span>
+                                        @endunless
                                     @else
                                         <span class="text-xs text-red-600" title="No tiene cuota: sus consultas se rechazan">sin plan</span>
                                     @endif
