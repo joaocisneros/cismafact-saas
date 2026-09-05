@@ -150,8 +150,11 @@ class ContactoWeb extends Model
                 : '¿Cuántos comprobantes emites al mes? Con eso te decimos el plan que te '
                     . 'conviene y te ayudamos con el certificado digital.',
 
-            'consultas_prueba' => 'Te enviamos las credenciales del Sandbox para que pruebes la '
-                . 'integración. ¿A qué correo te las mandamos?',
+            // Por aqui mismo, no por correo: esto se lee en WhatsApp, y pedirle
+            // una direccion para mandarle algo por otro lado es un paso de mas.
+            // Ademas las de produccion ya se entregan asi.
+            'consultas_prueba' => 'Te pasamos por aquí las credenciales del Sandbox para que '
+                . 'pruebes la integración. ¿Te las enviamos ya?',
 
             'consultas' => $yaLoConto
                 ? 'Con eso te preparamos tu API Key. ¿Te la dejamos lista hoy?'
