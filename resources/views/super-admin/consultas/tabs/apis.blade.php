@@ -288,7 +288,7 @@
          @keydown.escape.window="llave = null; nueva = false"
          class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4">
         <div @click.outside="llave = null; nueva = false"
-             class="my-auto w-full max-w-xl overflow-hidden rounded-lg bg-white shadow-xl">
+             class="my-auto w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
 
             <form method="POST" x-ref="formulario"
                   :action="nueva
@@ -317,20 +317,23 @@
                       soles(n) { return 'S/ ' + Number(n).toFixed(2); },
                       miles(n) { return Number(n).toLocaleString('es-PE'); },
 
+                      /* Solo el nombre y lo que costaria.
+
+                         Llevaba tambien los topes de cada consulta y no cabia
+                         en el desplegable: se leia «Pro — 4,000 RUC · 1,200 DNI
+                         · S/ 39...», cortado justo por el precio. Los topes ya
+                         salen en cada servicio ahi arriba, y cambian solos al
+                         elegir plan. */
                       etiquetaPlan(id) {
                           const t = this.tarifas[id];
                           if (! t) return '';
+                          if (t.aMedida) return t.nombre + ' — a convenir';
 
-                          /* Sin nada marcado se enseña el plan entero; con algo
-                             marcado, solo eso: quien contrata RUC no tiene por
-                             que ver un tope de DNI que no va a poder gastar. */
                           const cuales = this.marcados.length ? this.marcados : Object.keys(t.servicios);
-                          const topes = cuales.map(s => this.miles(t.servicios[s]?.limite ?? 0) + ' ' + s.toUpperCase()).join(' · ');
-                          const importe = t.aMedida
-                              ? 'a convenir'
-                              : 'S/ ' + cuales.reduce((a, s) => a + (t.servicios[s]?.precio ?? 0), 0).toFixed(2) + ' al mes';
+                          const importe = cuales.reduce((a, s) => a + (t.servicios[s]?.precio ?? 0), 0);
 
-                          return t.nombre + ' — ' + topes + ' · ' + importe;
+                          return t.nombre + ' — ' + (this.marcados.length ? '' : 'desde ')
+                              + 'S/ ' + (this.marcados.length ? importe : Math.min(...Object.values(t.servicios).map(v => v.precio).filter(p => p > 0))).toFixed(2);
                       },
 
                       buscando: false,
@@ -516,16 +519,9 @@
                             @endforeach
                         </select>
 
-                        {{-- El total de lo marcado, que es lo que se le cobra.
-                             Sin esto habia que sumar de cabeza los servicios. --}}
-                        <p class="mt-1.5 flex items-baseline justify-between text-xs">
-                            <span class="text-gray-500" x-text="marcados.length
-                                ? marcados.map(s => s.toUpperCase()).join(' + ')
-                                : 'Marca los servicios'"></span>
-                            <span class="font-semibold tabular-nums"
-                                  :class="marcados.length ? 'text-gray-900' : 'text-gray-400'"
-                                  x-text="! marcados.length ? '—' : (aMedida() ? 'A convenir' : soles(total()) + ' al mes')"></span>
-                        </p>
+                        {{-- El importe ya va en el propio desplegable. Repetirlo
+                             aqui debajo dejaba un «Marca los servicios —» suelto
+                             que solo servia para descuadrar la fila. --}}
                     </div>
 
                     {{-- Se piensa en cuanto dura el contrato, no en el dia del
