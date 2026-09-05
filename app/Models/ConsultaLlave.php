@@ -175,4 +175,38 @@ class ConsultaLlave extends Model
         return $this->plan?->precioDeTexto((array) $this->servicios) ?? 'S/ 0.00';
     }
 
+    /**
+     * Cuantos meses se le contrataron.
+     *
+     * De cuando se dio de alta hasta que caduca. Sin caducidad no son meses:
+     * es un cobro que se repite cada mes, y ahi no hay un total que decir.
+     */
+    public function mesesContratados(): ?int
+    {
+        if (! $this->expira_en) {
+            return null;
+        }
+
+        $desde = $this->created_at ?? now();
+
+        if ($this->expira_en->lessThanOrEqualTo($desde)) {
+            return null;
+        }
+
+        return max(1, (int) round($desde->diffInDays($this->expira_en) / 30.44));
+    }
+
+    /**
+     * Lo que se le cobro por todo el periodo.
+     *
+     * Es la cifra que se le paso: el precio del mes por los meses que dura.
+     * Null cuando no caduca, que entonces no hay un total sino una cuota.
+     */
+    public function montoContratado(): ?float
+    {
+        $meses = $this->mesesContratados();
+
+        return $meses === null ? null : round($this->precioMensual() * $meses, 2);
+    }
+
 }

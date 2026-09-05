@@ -103,6 +103,7 @@
                         <tr>
                             <th class="w-1/3 px-5 py-3">Titular</th>
                             <th class="w-1/12 px-5 py-3">Plan</th>
+                            <th class="w-1/12 px-5 py-3 text-right">Monto</th>
                             <th class="w-1/6 px-5 py-3">Consumo del mes</th>
                             <th class="w-1/6 px-5 py-3">Vigencia</th>
                             <th class="w-1/4 px-5 py-3 text-right">Acciones</th>
@@ -139,19 +140,39 @@
                                 <td class="px-5 py-3">
                                     @if($l->plan)
                                         <span class="text-gray-700">{{ $l->plan->nombre }}</span>
-                                        {{-- Y lo que paga, debajo.
-
-                                             Dos llaves del mismo plan no cuestan lo mismo si
-                                             una lleva RUC y DNI y la otra solo RUC, asi que el
-                                             nombre del plan no bastaba para saber lo que se le
-                                             cobra: habia que abrir la ficha y sumar. --}}
-                                        @unless($l->plan->esGratis())
-                                            <span class="mt-0.5 block whitespace-nowrap text-xs tabular-nums text-gray-500">
-                                                {{ $l->plan->a_medida ? 'a convenir' : $l->precioTexto() . ' / mes' }}
-                                            </span>
-                                        @endunless
                                     @else
                                         <span class="text-xs text-red-600" title="No tiene cuota: sus consultas se rechazan">sin plan</span>
+                                    @endif
+                                </td>
+
+                                {{-- Lo que se le cobro por todo el periodo.
+
+                                     El plan solo no lo dice: dos llaves en Pro pagan distinto
+                                     segun lleven RUC, DNI o los dos, y ademas segun los meses
+                                     que se les contrataran. Es la cifra que se le paso, y
+                                     habia que sacarla a mano cada vez.
+
+                                     Sin caducidad no hay un total que enseñar: se le cobra
+                                     esa cuota cada mes, y eso es lo que se pone. --}}
+                                <td class="whitespace-nowrap px-5 py-3 text-right">
+                                    {{-- En bloque, no en linea: la forma corta se cierra en el
+                                         primer parentesis y los del metodo la rompian. --}}
+                                    @php
+                                        $monto = $l->montoContratado();
+                                        $meses = $l->mesesContratados();
+                                    @endphp
+                                    @if(! $l->plan || $l->plan->esGratis())
+                                        <span class="text-sm text-gray-300">—</span>
+                                    @elseif($l->plan->a_medida)
+                                        <span class="text-sm text-gray-500">a convenir</span>
+                                    @elseif($monto !== null)
+                                        <span class="font-semibold tabular-nums text-gray-900">S/ {{ number_format($monto, 2) }}</span>
+                                        <span class="mt-0.5 block text-xs tabular-nums text-gray-500">
+                                            {{ $l->precioTexto() }} × {{ $meses }} {{ \Illuminate\Support\Str::plural('mes', $meses) }}
+                                        </span>
+                                    @else
+                                        <span class="font-semibold tabular-nums text-gray-900">{{ $l->precioTexto() }}</span>
+                                        <span class="mt-0.5 block text-xs text-gray-500">al mes</span>
                                     @endif
                                 </td>
 
