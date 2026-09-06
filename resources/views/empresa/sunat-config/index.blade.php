@@ -9,9 +9,8 @@
     @if(session('success'))
         <div class="rounded-lg bg-green-50 border border-green-200 text-green-800 px-4 py-3 text-sm">{{ session('success') }}</div>
     @endif
-    @if(session('error'))
-        <div class="rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">{{ session('error') }}</div>
-    @endif
+    {{-- El aviso de error lo pinta el layout, que es donde salen todos. Aqui
+         estaba repetido y se leia dos veces seguidas. --}}
     @if($errors->any())
         <div class="rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-3">
             <p class="text-sm font-semibold mb-1">No se pudo guardar. Revisa:</p>
@@ -295,7 +294,7 @@
          los valores originales: se subia el certificado nuevo con el RUC
          viejo, y el aviso resultante no ayudaba a entender por que. --}}
     <div x-show="metodo === 'cisma_fact'" x-cloak
-         x-data="{ confirmar: {{ $errors->any() || session('error') ? 'true' : 'false' }} }"
+         x-data="{ confirmar: {{ $errors->any() || session('error') || session('plan_requerido') ? 'true' : 'false' }} }"
          class="rounded-xl border-2 border-red-200 bg-red-50 p-6">
         <h3 class="text-md font-semibold text-red-800">🚀 Empezar a facturar de verdad</h3>
         <p class="text-sm text-red-700 mt-1">
@@ -462,4 +461,78 @@
     @endunless
 
 </div>
+
+{{-- Falta contratar: los planes y como pedirlo, en el mismo sitio.
+
+     Antes era una franja roja arriba del todo, junto a los avisos de error, y
+     el que la leia tenia que salir a buscar los precios a otra pantalla. --}}
+@if($aviso = session('plan_requerido'))
+    <div x-data="{ abierto: true }" x-show="abierto" x-cloak
+         @keydown.escape.window="abierto = false"
+         class="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-gray-900/60 p-4">
+        <div @click.outside="abierto = false"
+             class="my-auto w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-2xl">
+
+            <div class="flex items-start gap-3 border-b border-gray-100 px-5 py-4">
+                <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z"/>
+                    </svg>
+                </span>
+                <div class="min-w-0 flex-1">
+                    <h3 class="font-semibold text-gray-900">Para emitir en producción necesitas un plan de pago</h3>
+                    <p class="mt-0.5 text-sm text-gray-500">
+                        Tu plan actual ({{ $aviso['actual'] }}) sirve para evaluar el sistema en el
+                        ambiente de pruebas de SUNAT.
+                    </p>
+                </div>
+                <button type="button" @click="abierto = false"
+                        class="shrink-0 text-2xl leading-none text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+
+            <div class="space-y-3 px-5 py-4">
+                <p class="text-sm text-gray-600">
+                    Los comprobantes que emites ahora son de prueba y no tienen validez tributaria.
+                    Con un plan de pago emites de verdad, con tu propio certificado y directo a SUNAT.
+                </p>
+
+                <div class="overflow-hidden rounded-lg border border-gray-200">
+                    @foreach($aviso['planes'] as $plan)
+                        <div class="flex items-baseline justify-between gap-3 border-b border-gray-100 px-4 py-2.5 last:border-0">
+                            <span class="min-w-0">
+                                <span class="block text-sm font-semibold text-gray-900">{{ $plan['nombre'] }}</span>
+                                <span class="block text-xs text-gray-500">{{ $plan['documentos'] }}</span>
+                            </span>
+                            <span class="shrink-0 whitespace-nowrap text-sm font-bold tabular-nums text-blue-700">
+                                {{ $plan['precio'] }}
+                            </span>
+                        </div>
+                    @endforeach
+                </div>
+
+                <p class="text-xs text-gray-500">
+                    Escríbenos y lo activamos. Nada de lo que tienes ahora se pierde: al pasar a
+                    producción se borran solo los comprobantes y clientes de prueba.
+                </p>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
+                <button type="button" @click="abierto = false"
+                        class="rounded-lg px-4 py-2 text-sm text-gray-600 transition hover:bg-gray-50">
+                    Ahora no
+                </button>
+                <a href="https://wa.me/{{ config('asistente.whatsapp') }}?text={{ rawurlencode('Hola, quiero contratar un plan para emitir en producción con Cisma Fact.') }}"
+                   target="_blank" rel="noopener"
+                   class="flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-600">
+                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5 0-.2 0-.4 0-.5 0-.2-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2z"/>
+                    </svg>
+                    Escribir por WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
+@endif
+
 @endsection

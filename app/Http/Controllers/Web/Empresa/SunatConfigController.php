@@ -218,10 +218,23 @@ class SunatConfigController extends Controller
          * facturar por una regla que no existia cuando entro.
          */
         if (! $company->subscription?->plan || (float) $company->subscription->plan->monthly_price <= 0) {
-            return back()->with('error',
-                'Tu plan actual sirve para evaluar en el ambiente de pruebas. Para emitir '
-                . 'comprobantes con validez tributaria necesitas un plan de pago: escríbenos '
-                . 'y lo activamos.');
+            /*
+             * En su propia clave y no en 'error': esto no es que algo saliera
+             * mal, es que falta un paso. Va en un modal con los planes y el
+             * WhatsApp, para que no haya que ir a buscarlos a otra pantalla.
+             */
+            return back()->with('plan_requerido', [
+                'actual' => $company->subscription?->plan?->name ?? 'Free',
+                'planes' => \App\Models\Plan::where('active', true)
+                    ->where('monthly_price', '>', 0)
+                    ->orderBy('monthly_price')
+                    ->get(['name', 'monthly_price', 'monthly_document_limit'])
+                    ->map(fn ($p) => [
+                        'nombre' => $p->name,
+                        'precio' => 'S/ ' . number_format((float) $p->monthly_price, 2),
+                        'documentos' => number_format((int) $p->monthly_document_limit) . ' comprobantes al mes',
+                    ])->all(),
+            ]);
         }
 
         // Confirmación explícita: debe escribir PRODUCCION.
