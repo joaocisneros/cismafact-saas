@@ -32,7 +32,7 @@
                 <span class="shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold {{ $estadoClass }}">{{ $documento->estado_sunat ?? 'PENDIENTE' }}</span>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+            <div class="flex shrink-0 flex-wrap items-center gap-2 sm:flex-nowrap">
                 @if($documento->xml_path)
                     <a href="{{ route('empresa.documents.download', [$tipoRuta, $documento->id, 'xml']) }}" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">XML</a>
                 @endif
@@ -43,7 +43,7 @@
                     @if(in_array($tipoRuta, ['factura', 'boleta'], true))
                         <label class="shrink-0">
                             <span class="sr-only">Formato del PDF</span>
-                            <select x-model="formatoPdf" aria-label="Formato del PDF" title="Formato del PDF" class="w-40 rounded-lg border-gray-300 py-2 pl-3 pr-8 text-sm text-gray-700 focus:border-blue-500 focus:ring-blue-500">
+                            <select x-model="formatoPdf" aria-label="Formato del PDF" title="Formato del PDF" class="w-36 rounded-lg border-gray-300 py-2 pl-3 pr-8 text-sm text-gray-700 focus:border-blue-500 focus:ring-blue-500">
                                 <option value="A4">A4</option>
                                 <option value="A5">A5 compacto</option>
                                 <option value="80mm">Ticket 80 mm</option>
@@ -51,7 +51,7 @@
                             </select>
                         </label>
                     @endif
-                    <a :href="'{{ route('empresa.documents.download', [$tipoRuta, $documento->id, 'pdf']) }}?format=' + formatoPdf" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+                    <a :href="'{{ route('empresa.documents.download', [$tipoRuta, $documento->id, 'pdf']) }}?format=' + formatoPdf" class="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
                         Descargar PDF
                     </a>
