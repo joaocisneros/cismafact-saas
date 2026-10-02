@@ -9,7 +9,7 @@ Microservicio Laravel para facturacion electronica SUNAT Peru, basado en PHP 8.2
 - MySQL 8.0 o compatible.
 - Extensiones PHP: `bcmath`, `curl`, `dom`, `fileinfo`, `gd`, `intl`, `mbstring`, `openssl`, `pdo_mysql`, `soap`, `xml`, `xmlwriter`, `zlib`.
 - Certificado digital SUNAT en formato PEM para envío real.
-- Para Beta se necesita un certificado demo instalado manualmente en `storage/app/private/certificado/certificado.pem`. Las claves privadas no se versionan.
+- Para Beta se incluye un certificado exclusivo de demostración en `storage/app/private/certificado/certificado.pem`. Nunca debe utilizarse en Producción.
 
 En esta maquina se agregaron atajos locales para evitar que Windows use PHP 8.0 de XAMPP:
 
@@ -55,14 +55,14 @@ DB_PASSWORD=
 .\php82.bat artisan migrate
 ```
 
-6. Instalar manualmente un certificado demo para pruebas Beta:
+6. El certificado demo para pruebas Beta ya está incluido. Si necesita restaurarlo desde la copia de ejemplos:
 
 ```powershell
 New-Item -ItemType Directory -Force storage\app\private\certificado
-Copy-Item C:\ruta-segura\certificado-beta.pem storage\app\private\certificado\certificado.pem -Force
+Copy-Item ejemplos-postman\certificado_prueba\certificado.pem storage\app\private\certificado\certificado.pem -Force
 ```
 
-El archivo debe contener el certificado y su llave privada en formato PEM. Nunca debe agregarse al repositorio.
+Esta excepción corresponde únicamente al certificado demo de SUNAT Beta. Los certificados reales de las empresas permanecen en almacenamiento privado y nunca se agregan al repositorio.
 
 7. Levantar servidor local:
 
@@ -181,22 +181,3 @@ SUNAT_CERTIFICATE_PASSWORD=
 ```
 
 Para producción cada empresa debe configurar su propio RUC, usuario SOL, clave SOL y certificado real. El certificado demo compartido solo se usa en Beta y nunca sustituye al certificado real de una empresa en producción.
-
-### Primera actualización de un servidor que todavía versionaba el certificado Beta
-
-Antes de ejecutar `git pull`, respalde el certificado fuera del repositorio. Después de actualizar, restáurelo como archivo privado:
-
-```bash
-cp storage/app/private/certificado/certificado.pem /tmp/cisma-certificado-beta.pem
-git pull --ff-only origin main
-mkdir -p storage/app/private/certificado
-cp /tmp/cisma-certificado-beta.pem storage/app/private/certificado/certificado.pem
-chmod 600 storage/app/private/certificado/certificado.pem
-php artisan optimize:clear
-php artisan migrate --force
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-```
-
-A partir de esa primera actualización, Git ignorará el certificado y los siguientes `git pull` no lo modificarán.

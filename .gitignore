@@ -26,6 +26,10 @@
 /storage/app/private/certificado/*.pfx
 /storage/app/private/certificado/*.p12
 /ejemplos-postman/certificado_prueba/*.pem
+# Excepciones exclusivas para el certificado DEMO de SUNAT Beta. El
+# certificado real de cada empresa nunca se versiona.
+!/storage/app/private/certificado/certificado.pem
+!/ejemplos-postman/certificado_prueba/certificado.pem
 /storage/app/temp/certificados/
 # Los comprobantes emitidos (XML, CDR, PDF) nunca se versionan.
 /storage/app/comprobantes/*
