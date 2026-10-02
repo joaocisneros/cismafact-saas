@@ -123,7 +123,7 @@
                                     </select>
                                 </td>
                                 <td class="py-2 pr-2"><input type="number" step="0.001" min="0.001" :name="`detalles[${i}][cantidad]`" x-model.number="item.cantidad" required class="w-20 rounded border border-gray-300 px-2 py-1.5"></td>
-                                <td class="py-2 pr-2"><input type="number" step="0.01" min="0" :name="`detalles[${i}][mto_valor_unitario]`" x-model.number="item.valorUnitario" required class="w-24 rounded border border-gray-300 px-2 py-1.5"></td>
+                                <td class="py-2 pr-2"><input type="number" step="0.01" min="0.01" :name="`detalles[${i}][mto_valor_unitario]`" x-model.number="item.valorUnitario" required class="w-24 rounded border border-gray-300 px-2 py-1.5"></td>
                                 <td class="py-2 pr-2">
                                     <x-select-afectacion :excluir="['17']" ::name="`detalles[${i}][tip_afe_igv]`" x-model="item.afectacion" />
                                     {{-- No solo la 10: un retiro o una bonificacion gravada tampoco se

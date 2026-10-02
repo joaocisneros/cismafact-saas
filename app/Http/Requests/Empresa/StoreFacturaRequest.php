@@ -65,7 +65,9 @@ class StoreFacturaRequest extends FormRequest
             'detalles.*.descripcion' => ['required', 'string', 'max:500'],
             'detalles.*.unidad' => ['required', 'string', 'max:3'],
             'detalles.*.cantidad' => ['required', 'numeric', 'min:0.001'],
-            'detalles.*.mto_valor_unitario' => ['required', 'numeric', 'min:0'],
+            // Un valor cero deja la línea sin base tributaria y SUNAT rechaza
+            // el XML por no contener un tributo válido.
+            'detalles.*.mto_valor_unitario' => ['required', 'numeric', 'min:0.01'],
             'detalles.*.tip_afe_igv' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::AFECTACIONES_IGV)],
             'detalles.*.porcentaje_igv' => ['nullable', 'numeric', 'min:0', 'max:100'],
 
@@ -90,6 +92,7 @@ class StoreFacturaRequest extends FormRequest
             'detalles.*.descripcion.required' => 'La descripción del ítem es requerida.',
             'detalles.*.cantidad.min' => 'La cantidad debe ser mayor a cero.',
             'detalles.*.mto_valor_unitario.required' => 'El valor unitario es requerido.',
+            'detalles.*.mto_valor_unitario.min' => 'El valor unitario debe ser mayor a cero.',
         ];
     }
 

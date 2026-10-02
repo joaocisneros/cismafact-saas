@@ -52,7 +52,10 @@ class StoreBoletaRequest extends FormRequest
             'detalles.*.descripcion' => ['required', 'string', 'max:500'],
             'detalles.*.unidad' => ['required', 'string', 'max:3'],
             'detalles.*.cantidad' => ['required', 'numeric', 'min:0.001'],
-            'detalles.*.mto_valor_unitario' => ['required', 'numeric', 'min:0'],
+            // SUNAT exige una base/valor referencial por cada línea, incluso
+            // cuando la operación es gratuita. Con 0 no se genera el tributo
+            // de la línea y el XML termina rechazado.
+            'detalles.*.mto_valor_unitario' => ['required', 'numeric', 'min:0.01'],
             'detalles.*.tip_afe_igv' => ['required', 'string', CatalogoSunat::paraRegla(CatalogoSunat::AFECTACIONES_IGV)],
             'detalles.*.porcentaje_igv' => ['nullable', 'numeric', 'min:0', 'max:100'],
 
@@ -70,6 +73,7 @@ class StoreBoletaRequest extends FormRequest
             'client.razon_social.required' => 'El nombre del cliente es requerido.',
             'detalles.required' => 'Agrega al menos un ítem.',
             'detalles.min' => 'Agrega al menos un ítem.',
+            'detalles.*.mto_valor_unitario.min' => 'El valor unitario debe ser mayor a cero.',
         ];
     }
 
