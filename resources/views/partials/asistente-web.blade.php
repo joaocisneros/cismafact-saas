@@ -496,6 +496,15 @@
 
             init() {
                 this.empezar();
+
+                /* Permite abrir una rama concreta del asistente desde enlaces
+                   externos, sin aceptar pasos arbitrarios desde la URL. */
+                const paso = new URLSearchParams(window.location.search).get('asistente');
+                const pasosPermitidos = ['fact_api', 'cons_prueba'];
+
+                if (pasosPermitidos.includes(paso)) {
+                    this.$nextTick(() => this.abrirDesde(paso));
+                }
             },
 
             empezar() {
