@@ -32,7 +32,7 @@
                 <span class="shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold {{ $estadoClass }}">{{ $documento->estado_sunat ?? 'PENDIENTE' }}</span>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2 sm:flex-nowrap">
                 @if($documento->xml_path)
                     <a href="{{ route('empresa.documents.download', [$tipoRuta, $documento->id, 'xml']) }}" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">XML</a>
                 @endif
@@ -41,9 +41,9 @@
                 @endif
                 @if($puedeVerPdf)
                     @if(in_array($tipoRuta, ['factura', 'boleta'], true))
-                        <label class="flex items-center gap-2 text-sm font-medium text-gray-600">
-                            <span class="hidden lg:inline">Formato</span>
-                            <select x-model="formatoPdf" class="rounded-lg border-gray-300 py-2 pl-3 pr-8 text-sm text-gray-700 focus:border-blue-500 focus:ring-blue-500">
+                        <label class="shrink-0">
+                            <span class="sr-only">Formato del PDF</span>
+                            <select x-model="formatoPdf" aria-label="Formato del PDF" title="Formato del PDF" class="w-40 rounded-lg border-gray-300 py-2 pl-3 pr-8 text-sm text-gray-700 focus:border-blue-500 focus:ring-blue-500">
                                 <option value="A4">A4</option>
                                 <option value="A5">A5 compacto</option>
                                 <option value="80mm">Ticket 80 mm</option>
