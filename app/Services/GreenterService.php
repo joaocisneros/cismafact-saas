@@ -1034,7 +1034,7 @@ class GreenterService
             'destinatario_data' => $despatchData['destinatario'] ?? 'NULL'
         ]);
 
-        $despatch->setCompany($this->getGRECompany())
+        $despatch->setCompany($this->getGreenterCompany())
                  ->setDestinatario($this->getGreenterClient($despatchData['destinatario']));
 
         // Crear objeto de envío
@@ -1054,8 +1054,8 @@ class GreenterService
             $envio->setIndicadores(['SUNAT_Envio_IndicadorTrasladoVehiculoM1L']);
             
             // Agregar RUC y código de local para misma empresa
-            $llegada->setRuc('20161515648')->setCodLocal('00002');
-            $partida->setRuc('20161515648')->setCodLocal('00001');
+            $llegada->setRuc($this->company->ruc);
+            $partida->setRuc($this->company->ruc);
         }
         
         $envio->setLlegada($llegada)->setPartida($partida);
@@ -1143,27 +1143,6 @@ class GreenterService
         return $despatch;
     }
 
-    protected function getGRECompany()
-    {
-        // Para GRE usar datos consistentes con las credenciales SOL de test
-        $company = new GreenterCompany();
-        
-        $company->setRuc('20161515648') // Debe coincidir con credenciales SOL
-                ->setRazonSocial('EMPRESA DE PRUEBA SUNAT')
-                ->setNombreComercial('EMPRESA DE PRUEBA')
-                ->setAddress((new Address())
-                    ->setUbigueo('150101')
-                    ->setDepartamento('LIMA')
-                    ->setProvincia('LIMA')
-                    ->setDistrito('LIMA')
-                    ->setUrbanizacion('-')
-                    ->setDireccion('AV. LIMA 123')
-                    ->setCodLocal('0000') // Para GRE, código de local
-                );
-
-        return $company;
-    }
-
     public function sendDespatchDocument($despatch)
     {
         try {
@@ -1201,7 +1180,7 @@ class GreenterService
             // Si no es exitoso, revisar el XML para debug
             if (!$result->isSuccess()) {
                 $xml = $api->getLastXml();
-                if ($xml) {
+                if ($xml && config('app.debug')) {
                     // Guardar XML completo para revisión
                     $xmlPath = storage_path('logs/debug_despatch_' . date('Y-m-d_H-i-s') . '.xml');
                     file_put_contents($xmlPath, $xml);

@@ -4,8 +4,8 @@
     Sin tarjetas de cifras arriba: lo mismo ya se cuenta en «Mis APIs» y
     repetirlo aquí solo alarga la pantalla.
 
-    El acceso cuelga del titular y no de la llave: quien tiene dos llaves de
-    producción entra una vez y ve las dos, en vez de acabar con dos
+    El acceso cuelga del titular y no de la llave: quien tiene llaves de
+    Producción y Sandbox entra una vez y ve todas, en vez de acabar con dos
     contraseñas para lo mismo.
 
     Sin aviso de «hay titulares sin acceso»: si se lo acabas de quitar tú, el
@@ -16,11 +16,8 @@
 
     <div class="rounded-lg border border-gray-200 bg-white">
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 px-4 py-3">
-            {{-- «de producción» ya lo dice todo: en esta tabla no hay ninguna
-                 de Sandbox, asi que aclarar que esas no dan acceso era negar
-                 algo que nadie esta viendo. --}}
             <h2 class="text-[11px] font-semibold uppercase tracking-widest text-gray-400">
-                Titulares con llave de producción
+                Usuarios y accesos de API RUC/DNI
             </h2>
         </div>
 
@@ -59,9 +56,9 @@
                             <td class="px-4 py-3">
                                 <div class="flex flex-col items-start gap-1">
                                     @foreach($fila['llaves'] as $llave)
-                                        <span class="max-w-[16rem] truncate rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700"
+                                        <span class="max-w-[16rem] truncate rounded px-1.5 py-0.5 text-xs font-medium {{ $llave->entorno === 'sandbox' ? 'bg-violet-50 text-violet-700' : 'bg-emerald-50 text-emerald-700' }}"
                                               title="{{ $llave->nombre }}">
-                                            {{ \Illuminate\Support\Str::limit($llave->nombre, 32) }}
+                                            {{ $llave->entorno === 'sandbox' ? 'Sandbox' : 'Producción' }} · {{ \Illuminate\Support\Str::limit($llave->nombre, 24) }}
                                         </span>
                                     @endforeach
                                 </div>
@@ -127,7 +124,7 @@
                     @empty
                         <tr>
                             <td colspan="5" class="px-4 py-8 text-center text-sm text-gray-500">
-                                Todavía no hay ninguna llave de producción.
+                                Todavía no hay llaves de Producción ni Sandbox.
                             </td>
                         </tr>
                     @endforelse
@@ -209,35 +206,46 @@
                 </div>
 
                 <div class="space-y-4 p-5">
-                    <p class="text-sm text-gray-600">
-                        P&aacute;saselo t&uacute;. <strong class="text-gray-900">La contrase&ntilde;a no se vuelve a ense&ntilde;ar</strong>,
-                        pero siempre puedes generarle otra desde la tabla.
-                    </p>
-
-                    <div>
-                        <p class="mb-1.5 text-sm font-semibold text-gray-600">Entra con</p>
-                        <div class="flex gap-2">
-                            <code class="flex-1 overflow-x-auto whitespace-nowrap rounded-md border border-gray-200 bg-gray-50 px-3.5 py-2.5 font-mono text-sm">{{ session('acceso_creado')['correo'] }}</code>
-                            <button type="button"
-                                    @click="navigator.clipboard.writeText(@js(session('acceso_creado')['correo'])); $el.textContent = 'Copiado'; setTimeout(() => $el.textContent = 'Copiar', 1400)"
-                                    class="shrink-0 rounded-md border border-gray-300 px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">Copiar</button>
-                        </div>
+                    <div class="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                        <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.7 2.8 17a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3L13.7 3.7a2 2 0 0 0-3.4 0Z"/></svg>
+                        <p class="text-sm leading-5 text-amber-800"><strong>Guarda estas credenciales ahora.</strong> La contraseña no volverá a mostrarse; después solo podrás generar una nueva.</p>
                     </div>
 
-                    <div>
-                        <p class="mb-1.5 text-sm font-semibold text-gray-600">Contrase&ntilde;a</p>
-                        <div class="flex gap-2">
-                            <code class="flex-1 overflow-x-auto whitespace-nowrap rounded-md border border-gray-200 bg-gray-50 px-3.5 py-2.5 font-mono text-sm">{{ session('acceso_creado')['clave'] }}</code>
-                            <button type="button"
-                                    @click="navigator.clipboard.writeText(@js(session('acceso_creado')['clave'])); $el.textContent = 'Copiada'; setTimeout(() => $el.textContent = 'Copiar', 1400)"
-                                    class="shrink-0 rounded-md border border-gray-300 px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">Copiar</button>
+                    <div class="overflow-hidden rounded-xl border border-indigo-200 bg-white">
+                        <div class="flex items-center justify-between border-b border-indigo-200 bg-indigo-50 px-4 py-2.5">
+                            <span class="text-xs font-semibold uppercase tracking-wide text-indigo-700">Credenciales de acceso</span>
+                            <span class="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-emerald-700">Listas para entregar</span>
+                        </div>
+
+                        <div class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-gray-100 px-4 py-3">
+                            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18v12H3zM3 7l9 6 9-6"/></svg>
+                            </span>
+                            <div class="min-w-0"><p class="text-xs text-gray-500">Correo de acceso</p><code class="block truncate font-mono text-sm font-medium text-gray-900">{{ session('acceso_creado')['correo'] }}</code></div>
+                            <button type="button" onclick="window.copyCompanyCredential(this, @js(session('acceso_creado')['correo']))"
+                                    class="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span data-copy-label>Copiar</span>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
+                            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                            </span>
+                            <div class="min-w-0"><p class="text-xs text-gray-500">Contraseña temporal</p><code class="block truncate font-mono text-sm font-medium text-gray-900">{{ session('acceso_creado')['clave'] }}</code></div>
+                            <button type="button" onclick="window.copyCompanyCredential(this, @js(session('acceso_creado')['clave']))"
+                                    class="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 002 2v8a2 2 0 002 2z"/></svg>
+                                <span data-copy-label>Copiar</span>
+                            </button>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex justify-end border-t border-gray-100 px-5 py-4">
                     <button type="button" @click="abierto = false"
-                            class="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">
+                            class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
                         Ya lo copi&eacute;
                     </button>
                 </div>

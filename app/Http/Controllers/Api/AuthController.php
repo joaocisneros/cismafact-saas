@@ -134,7 +134,9 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        // Las rutas heredadas tambien admiten API key. En ese caso no existe
+        // un token Sanctum que revocar y logout debe seguir siendo idempotente.
+        $request->user()?->currentAccessToken()?->delete();
 
         return response()->json([
             'message' => 'Logout exitoso'

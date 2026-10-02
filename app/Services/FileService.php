@@ -233,6 +233,14 @@ class FileService
         );
     }
 
+    /** Ruta relativa de un PDF alternativo, si ya fue generado. */
+    public function getPdfFormatPath($document, string $format = 'A4'): ?string
+    {
+        $ruta = $this->generatePath($document, 'pdf', $format);
+
+        return Storage::disk(self::DISCO)->exists($ruta) ? $ruta : null;
+    }
+
     public function createDirectoryStructure(): void
     {
         // Tipos de comprobantes

@@ -60,8 +60,7 @@ class ConsultaController extends Controller
                       ->on('consultas_documento.numero', '=', 'consultas_consumo.numero');
                 })
                 ->orderByDesc('consultas_consumo.id')
-                ->limit(60)
-                ->get([
+                ->paginate(15, [
                     'consultas_consumo.created_at',
                     'consultas_consumo.tipo',
                     'consultas_consumo.numero',
@@ -79,7 +78,8 @@ class ConsultaController extends Controller
                     'api_planes.nombre as plan',
                     'api_planes.precio_mensual as plan_precio',
                     'api_planes.a_medida as plan_a_medida',
-                ]),
+                ], 'consumo_page')
+                ->withQueryString(),
             'padron' => DB::table('padron_ruc')->count(),
             'apis' => Api::with(['planes' => fn ($q) => $q->orderBy('a_medida')->orderBy('precio_mensual')->orderBy('orden')])
                 ->withCount(['consumo as consultas_mes' => fn ($q) => $q->where('created_at', '>=', now()->startOfMonth())])
@@ -142,8 +142,7 @@ class ConsultaController extends Controller
                       ->on('consultas_documento.numero', '=', 'consultas_consumo.numero');
                 })
                 ->orderByDesc('consultas_consumo.id')
-                ->limit(40)
-                ->get([
+                ->paginate(15, [
                     'consultas_consumo.created_at',
                     'consultas_consumo.company_id',
                     'consultas_consumo.tipo',
@@ -161,7 +160,8 @@ class ConsultaController extends Controller
                     // se busco un RUC y salio bien, pero no de quien era: habia
                     // que copiar el numero y buscarlo aparte.
                     'consultas_documento.datos as ficha',
-                ]),
+                ], 'interno_page')
+                ->withQueryString(),
 
             // Lo que lleva cada empresa este mes, para ponerlo en su fila sin
             // volver a tener una tabla aparte solo para eso.
@@ -528,12 +528,10 @@ class ConsultaController extends Controller
              */
             // whereHas y no whereNotNull: una llave puede apuntar a un usuario
             // que ya no existe, y ese no puede entrar aunque su id siga ahi.
-            'titulares_con_acceso' => \App\Models\ConsultaLlave::where('entorno', 'produccion')
-                ->whereHas('usuario')
+            'titulares_con_acceso' => \App\Models\ConsultaLlave::whereHas('usuario')
                 ->distinct()
                 ->count('usuario_id'),
-            'titulares_sin_acceso' => \App\Models\ConsultaLlave::where('entorno', 'produccion')
-                ->whereNull('usuario_id')
+            'titulares_sin_acceso' => \App\Models\ConsultaLlave::whereNull('usuario_id')
                 ->distinct()
                 ->count('titular'),
         ];
@@ -584,7 +582,7 @@ class ConsultaController extends Controller
     }
 
     /**
-     * Los titulares de llaves de produccion, agrupados por quien entra.
+     * Los titulares de llaves de Producción y Sandbox, agrupados por quien entra.
      *
      * Por titular y no por llave: quien tiene dos llaves entra una sola vez y
      * ve las dos. Agrupar por llave le habria dado dos contraseñas para lo
@@ -592,8 +590,7 @@ class ConsultaController extends Controller
      */
     private function titularesConAcceso()
     {
-        return \App\Models\ConsultaLlave::where('entorno', 'produccion')
-            ->with('usuario:id,name,email,last_login_at,active')
+        return \App\Models\ConsultaLlave::with('usuario:id,name,email,last_login_at,active')
             ->orderBy('titular')
             ->get()
             ->groupBy(fn ($llave) => $llave->usuario_id ?: 'sin-acceso-' . $llave->titular)

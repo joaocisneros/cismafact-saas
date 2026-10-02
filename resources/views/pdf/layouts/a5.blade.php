@@ -32,10 +32,11 @@
         display: table-cell;
         vertical-align: top;
         padding: 4px;
+        box-sizing: border-box;
     }
 
     .logo-section {
-        width: 25%;
+        width: 18%;
         text-align: left;
     }
 
@@ -49,7 +50,7 @@
     }
 
     .company-section {
-        width: 50%;
+        width: 49%;
         text-align: left;
         padding: 0 12px;
     }
@@ -59,6 +60,8 @@
         font-size: 14px;
         font-weight: bold;
         color: #000;
+        line-height: 1.15;
+        word-wrap: break-word;
     }
 
     .company-details {
@@ -69,7 +72,7 @@
     }
 
     .document-section {
-        width: 25%;
+        width: 33%;
         text-align: center;
         vertical-align: top;
     }
@@ -80,8 +83,9 @@
         padding: 8px;
         font-size: 9px;
         background-color: #fff;
-        display: inline-block;
-        min-width: 140px;
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .factura-box p {

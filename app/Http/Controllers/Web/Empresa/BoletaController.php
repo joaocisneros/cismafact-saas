@@ -67,6 +67,7 @@ class BoletaController extends Controller
 
         try {
             $boleta = $this->documentService->createBoleta($request->toServiceData());
+            $boleta->forceFill(['created_by_user_id' => Auth::id()])->save();
             $result = $this->documentService->sendToSunat($boleta, 'boleta');
             $boleta = $result['document'] ?? $boleta;
 

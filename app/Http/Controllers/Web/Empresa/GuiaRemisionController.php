@@ -70,6 +70,7 @@ class GuiaRemisionController extends Controller
 
         try {
             $guia = $this->documentService->createDispatchGuide($request->toServiceData());
+            $guia->forceFill(['created_by_user_id' => Auth::id()])->save();
             $result = $this->documentService->sendDispatchGuideToSunat($guia);
             $guia = $result['document'] ?? $guia;
 

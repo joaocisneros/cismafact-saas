@@ -27,6 +27,8 @@ class DashboardController extends Controller
         $invoiceStats = $this->getDocumentStats(Invoice::class, $companyId, $todayStart, $tomorrowStart, $monthStart, $nextMonthStart);
         $boletaStats = $this->getDocumentStats(Boleta::class, $companyId, $todayStart, $tomorrowStart, $monthStart, $nextMonthStart);
         $apiStats = $this->getApiUsageStats($companyId, $todayStart, $tomorrowStart, $monthStart, $nextMonthStart);
+        $ultimasFacturas = $this->getLatestDocuments(Invoice::class, $companyId);
+        $ultimasBoletas = $this->getLatestDocuments(Boleta::class, $companyId);
 
         $data = [
             'facturasHoy' => (int) $invoiceStats->today_count,
@@ -46,8 +48,8 @@ class DashboardController extends Controller
             'certificadoExiste' => !empty($company->certificado_pem),
             'certificadoExpira' => null,
             'certificadoVencido' => false,
-            'ultimasFacturas' => $this->getLatestDocuments(Invoice::class, $companyId),
-            'ultimasBoletas' => $this->getLatestDocuments(Boleta::class, $companyId),
+            'ultimosDocumentos' => $ultimasFacturas->concat($ultimasBoletas)
+                ->sortByDesc('created_at')->take(6)->values(),
             'ventasHoy' => (float) $invoiceStats->today_sales + (float) $boletaStats->today_sales,
             'ventasMes' => (float) $invoiceStats->month_sales + (float) $boletaStats->month_sales,
         ];
@@ -96,8 +98,8 @@ class DashboardController extends Controller
             ->selectRaw('SUM(CASE WHEN estado_sunat = ? THEN 1 ELSE 0 END) as pending_count', ['PENDIENTE'])
             // Un comprobante dado de baja ya no es una venta: se cuenta como
             // emitido, pero su importe no puede seguir sumando.
-            ->selectRaw('COALESCE(SUM(CASE WHEN fecha_emision >= ? AND fecha_emision < ? AND anulado_en IS NULL THEN mto_imp_venta ELSE 0 END), 0) as today_sales', [$todayStart, $tomorrowStart])
-            ->selectRaw('COALESCE(SUM(CASE WHEN fecha_emision >= ? AND fecha_emision < ? AND anulado_en IS NULL THEN mto_imp_venta ELSE 0 END), 0) as month_sales', [$monthStart, $nextMonthStart])
+            ->selectRaw("COALESCE(SUM(CASE WHEN fecha_emision >= ? AND fecha_emision < ? AND anulado_en IS NULL AND estado_sunat <> 'RECHAZADO' THEN mto_imp_venta ELSE 0 END), 0) as today_sales", [$todayStart, $tomorrowStart])
+            ->selectRaw("COALESCE(SUM(CASE WHEN fecha_emision >= ? AND fecha_emision < ? AND anulado_en IS NULL AND estado_sunat <> 'RECHAZADO' THEN mto_imp_venta ELSE 0 END), 0) as month_sales", [$monthStart, $nextMonthStart])
             ->first();
     }
 
@@ -113,9 +115,10 @@ class DashboardController extends Controller
     private function getLatestDocuments(string $model, int $companyId)
     {
         return $model::where('company_id', $companyId)
-            ->select(['id', 'serie', 'numero_completo', 'fecha_emision', 'mto_imp_venta', 'estado_sunat', 'created_at'])
+            ->with(['createdBy:id,name,role_id', 'createdBy.role:id,name,display_name'])
+            ->select(['id', 'api_key_id', 'created_by_user_id', 'serie', 'numero_completo', 'fecha_emision', 'mto_imp_venta', 'estado_sunat', 'created_at'])
             ->latest()
-            ->take(5)
+            ->take(6)
             ->get();
     }
 }

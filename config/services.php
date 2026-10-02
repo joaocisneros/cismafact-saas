@@ -41,4 +41,12 @@ return [
         'site_verification' => env('GOOGLE_SITE_VERIFICATION'),
     ],
 
+    'cisma_fact' => [
+        'public_url' => env('CISMA_PUBLIC_URL', 'https://www.cismafact.com'),
+        'sunat_verification_url' => env(
+            'SUNAT_CPE_VERIFICATION_URL',
+            'https://ww3.sunat.gob.pe/ol-ti-itconsvalicpe/ConsValiCpe.htm'
+        ),
+    ],
+
 ];

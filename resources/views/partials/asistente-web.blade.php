@@ -20,12 +20,6 @@
     // produccion. Se separan aqui para no repetir la condicion en cada texto.
     $planPrueba = $planesFacturacion->first(fn ($p) => (float) $p->monthly_price <= 0);
     $planesProduccion = $planesFacturacion->filter(fn ($p) => (float) $p->monthly_price > 0);
-    $planesConsultas = \App\Models\ApiPlan::with('apis')
-        ->where('activo', true)
-        ->orderBy('orden')
-        ->get()
-        ->filter(fn ($p) => $p->a_medida || (float) $p->precio_mensual > 0);
-
     $soles = fn ($n) => 'S/ ' . number_format((float) $n, 2);
 
     // El guion de la conversacion. Cada paso dice algo y ofrece por donde
@@ -87,7 +81,7 @@
                 . "plan de producción.",
             'opciones' => [
                 ['ir' => 'fact_planes', 'texto' => 'Ver planes y precios'],
-                ['enlace' => route('register'), 'texto' => 'Crear cuenta', 'principal' => true],
+                ['enlace' => route('register'), 'texto' => 'Crear cuenta de Facturación', 'principal' => true],
             ],
         ],
 
@@ -103,7 +97,7 @@
             ],
             'opciones' => [
                 ['ir' => 'fact_planes', 'texto' => 'Ver planes y precios'],
-                ['enlace' => route('register'), 'texto' => 'Crear cuenta', 'principal' => true],
+                ['enlace' => route('register'), 'texto' => 'Crear cuenta de Facturación', 'principal' => true],
             ],
         ],
 
@@ -144,84 +138,47 @@
             'nota' => 'Los de producción incluyen la firma con tu propio certificado y el envío '
                 . 'directo a SUNAT. Puedes cambiar de plan cuando lo necesites.',
             'opciones' => [
-                ['enlace' => route('register'), 'texto' => 'Crear cuenta', 'principal' => true],
+                ['enlace' => route('register'), 'texto' => 'Crear cuenta de Facturación', 'principal' => true],
             ],
             'fin' => true,
         ],
 
         'consultas' => [
-            'texto' => "La API de consultas es independiente de la facturación y se contrata por "
-                . "separado.",
+            'texto' => "La API RUC/DNI se encuentra disponible por ahora únicamente en Sandbox, "
+                . "para que pruebes tu integración con datos de prueba.\n\n"
+                . "Este acceso no se crea desde el registro de Facturación: nuestro equipo te entrega "
+                . "personalmente las credenciales por WhatsApp.",
             'lista' => [
                 'RUC: razón social, estado, condición y domicilio fiscal',
                 'DNI: nombres y apellidos por separado',
             ],
             'opciones' => [
                 [
-                    'ir' => 'cons_planes',
-                    'texto' => 'Ver planes y precios',
-                    'detalle' => 'Cada consulta se contrata por separado',
-                ],
-                [
-                    'ir' => 'cons_produccion',
-                    'texto' => 'Contratar producción',
-                    'detalle' => 'Coordinamos tu API Key por WhatsApp',
-                ],
-                [
                     'ir' => 'cons_prueba',
-                    'texto' => 'Probar en Sandbox',
-                    'detalle' => 'Sin costo, antes de contratar',
+                    'texto' => 'Solicitar acceso Sandbox',
+                    'detalle' => 'Recibe tus credenciales por WhatsApp',
                 ],
             ],
-        ],
-
-        'cons_planes' => [
-            'interes' => 'consultas',
-            'texto' => 'Si solo requieres RUC, pagas únicamente RUC:',
-            'grupos' => $planesConsultas->map(fn ($p) => [
-                'titulo' => $p->nombre,
-                'fichas' => $p->apis
-                    ->filter(fn ($a) => (int) $a->pivot->limite_mensual > 0)
-                    ->map(fn ($a) => [
-                        'nombre' => strtoupper($a->slug),
-                        'precio' => $p->a_medida ? 'A convenir' : $soles($a->pivot->precio_mensual),
-                        'detalle' => number_format((int) $a->pivot->limite_mensual) . ' consultas al mes',
-                    ])->values()->all(),
-                'total' => $p->a_medida ? null : 'Contratando ambas: ' . $soles($p->precio_mensual),
-            ])->values()->all(),
-            'opciones' => [
-                ['ir' => 'cons_produccion', 'texto' => 'Contratar', 'principal' => true],
-            ],
-        ],
-
-        'cons_produccion' => [
-            'interes' => 'consultas',
-            'texto' => "Las credenciales de producción se entregan de forma coordinada por "
-                . "WhatsApp: preparamos tu API Key con el plan que elijas y te la enviamos en el "
-                . "momento.\n\nIndícanos:",
-            'lista' => [
-                'Qué consultas usarás: RUC, DNI o ambas',
-                'El volumen mensual estimado',
-            ],
-            'nota' => 'Con eso te recomendamos el plan que corresponde.',
-            'fin' => true,
-            'destacar_whatsapp' => true,
         ],
 
         'cons_prueba' => [
             'interes' => 'consultas_prueba',
-            'texto' => "Disponemos de un entorno Sandbox sin costo para que valides la integración "
-                . "antes de contratar: mismas respuestas y mismo formato, con datos de prueba.\n\n"
-                . "Escríbenos por WhatsApp y te entregamos las credenciales.",
+            'texto' => "Disponemos de un Sandbox sin costo para que valides la integración con datos "
+                . "de prueba. No necesitas registrarte en Facturación.\n\n"
+                . "Escríbenos por WhatsApp indicando que deseas probar la API RUC/DNI y nuestro equipo "
+                . "te entregará las credenciales de acceso.",
             'opciones' => [
-                ['enlace' => url('/docs'), 'texto' => 'Ver documentación'],
+                ['enlace' => route('docs.consultas'), 'texto' => 'Ver documentación'],
             ],
             'destacar_whatsapp' => true,
         ],
     ];
 @endphp
 
-<div x-data="asistenteCismaFact()" x-cloak class="fixed bottom-6 right-24 z-50">
+<div x-data="asistenteCismaFact()" x-cloak
+     @abrir-asistente.window="abrirDesde($event.detail?.paso || 'inicio')"
+     @solicitar-plan.window="solicitarPlan($event.detail || {})"
+     class="fixed bottom-6 right-6 z-50">
 
     <div x-show="abierto"
          x-transition:enter="transition ease-out duration-200"
@@ -408,7 +365,7 @@
                         Que me escriban
                     </button>
 
-                    <a :href="'https://wa.me/' + whatsapp" target="_blank" rel="noopener"
+                    <a :href="enlaceWhatsapp()" target="_blank" rel="noopener"
                        class="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 shadow-sm transition hover:border-green-300 hover:bg-green-50/50">
                         <svg class="h-3.5 w-3.5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5 0-.2 0-.4 0-.5 0-.2-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2z"/>
@@ -427,7 +384,7 @@
                         </svg>
                         Te escribiremos en breve
                     </span>
-                    <a :href="'https://wa.me/' + whatsapp" target="_blank" rel="noopener"
+                    <a :href="enlaceWhatsapp()" target="_blank" rel="noopener"
                        class="shrink-0 text-xs font-semibold text-emerald-700 underline hover:text-emerald-900">
                         o escríbenos ya
                     </a>
@@ -550,6 +507,47 @@
                 this.contactoAbierto = false;
                 this.contactoError = '';
                 this.ir('inicio');
+            },
+
+            abrirDesde(paso = 'inicio') {
+                this.abierto = true;
+                this.mensajes = [];
+                this.opciones = [];
+                this.mostrarWhatsapp = false;
+                this.cerrado = false;
+                this.interes = null;
+                this.contactoAbierto = false;
+                this.contactoError = '';
+                this.ir(paso);
+            },
+
+            solicitarPlan(plan = {}) {
+                const nombre = plan.nombre || 'seleccionado';
+                const precio = plan.precio ? ` (${plan.precio})` : '';
+
+                this.abierto = true;
+                this.mensajes = [{
+                    rol: 'asistente',
+                    texto: `Has seleccionado el plan ${nombre}${precio}.\n\nPara activar un plan de producción verificaremos los datos de tu empresa y coordinaremos la configuración contigo. Puedes dejarnos tu número o escribirnos directamente por WhatsApp.`,
+                }];
+                this.opciones = [];
+                this.mostrarWhatsapp = true;
+                this.cerrado = false;
+                this.interes = 'facturacion_plan';
+                this.contactoAbierto = false;
+                this.contactoEnviado = false;
+                this.contactoError = '';
+                this.contacto.mensaje = `Deseo contratar el plan ${nombre}${precio}.`;
+                this.$nextTick(() => this.abajo());
+            },
+
+            enlaceWhatsapp() {
+                const mensaje = this.contacto.mensaje
+                    || (this.interes === 'consultas_prueba'
+                        ? 'Hola, deseo solicitar acceso al Sandbox de la API RUC/DNI.'
+                        : 'Hola, deseo información sobre Cisma Fact.');
+
+                return `https://wa.me/${this.whatsapp}?text=${encodeURIComponent(mensaje)}`;
             },
 
             /* Un paso del guion: lo que dice y por donde puede seguir. */

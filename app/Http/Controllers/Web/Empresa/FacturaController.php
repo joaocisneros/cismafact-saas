@@ -69,6 +69,7 @@ class FacturaController extends Controller
 
         try {
             $invoice = $this->documentService->createInvoice($request->toServiceData());
+            $invoice->forceFill(['created_by_user_id' => Auth::id()])->save();
             $result = $this->documentService->sendToSunat($invoice, 'invoice');
             $invoice = $result['document'] ?? $invoice;
 

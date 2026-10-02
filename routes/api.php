@@ -41,10 +41,10 @@ Route::prefix('setup')->middleware(['setup.token', 'throttle:10,1'])->group(func
 });
 
 // Inicialización del sistema
-Route::post('/auth/initialize', [AuthController::class, 'initialize']);
+Route::post('/auth/initialize', [AuthController::class, 'initialize'])->middleware('throttle:3,1');
 
 // Autenticación
-Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
 Route::match(['get', 'post'], '/empresa', function (Request $request) {
     $apiKeyValue = $request->header('X-Api-Key') ?? $request->header('X-API-KEY');
@@ -260,12 +260,12 @@ Route::prefix('v1')->middleware('api.key')->group(function () {
     // ========================
     
     // Empresas
-    Route::apiResource('companies', CompanyController::class);
-    Route::post('/companies/{company}/activate', [CompanyController::class, 'activate']);
-    Route::post('/companies/{company}/toggle-production', [CompanyController::class, 'toggleProductionMode']);
+    Route::apiResource('companies', CompanyController::class)->middleware('api.tenant');
+    Route::post('/companies/{company}/activate', [CompanyController::class, 'activate'])->middleware('api.tenant');
+    Route::post('/companies/{company}/toggle-production', [CompanyController::class, 'toggleProductionMode'])->middleware('api.tenant');
 
     // Configuraciones de empresas
-    Route::prefix('companies/{company_id}/config')->group(function () {
+    Route::prefix('companies/{company_id}/config')->middleware('api.tenant')->group(function () {
         Route::get('/', [CompanyConfigController::class, 'show']);
         Route::get('/{section}', [CompanyConfigController::class, 'getSection']);
         Route::put('/{section}', [CompanyConfigController::class, 'updateSection']);
@@ -284,27 +284,29 @@ Route::prefix('v1')->middleware('api.key')->group(function () {
     // ========================
     // SUCURSALES
     // ========================
-    Route::apiResource('branches', BranchController::class);
-    Route::post('/branches/{branch}/activate', [BranchController::class, 'activate']);
-    Route::get('/companies/{company}/branches', [BranchController::class, 'getByCompany']);
+    Route::apiResource('branches', BranchController::class)->middleware('api.tenant');
+    Route::post('/branches/{branch}/activate', [BranchController::class, 'activate'])->middleware('api.tenant');
+    Route::get('/companies/{company}/branches', [BranchController::class, 'getByCompany'])->middleware('api.tenant');
 
     // ========================
     // CLIENTES
     // ========================
-    Route::apiResource('clients', ClientController::class);
-    Route::post('/clients/{client}/activate', [ClientController::class, 'activate']);
-    Route::get('/companies/{company}/clients', [ClientController::class, 'getByCompany']);
+    Route::apiResource('clients', ClientController::class)->middleware('api.tenant');
+    Route::post('/clients/{client}/activate', [ClientController::class, 'activate'])->middleware('api.tenant');
+    Route::get('/companies/{company}/clients', [ClientController::class, 'getByCompany'])->middleware('api.tenant');
     Route::post('/clients/search-by-document', [ClientController::class, 'searchByDocument']);
 
     // ========================
     // CORRELATIVOS
     // ========================
-    Route::get('/branches/{branch}/correlatives', [CorrelativeController::class, 'index']);
-    Route::post('/branches/{branch}/correlatives', [CorrelativeController::class, 'store']);
-    Route::put('/branches/{branch}/correlatives/{correlative}', [CorrelativeController::class, 'update']);
-    Route::delete('/branches/{branch}/correlatives/{correlative}', [CorrelativeController::class, 'destroy']);
-    Route::post('/branches/{branch}/correlatives/batch', [CorrelativeController::class, 'createBatch']);
-    Route::post('/branches/{branch}/correlatives/{correlative}/increment', [CorrelativeController::class, 'increment']);
+    Route::middleware('api.tenant')->group(function () {
+        Route::get('/branches/{branch}/correlatives', [CorrelativeController::class, 'index']);
+        Route::post('/branches/{branch}/correlatives', [CorrelativeController::class, 'store']);
+        Route::put('/branches/{branch}/correlatives/{correlative}', [CorrelativeController::class, 'update']);
+        Route::delete('/branches/{branch}/correlatives/{correlative}', [CorrelativeController::class, 'destroy']);
+        Route::post('/branches/{branch}/correlatives/batch', [CorrelativeController::class, 'createBatch']);
+        Route::post('/branches/{branch}/correlatives/{correlative}/increment', [CorrelativeController::class, 'increment']);
+    });
     
     // Catálogos de correlativos
     Route::get('/correlatives/document-types', [CorrelativeController::class, 'getDocumentTypes']);

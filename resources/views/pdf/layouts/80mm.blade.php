@@ -319,6 +319,12 @@
             margin: 2px 0;
         }
 
+        .footer-text a,
+        .footer-url a {
+            color: #000;
+            text-decoration: none;
+        }
+
         .footer-url {
             font-size: 10px;
             text-align: center;

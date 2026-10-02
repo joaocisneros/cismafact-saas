@@ -18,21 +18,31 @@ use Illuminate\Support\Facades\Storage;
 trait GeneraPdfDelComprobante
 {
     /** Ruta del PDF, generandolo si aun no existe. */
-    protected function rutaDelPdf($document): ?string
+    protected function rutaDelPdf($document, string $formato = 'A4', bool $regenerar = false): ?string
     {
-        if ($document->pdf_path && Storage::disk('comprobantes')->exists($document->pdf_path)) {
+        $formato = PdfService::normalizarFormato($formato);
+
+        if ($formato === 'A4' && ! $regenerar && $document->pdf_path && Storage::disk('comprobantes')->exists($document->pdf_path)) {
             return $document->pdf_path;
+        }
+
+        $fileService = app(FileService::class);
+        if ($formato !== 'A4' && ! $regenerar) {
+            $rutaExistente = $fileService->getPdfFormatPath($document, $formato);
+            if ($rutaExistente !== null) {
+                return $rutaExistente;
+            }
         }
 
         $document->loadMissing(['company', 'branch', 'client']);
         $pdf = app(PdfService::class);
 
         $contenido = match (class_basename($document)) {
-            'Invoice' => $pdf->generateInvoicePdf($document),
-            'Boleta' => $pdf->generateBoletaPdf($document),
-            'CreditNote' => $pdf->generateCreditNotePdf($document),
-            'DebitNote' => $pdf->generateDebitNotePdf($document),
-            'DispatchGuide' => $pdf->generateDispatchGuidePdf($document),
+            'Invoice' => $pdf->generateInvoicePdf($document, $formato),
+            'Boleta' => $pdf->generateBoletaPdf($document, $formato),
+            'CreditNote' => $pdf->generateCreditNotePdf($document, $formato),
+            'DebitNote' => $pdf->generateDebitNotePdf($document, $formato),
+            'DispatchGuide' => $pdf->generateDispatchGuidePdf($document, $formato),
             default => null,
         };
 
@@ -40,8 +50,10 @@ trait GeneraPdfDelComprobante
             return null;
         }
 
-        $ruta = app(FileService::class)->savePdf($document, $contenido);
-        $document->update(['pdf_path' => $ruta]);
+        $ruta = $fileService->savePdf($document, $contenido, $formato);
+        if ($formato === 'A4') {
+            $document->update(['pdf_path' => $ruta]);
+        }
 
         return $ruta;
     }

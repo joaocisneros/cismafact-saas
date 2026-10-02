@@ -14,20 +14,20 @@
     $coste = $coste ?? false;
 
     $mapa = [
-        'proveedor' => [$coste ? 'Con costo' : 'Proveedor', 'Hubo que salir al proveedor', 'bg-amber-50 text-amber-700'],
-        'padron' => [$coste ? 'Sin costo' : 'Padrón', 'Estaba en el padrón', 'bg-emerald-50 text-emerald-700'],
-        'consultado antes' => [$coste ? 'Sin costo' : 'Ya guardada', 'Ya se había consultado antes', 'bg-emerald-50 text-emerald-700'],
+        'proveedor' => [$coste ? 'Con costo' : 'Proveedor', 'Hubo que salir al proveedor', 'border border-amber-200 bg-amber-50 text-amber-700'],
+        'padron' => [$coste ? 'Sin costo' : 'Padrón', 'Estaba en el padrón', 'border border-emerald-200 bg-emerald-50 text-emerald-700'],
+        'consultado antes' => [$coste ? 'Sin costo' : 'Ya guardada', 'Ya se había consultado antes', 'border border-emerald-200 bg-emerald-50 text-emerald-700'],
         // Ni costo ni salio de casa: es un dato inventado para pruebas.
         // Ni se llego a consultar: la llamada se paro en la puerta.
         'rechazada' => ['No entró', 'La llamada se rechazó antes de consultar', 'bg-red-50 text-red-700'],
-        'modo prueba' => ['Prueba sandbox', 'Llave de sandbox: el dato es de ejemplo, no es real', 'bg-blue-50 text-blue-700'],
+        'modo prueba' => ['Prueba sandbox', 'Llave de sandbox: el dato es de ejemplo, no es real', 'border border-blue-200 bg-blue-50 text-blue-700'],
     ];
 
     // «invalido»: el numero no valia, no se pregunto a nadie.
     // «ninguna»: el numero valia, pero no se pudo traer la ficha.
     $porDefecto = $fuente === 'invalido'
-        ? ['—', 'El número no era válido, no se llegó a preguntar', 'bg-gray-100 text-gray-500']
-        : ['—', 'Se preguntó, pero no se pudo traer la ficha', 'bg-gray-100 text-gray-500'];
+        ? ['—', 'El número no era válido, no se llegó a preguntar', 'border border-slate-200 bg-slate-50 text-slate-500']
+        : ['—', 'Se preguntó, pero no se pudo traer la ficha', 'border border-slate-200 bg-slate-50 text-slate-500'];
 
     [$texto, $detalle, $color] = $mapa[$fuente] ?? $porDefecto;
 @endphp

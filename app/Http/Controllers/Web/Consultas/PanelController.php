@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Web\Consultas;
 use App\Http\Controllers\Controller;
 use App\Models\Api;
 use App\Models\ConsultaLlave;
+use App\Http\Controllers\Api\ConsultaController as ApiConsultaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 /**
  * El panel del titular de una llave de RUC y DNI.
@@ -27,10 +29,19 @@ class PanelController extends Controller
     public function panel()
     {
         $llaves = $this->llavesDelUsuario();
-        $consumo = $this->consumoDelMes($llaves);
+        // El resumen no mezcla cuotas de prueba con cuotas contratadas. Si el
+        // cliente ya tiene Producción, esa es la vista principal; si todavía
+        // está probando, todo el resumen corresponde a Sandbox.
+        $produccion = $llaves->where('entorno', 'produccion');
+        $llavesResumen = $produccion->isNotEmpty()
+            ? $produccion->values()
+            : $llaves->where('entorno', 'sandbox')->values();
+        $consumo = $this->consumoDelMes($llavesResumen);
 
         return view('consultas.panel', [
             'llaves' => $llaves,
+            'llavesResumen' => $llavesResumen,
+            'entornoResumen' => $llavesResumen->first()?->entorno,
             'consumo' => $consumo,
             'gastadas' => array_sum(array_column($consumo, 'usadas')),
             'disponibles' => array_sum(array_column($consumo, 'tope')),
@@ -61,11 +72,20 @@ class PanelController extends Controller
         $llaves = $this->llavesDelUsuario();
 
         $filas = DB::table('consultas_consumo')
+            ->join('consulta_llaves', 'consulta_llaves.id', '=', 'consultas_consumo.llave_id')
             ->whereIn('llave_id', $llaves->pluck('id'))
-            ->when($request->filled('tipo'), fn ($q) => $q->where('tipo', $request->string('tipo')))
-            ->when($request->filled('desde'), fn ($q) => $q->whereDate('created_at', '>=', $request->date('desde')))
-            ->orderByDesc('created_at')
-            ->paginate(30, ['created_at', 'tipo', 'numero', 'exito', 'fuente'])
+            ->when($request->filled('tipo'), fn ($q) => $q->where('consultas_consumo.tipo', $request->string('tipo')))
+            ->when($request->filled('entorno'), fn ($q) => $q->where('consulta_llaves.entorno', $request->string('entorno')))
+            ->when($request->filled('desde'), fn ($q) => $q->whereDate('consultas_consumo.created_at', '>=', $request->date('desde')))
+            ->orderByDesc('consultas_consumo.created_at')
+            ->paginate(30, [
+                'consultas_consumo.created_at',
+                'consultas_consumo.tipo',
+                'consultas_consumo.numero',
+                'consultas_consumo.exito',
+                'consultas_consumo.fuente',
+                'consulta_llaves.entorno',
+            ])
             ->withQueryString();
 
         return view('consultas.consultas', [
@@ -79,6 +99,41 @@ class PanelController extends Controller
         return view('consultas.documentacion', [
             'llave' => $this->llavesDelUsuario()->first(),
         ]);
+    }
+
+    /** Probador visual que usa exactamente el mismo flujo de la API pública. */
+    public function probar(Request $request, ApiConsultaController $api)
+    {
+        $llaves = $this->llavesDelUsuario()->filter(fn ($llave) => $llave->activa && ! $llave->vencida())->values();
+        $resultado = null;
+        $estadoHttp = null;
+
+        if ($request->isMethod('post')) {
+            $datos = $request->validate([
+                'llave_id' => ['required', 'integer'],
+                'tipo' => ['required', Rule::in(['ruc', 'dni'])],
+                'numero' => ['required', 'string', 'regex:/^\d+$/', 'max:11'],
+            ], [
+                'numero.regex' => 'Escribe únicamente números.',
+            ]);
+
+            $llave = $llaves->firstWhere('id', (int) $datos['llave_id']);
+            abort_unless($llave, 403, 'Esa llave no pertenece a tu cuenta o no está disponible.');
+
+            if (! $llave->sirve($datos['tipo'])) {
+                return back()->withErrors(['tipo' => 'La llave seleccionada no incluye ese servicio.'])->withInput();
+            }
+
+            $request->attributes->set('llave_consulta', $llave);
+            $respuesta = $datos['tipo'] === 'ruc'
+                ? $api->ruc($request, $datos['numero'])
+                : $api->dni($request, $datos['numero']);
+
+            $resultado = $respuesta->getData(true);
+            $estadoHttp = $respuesta->getStatusCode();
+        }
+
+        return view('consultas.probar', compact('llaves', 'resultado', 'estadoHttp'));
     }
 
     /**
@@ -174,12 +229,18 @@ class PanelController extends Controller
         foreach (Api::whereIn('slug', $servicios)->get() as $api) {
             $tope = $llaves->sum(fn ($llave) => $llave->topeDe($api));
 
-            $usadas = DB::table('consultas_consumo')
+            $consulta = DB::table('consultas_consumo')
                 ->whereIn('llave_id', $llaves->pluck('id'))
                 ->where('api_id', $api->id)
-                ->where('created_at', '>=', now()->startOfMonth())
-                ->where('fuente', '!=', 'modo prueba')
-                ->count();
+                ->where('created_at', '>=', now()->startOfMonth());
+
+            // En Producción solo se enseña lo que consume cuota. En Sandbox
+            // todas las llamadas son pruebas y deben verse como realizadas.
+            if ($llaves->contains(fn ($llave) => $llave->entorno === 'produccion')) {
+                $consulta->where('fuente', '!=', 'modo prueba');
+            }
+
+            $usadas = $consulta->count();
 
             $salida[] = [
                 'slug' => $api->slug,
@@ -212,10 +273,18 @@ class PanelController extends Controller
         }
 
         return DB::table('consultas_consumo')
+            ->join('consulta_llaves', 'consulta_llaves.id', '=', 'consultas_consumo.llave_id')
             ->whereIn('llave_id', $llaves->pluck('id'))
-            ->orderByDesc('created_at')
+            ->orderByDesc('consultas_consumo.created_at')
             ->limit($cuantas)
-            ->get(['created_at', 'tipo', 'numero', 'exito', 'fuente']);
+            ->get([
+                'consultas_consumo.created_at',
+                'consultas_consumo.tipo',
+                'consultas_consumo.numero',
+                'consultas_consumo.exito',
+                'consultas_consumo.fuente',
+                'consulta_llaves.entorno',
+            ]);
     }
 
     /** Seis meses de consumo, para la grafica. */

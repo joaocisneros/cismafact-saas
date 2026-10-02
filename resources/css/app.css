@@ -22,6 +22,30 @@
     display: none !important;
 }
 
+/* Lenguaje visual comun para las tablas del modulo API RUC/DNI.
+ * Los colores quedan reservados a estados; la estructura usa una paleta
+ * neutra para que varias etiquetas en una fila no compitan entre si. */
+.consultas-module table > thead > tr {
+    background-color: #f8fafc;
+}
+
+.consultas-module table > thead th {
+    color: #475569;
+    letter-spacing: .025em;
+}
+
+.consultas-module table > tbody > tr {
+    transition: background-color 150ms ease;
+}
+
+.consultas-module table > tbody > tr:hover {
+    background-color: #f8fafc;
+}
+
+.consultas-module table > tbody td {
+    border-color: #f1f5f9;
+}
+
 /*
  * Barra de avance para lo que no se puede medir.
  *

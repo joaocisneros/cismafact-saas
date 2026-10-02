@@ -22,6 +22,7 @@ class DispatchGuide extends Model
         'anulado_en', 'anulado_motivo', 'anulado_registrado_por',
         'company_id',
         'api_key_id',   // token de la API con el que se emitio, si vino por ahi
+        'created_by_user_id',
         'branch_id',
         'client_id',
         'tipo_documento',
@@ -83,6 +84,11 @@ class DispatchGuide extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id')->withTrashed();
     }
 
     public function getTipoDocumentoNameAttribute(): string

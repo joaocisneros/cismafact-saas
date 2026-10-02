@@ -393,6 +393,19 @@ Route::prefix('empresa')
         Route::put('/usuarios/{usuario}', [\App\Http\Controllers\Web\Empresa\UsuarioController::class, 'update'])->name('usuarios.update');
         Route::post('/usuarios/{usuario}/toggle-active', [\App\Http\Controllers\Web\Empresa\UsuarioController::class, 'toggleActive'])->name('usuarios.toggle-active');
 
+        Route::get('/rendimiento-equipo', [\App\Http\Controllers\Web\Empresa\RendimientoController::class, 'index'])
+            ->name('rendimiento.index');
+        Route::post('/rendimiento-equipo/configuracion', [\App\Http\Controllers\Web\Empresa\RendimientoController::class, 'guardarConfiguracion'])
+            ->name('rendimiento.configuracion');
+        Route::post('/rendimiento-equipo/comisiones/{usuario}', [\App\Http\Controllers\Web\Empresa\RendimientoController::class, 'actualizarComision'])
+            ->name('rendimiento.comisiones.actualizar');
+        Route::delete('/rendimiento-equipo/comisiones', [\App\Http\Controllers\Web\Empresa\RendimientoController::class, 'restablecerComisiones'])
+            ->name('rendimiento.comisiones.restablecer');
+        Route::get('/rendimiento-equipo/comisiones/exportar', [\App\Http\Controllers\Web\Empresa\RendimientoController::class, 'exportarComisiones'])
+            ->name('rendimiento.comisiones.exportar');
+        Route::delete('/rendimiento-equipo/comisiones/historial', [\App\Http\Controllers\Web\Empresa\RendimientoController::class, 'limpiarHistorial'])
+            ->name('rendimiento.comisiones.historial.limpiar');
+
         // El plan y su consumo son informacion comercial de la empresa:
         // la ve el dueño, no cada empleado.
         Route::get('/plan', [\App\Http\Controllers\Web\Empresa\PlanController::class, 'index'])->name('plan.index');
@@ -543,6 +556,7 @@ Route::prefix('consultas')
         Route::get('/consumo', [ConsultasPanelController::class, 'consumo'])->name('consumo');
         Route::get('/mis-consultas', [ConsultasPanelController::class, 'consultas'])->name('consultas');
         Route::get('/documentacion', [ConsultasPanelController::class, 'documentacion'])->name('documentacion');
+        Route::match(['get', 'post'], '/probar-api', [ConsultasPanelController::class, 'probar'])->name('probar');
 
         Route::get('/mi-cuenta', [ConsultasPanelController::class, 'cuenta'])->name('cuenta');
         Route::put('/mi-cuenta', [ConsultasPanelController::class, 'guardarCuenta'])->name('cuenta.guardar');

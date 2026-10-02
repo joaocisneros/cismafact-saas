@@ -23,7 +23,7 @@
             <div>
                 <h2 class="text-sm font-semibold text-gray-900">Búsquedas desde el panel</h2>
                 <p class="mt-0.5 text-xs text-gray-500">
-                    Las 40 más recientes. Para ver qué buscó una empresa cuando dice que no le salió.
+                    15 por página. Para ver qué buscó una empresa cuando dice que no le salió.
                 </p>
             </div>
 
@@ -49,39 +49,37 @@
         ])
 
 
-        <div class="overflow-x-auto">
-            <table class="min-w-full table-fixed divide-y divide-gray-200 text-sm">
+        <div>
+            <table class="w-full table-auto divide-y divide-gray-200 text-sm">
                 <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
                     <tr>
-                        <th class="w-1/8 whitespace-nowrap px-4 py-3">Fecha y hora</th>
-                        <th class="w-1/6 whitespace-nowrap px-4 py-3">Empresa</th>
-                        <th class="w-1/12 whitespace-nowrap px-4 py-3">Servicio</th>
-                        <th class="w-1/12 whitespace-nowrap px-4 py-3">Número</th>
-                        <th class="w-1/5 whitespace-nowrap px-4 py-3">A nombre de</th>
-                        <th class="w-1/6 whitespace-nowrap px-4 py-3">Estado</th>
-                        <th class="w-1/12 whitespace-nowrap px-4 py-3">Origen</th>
-                        <th class="w-1/12 whitespace-nowrap px-4 py-3 text-right">Tardó</th>
+                        <th class="w-px whitespace-nowrap px-4 py-3">Fecha y hora</th>
+                        <th class="w-[28%] px-4 py-3">Empresa</th>
+                        <th class="w-[30%] px-4 py-3">Documento consultado</th>
+                        <th class="w-[27%] px-4 py-3">Resultado</th>
+                        <th class="w-px whitespace-nowrap px-4 py-3 text-right">Fuente / tiempo</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse($historial_interno as $h)
                         <tr class="{{ $h->exito ? '' : 'bg-red-50/40' }}">
-                            <td class="whitespace-nowrap px-4 py-2.5 text-gray-600">
-                                {{ \Illuminate\Support\Carbon::parse($h->created_at)->format('d/m/Y H:i:s') }}
+                            <td class="whitespace-nowrap px-4 py-2.5 align-top text-gray-600">
+                                <p class="font-medium text-gray-700">{{ \Illuminate\Support\Carbon::parse($h->created_at)->format('d/m/Y') }}</p>
+                                <p class="mt-0.5 text-xs text-gray-400">{{ \Illuminate\Support\Carbon::parse($h->created_at)->format('H:i:s') }}</p>
                             </td>
                             {{-- El consumo del mes va debajo del nombre, no en
                                  columna propia: es un dato de la empresa, no de
                                  esta consulta, y en medio partia la fila justo
                                  entre quien busco y que busco. --}}
-                            <td class="px-4 py-2.5">
-                                <div class="flex items-center gap-1.5">
+                            <td class="px-4 py-2.5 align-top">
+                                <div class="flex items-start gap-1.5">
                                     {{-- Sin empresa la hizo el super admin desde el
                                          panel: al dar de alta una llave se busca el
                                          RUC del cliente, y eso cuesta igual. Se dice
                                          quien fue, que con un guion no se distinguia
                                          de un dato que falta. --}}
                                     @if($h->empresa)
-                                        <span class="text-gray-900">{{ $h->empresa }}</span>
+                                        <span class="break-words font-medium leading-5 text-gray-900">{{ $h->empresa }}</span>
                                     @else
                                         <span class="rounded bg-violet-50 px-1.5 py-0.5 text-xs font-medium text-violet-700">Super Admin</span>
                                     @endif
@@ -106,58 +104,49 @@
                                     </p>
                                 @endif
                             </td>
-                            <td class="whitespace-nowrap px-4 py-2.5 text-gray-600">{{ strtoupper($h->tipo) }}</td>
-                            <td class="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-gray-700">{{ $h->numero }}</td>
-
-                            {{-- De quien es el numero. La fila decia que la
-                                 busqueda salio bien, pero no a quien encontro:
-                                 habia que copiar el numero y mirarlo aparte. --}}
-                            <td class="px-4 py-2.5 text-gray-700">
-                                @php
-                                    $ficha = $h->ficha ? json_decode($h->ficha, true) : null;
-                                @endphp
-                                <p class="truncate" title="{{ $ficha['nombre'] ?? '' }}">{{ $ficha['nombre'] ?? '—' }}</p>
+                            <td class="px-4 py-2.5 align-top text-gray-700">
+                                <div class="inline-flex items-stretch overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
+                                    <span class="flex items-center px-2 py-1 text-[11px] font-bold tracking-wide text-white {{ strtolower($h->tipo) === 'ruc' ? 'bg-violet-600' : 'bg-blue-600' }}">
+                                        {{ strtoupper($h->tipo) }}
+                                    </span>
+                                    <span class="flex items-center border-l border-slate-200 px-2.5 py-1 font-mono text-xs font-medium tracking-wide text-slate-700">
+                                        {{ $h->numero ?: '—' }}
+                                    </span>
+                                </div>
+                                @php $ficha = $h->ficha ? json_decode($h->ficha, true) : null; @endphp
+                                <p class="mt-1.5 break-words leading-5 text-slate-800">
+                                    {{ $ficha['nombre'] ?? '—' }}
+                                </p>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-2.5">
+
+                            <td class="px-4 py-2.5 align-top">
                                 @if($h->exito)
                                     <span class="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">Éxito</span>
                                 @else
-                                    {{-- Dos fallos distintos que antes salian iguales:
-                                         el numero mal escrito ni se llego a consultar,
-                                         y «sin ficha» es que el numero valia pero no
-                                         se pudo traer nada. --}}
                                     @if($h->fuente === 'invalido')
                                         <span class="rounded-full bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-700">Número inválido</span>
                                     @else
                                         <span class="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">Sin datos</span>
                                     @endif
                                     @if($h->motivo)
-                                        <p class="mt-0.5 truncate text-xs text-gray-500" title="{{ $h->motivo }}">{{ $h->motivo }}</p>
+                                        <p class="mt-1 break-words text-xs leading-4 text-gray-500">{{ $h->motivo }}</p>
                                     @endif
                                 @endif
                             </td>
-                            <td class="px-4 py-2.5">
+
+                            <td class="whitespace-nowrap px-4 py-2.5 text-right align-top text-gray-600">
                                 @include('super-admin.consultas.tabs._fuente', ['fuente' => $h->fuente, 'coste' => false])
-                            </td>
-                            <td class="whitespace-nowrap px-4 py-2.5 text-right text-gray-600">
-                                {{-- «0 ms» se leia como que no se habia medido. Es
-                                     real: se redondea a entero y esto tarda menos
-                                     de medio milisegundo. Cuando no se consulto
-                                     nada, no hay tiempo que dar. --}}
-                                @if($h->fuente === 'invalido')
-                                    <span class="text-gray-300">—</span>
-                                @elseif($h->ms === null)
-                                    —
-                                @elseif($h->ms == 0)
-                                    <span title="Menos de un milisegundo">&lt;1 ms</span>
-                                @else
-                                    {{ number_format($h->ms) }} ms
-                                @endif
+                                <p class="mt-1 text-xs text-gray-400">
+                                    @if($h->fuente === 'invalido' || $h->ms === null)—
+                                    @elseif($h->ms == 0)&lt;1 ms
+                                    @else{{ number_format($h->ms) }} ms
+                                    @endif
+                                </p>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-5 py-8 text-center text-sm text-gray-500">
+                            <td colspan="5" class="px-5 py-8 text-center text-sm text-gray-500">
                                 {{ $solo_fallos ? 'Ninguna búsqueda ha fallado.' : 'Todavía no hay ninguna búsqueda desde el panel.' }}
                             </td>
                         </tr>
@@ -165,5 +154,11 @@
                 </tbody>
             </table>
         </div>
+
+        @if($historial_interno->hasPages())
+            <div class="border-t border-gray-100 px-5 py-3">
+                {{ $historial_interno->onEachSide(1)->links() }}
+            </div>
+        @endif
     </section>
 </div>

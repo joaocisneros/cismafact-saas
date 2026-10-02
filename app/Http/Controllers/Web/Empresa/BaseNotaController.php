@@ -101,6 +101,7 @@ abstract class BaseNotaController extends Controller
 
         try {
             $nota = $this->createDocument($data);
+            $nota->forceFill(['created_by_user_id' => Auth::id()])->save();
             $result = $this->documentService->sendToSunat($nota, $this->documentType());
             $nota = $result['document'] ?? $nota;
 

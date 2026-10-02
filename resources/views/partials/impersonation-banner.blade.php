@@ -1,7 +1,7 @@
 @if(\App\Support\Impersonation::activa())
     {{-- Aviso fijo: deja claro que lo que se ve y lo que se haga es bajo la
          cuenta de la empresa, no la del Super Admin. --}}
-    <div class="sticky top-0 z-[9998] border-b border-amber-300 bg-amber-100 px-4 py-2.5 shadow-sm">
+    <div class="support-banner sticky top-0 z-[9998] border-b border-amber-300 bg-amber-100 px-4 py-2.5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-2 text-sm text-amber-900">
                 <svg class="h-5 w-5 shrink-0 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

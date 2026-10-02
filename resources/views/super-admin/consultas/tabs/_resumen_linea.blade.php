@@ -21,12 +21,12 @@
     </span>
 
     <span class="text-gray-500">
-        <span class="font-semibold {{ $r['proveedor'] ? 'text-amber-700' : 'text-gray-400' }}">{{ number_format($r['proveedor']) }}</span>
+        <span class="font-semibold {{ $r['proveedor'] ? 'text-slate-800' : 'text-gray-400' }}">{{ number_format($r['proveedor']) }}</span>
         {{ $coste ? "con costo" : "del proveedor" }}
     </span>
 
     <span class="text-gray-500">
-        <span class="font-semibold {{ $r['en_casa'] ? 'text-emerald-700' : 'text-gray-400' }}">{{ number_format($r['en_casa']) }}</span>
+        <span class="font-semibold {{ $r['en_casa'] ? 'text-slate-800' : 'text-gray-400' }}">{{ number_format($r['en_casa']) }}</span>
         {{ $coste ? "sin costo" : "de casa" }}
         @if($r['en_casa'])
             <span class="text-gray-400">({{ $ahorro }}%)</span>
@@ -35,14 +35,14 @@
 
     @if(($r['de_prueba'] ?? 0) > 0)
         <span class="text-gray-500">
-            <span class="font-semibold text-blue-700">{{ number_format($r['de_prueba']) }}</span>
+            <span class="font-semibold text-slate-800">{{ number_format($r['de_prueba']) }}</span>
             de prueba
         </span>
     @endif
 
     @if(($r['sin_ficha'] ?? 0) > 0)
         <span class="text-gray-500">
-            <span class="font-semibold text-amber-700">{{ number_format($r['sin_ficha']) }}</span>
+            <span class="font-semibold text-slate-800">{{ number_format($r['sin_ficha']) }}</span>
             sin ficha
         </span>
     @endif

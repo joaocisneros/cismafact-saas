@@ -13,7 +13,11 @@
 /.zed
 /auth.json
 /node_modules
-/public/build
+/public/build/*
+!/public/build/manifest.json
+!/public/build/assets/
+!/public/build/assets/*.css
+!/public/build/assets/*.js
 /public/hot
 /public/storage
 /storage/*.key
@@ -21,11 +25,7 @@
 /storage/app/private/certificado/*.pem
 /storage/app/private/certificado/*.pfx
 /storage/app/private/certificado/*.p12
-# Excepcion: el certificado de DEMOSTRACION de SUNAT (publico, solo beta) si se
-# versiona para que el entorno desplegado pueda firmar comprobantes de prueba sin
-# subirlo a mano. Vive en 'private' porque 'public' esta enlazada a la web y
-# cualquiera podia descargarlo con su clave privada dentro.
-!/storage/app/private/certificado/certificado.pem
+/ejemplos-postman/certificado_prueba/*.pem
 /storage/app/temp/certificados/
 # Los comprobantes emitidos (XML, CDR, PDF) nunca se versionan.
 /storage/app/comprobantes/*

@@ -29,7 +29,7 @@
     $actual = array_key_exists(request('tab'), $pestanas) ? request('tab') : 'apis';
 @endphp
 
-<div class="space-y-5">
+<div class="consultas-module space-y-5">
 
     @if(session('success'))
         <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('success') }}</div>

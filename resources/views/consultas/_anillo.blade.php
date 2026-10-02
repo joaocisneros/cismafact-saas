@@ -1,29 +1,28 @@
-{{--
-    El medidor de consumo de un servicio.
-
-    Anillo y no barra: dos barras largas ocupaban media pantalla para decir lo
-    mismo, y aquí lo que importa se lee de un vistazo —cuántas llevas y cuántas
-    te quedan.
---}}
+{{-- Medidor legible incluso cuando el consumo todavía es menor al 1 %. --}}
 @props(['servicio'])
 
 @php
-    $radio = 58;
-    $vuelta = 2 * M_PI * $radio;
-    // Lo pintado es lo gastado: el hueco es lo que queda.
-    $pintado = $vuelta * min(1, $servicio['porcentaje'] / 100);
+    $porcentaje = min(100, max(0, (float) $servicio['porcentaje']));
+    $anchoVisible = $porcentaje > 0 ? max(1.5, $porcentaje) : 0;
+    $esRuc = strtolower($servicio['slug']) === 'ruc';
 @endphp
 
-<div class="text-center">
-    <svg width="140" height="140" viewBox="0 0 140 140" class="mx-auto mb-3">
-        <circle cx="70" cy="70" r="{{ $radio }}" fill="none" stroke-width="12" class="stroke-gray-100"/>
-        <circle cx="70" cy="70" r="{{ $radio }}" fill="none" stroke-width="12" stroke-linecap="round"
-                class="stroke-emerald-500 origin-center -rotate-90"
-                stroke-dasharray="{{ round($vuelta, 1) }}"
-                stroke-dashoffset="{{ round($vuelta - $pintado, 1) }}"/>
-        <text x="70" y="68" text-anchor="middle" class="fill-gray-900 text-3xl font-semibold tabular-nums">{{ number_format($servicio['usadas']) }}</text>
-        <text x="70" y="88" text-anchor="middle" class="fill-gray-400 text-xs">de {{ number_format($servicio['tope']) }}</text>
-    </svg>
-    <p class="text-base font-semibold text-gray-900">{{ strtoupper($servicio['slug']) }}</p>
-    <p class="text-sm text-gray-500 tabular-nums">quedan {{ number_format($servicio['restantes']) }}</p>
+<div class="min-w-[210px] flex-1 rounded-xl border {{ $esRuc ? 'border-blue-200 bg-blue-50' : 'border-violet-200 bg-violet-50' }} p-4">
+    <div class="flex items-start justify-between gap-4">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wider {{ $esRuc ? 'text-blue-700' : 'text-violet-700' }}">Consultas {{ strtoupper($servicio['slug']) }}</p>
+            <p class="mt-1 text-3xl font-semibold tabular-nums text-gray-900">{{ number_format($servicio['usadas']) }}</p>
+            <p class="text-xs text-gray-500">utilizadas de {{ number_format($servicio['tope']) }}</p>
+        </div>
+        <span class="rounded-full bg-white px-2.5 py-1 text-xs font-semibold tabular-nums {{ $esRuc ? 'text-blue-700' : 'text-violet-700' }}">
+            {{ number_format($porcentaje, $porcentaje < 1 ? 2 : 1) }}%
+        </span>
+    </div>
+    <div class="mt-4 h-2.5 overflow-hidden rounded-full bg-white/80">
+        <div class="h-full rounded-full {{ $esRuc ? 'bg-blue-500' : 'bg-violet-500' }}" style="width: {{ $anchoVisible }}%"></div>
+    </div>
+    <div class="mt-2 flex items-center justify-between text-xs">
+        <span class="text-gray-500">Disponible</span>
+        <span class="font-semibold tabular-nums text-gray-700">{{ number_format($servicio['restantes']) }}</span>
+    </div>
 </div>

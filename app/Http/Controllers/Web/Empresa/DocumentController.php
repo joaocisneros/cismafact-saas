@@ -117,14 +117,15 @@ class DocumentController extends Controller
             ]);
     }
 
-    public function download(string $type, int $id, string $file)
+    public function download(Request $request, string $type, int $id, string $file)
     {
         $document = $this->findCompanyDocument($type, $id);
         $pathField = $this->pathFieldFor($file);
         $path = $document->$pathField;
 
         if ($file === 'pdf') {
-            $path = $this->rutaDelPdf($document);
+            $format = $this->pdfFormat($request, $type);
+            $path = $this->rutaDelPdf($document, $format, true);
         }
 
         if (!$path || !Storage::disk('comprobantes')->exists($path)) {
@@ -132,12 +133,13 @@ class DocumentController extends Controller
         }
 
         $extension = pathinfo($path, PATHINFO_EXTENSION);
-        $filename = "{$type}_{$document->numero_completo}.{$extension}";
+        $formatSuffix = $file === 'pdf' && isset($format) && $format !== 'A4' ? "_{$format}" : '';
+        $filename = "{$type}_{$document->numero_completo}{$formatSuffix}.{$extension}";
 
         return Storage::disk('comprobantes')->download($path, $filename);
     }
 
-    public function view(string $type, int $id, string $file)
+    public function view(Request $request, string $type, int $id, string $file)
     {
         $document = $this->findCompanyDocument($type, $id);
         $pathField = $this->pathFieldFor($file);
@@ -146,7 +148,8 @@ class DocumentController extends Controller
         // El PDF se rehace si falta: es lo mismo que hace la descarga, y sin
         // esto "Ver" fallaba en todos los comprobantes sin pdf_path guardado.
         if ($file === 'pdf') {
-            $path = $this->rutaDelPdf($document);
+            $format = $this->pdfFormat($request, $type);
+            $path = $this->rutaDelPdf($document, $format, true);
         }
 
         if (!$path || !Storage::disk('comprobantes')->exists($path)) {
@@ -188,6 +191,18 @@ class DocumentController extends Controller
             'pdf' => 'pdf_path',
             default => abort(404),
         };
+    }
+
+    private function pdfFormat(Request $request, string $type): string
+    {
+        $format = PdfService::normalizarFormato($request->query('format', 'A4'));
+        $allowed = in_array($type, ['factura', 'boleta'], true)
+            ? ['A4', 'A5', '80mm', '58mm']
+            : ['A4'];
+
+        abort_unless(in_array($format, $allowed, true), 422, 'Formato de PDF no disponible.');
+
+        return $format;
     }
 
     private function generatePdf($document): string

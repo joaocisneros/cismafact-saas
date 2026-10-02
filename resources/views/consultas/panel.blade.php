@@ -4,6 +4,7 @@
 
 @section('content')
 @php($produccion = $llaves->firstWhere('entorno', 'produccion') ?? $llaves->first())
+@php($esSandbox = $entornoResumen === 'sandbox')
 
 <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
     <div>
@@ -25,19 +26,29 @@
     </div>
 @else
     <div class="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div class="rounded-xl border border-gray-200 bg-white p-5">
-            <p class="text-sm text-gray-500">Consultas del mes</p>
+        <div class="rounded-xl border border-blue-200 border-l-4 border-l-blue-500 bg-white p-5 shadow-sm">
+            <p class="text-sm font-medium text-blue-600">{{ $esSandbox ? 'Pruebas realizadas' : 'Consultas del mes' }}</p>
             <p class="mt-1 text-4xl font-semibold tabular-nums text-gray-900">{{ number_format($gastadas) }}</p>
             <p class="mt-0.5 text-sm text-gray-500">de {{ number_format($disponibles) }} disponibles</p>
         </div>
-        <div class="rounded-xl border border-gray-200 bg-white p-5">
-            <p class="text-sm text-gray-500">Te quedan</p>
+        <div class="rounded-xl border border-emerald-200 border-l-4 border-l-emerald-500 bg-white p-5 shadow-sm">
+            <p class="text-sm font-medium text-emerald-700">{{ $esSandbox ? 'Pruebas disponibles' : 'Saldo disponible' }}</p>
             <p class="mt-1 text-4xl font-semibold tabular-nums text-gray-900">{{ number_format(max(0, $disponibles - $gastadas)) }}</p>
-            <p class="mt-0.5 text-sm text-gray-500">hasta el día 1</p>
+            <p class="mt-0.5 text-sm text-gray-500">
+                @if($esSandbox && $produccion?->expira_en)
+                    hasta el {{ $produccion->expira_en->format('d/m/Y') }}
+                @else
+                    se renueva el día 1
+                @endif
+            </p>
         </div>
-        <div class="rounded-xl border border-gray-200 bg-white p-5">
-            <p class="text-sm text-gray-500">Tu plan</p>
-            <p class="mt-1 text-2xl font-semibold text-gray-900">{{ $produccion?->plan?->nombre ?? '—' }}</p>
+        <div class="rounded-xl border border-violet-200 border-l-4 border-l-violet-500 bg-white p-5 shadow-sm">
+            <p class="text-sm font-medium text-violet-700">
+                {{ $produccion?->entorno === 'sandbox' ? 'Entorno asignado' : 'Plan contratado' }}
+            </p>
+            <p class="mt-1 text-2xl font-semibold text-gray-900">
+                {{ $produccion?->entorno === 'sandbox' ? 'Sandbox' : ($produccion?->plan?->nombre ?? '—') }}
+            </p>
             {{-- Lo que paga, no solo el nombre del plan.
 
                  El precio va por servicio, asi que dos llaves del mismo plan
@@ -45,16 +56,27 @@
                  no le decia cuanto le toca. --}}
             <p class="mt-0.5 text-sm text-gray-500">
                 {{ collect($produccion?->servicios ?? [])->map(fn($s) => strtoupper($s))->join(' y ') }}
-                @if($produccion?->plan && ! $produccion->plan->esGratis())
+                @if($produccion?->entorno === 'sandbox')
+                    <span class="text-gray-300">·</span>
+                    <span class="font-medium text-violet-700">Acceso de prueba</span>
+                @elseif($produccion?->plan && ! $produccion->plan->esGratis())
                     <span class="text-gray-300">·</span>
                     <span class="font-medium text-gray-700">{{ $produccion->precioTexto() }} al mes</span>
                 @endif
             </p>
         </div>
-        <div class="rounded-xl border border-gray-200 bg-white p-5">
-            <p class="text-sm text-gray-500">Tus llaves</p>
-            <p class="mt-1 text-4xl font-semibold tabular-nums text-gray-900">{{ $llaves->count() }}</p>
-            <p class="mt-0.5 text-sm text-gray-500">{{ $llaves->where('entorno', 'produccion')->count() }} en producción</p>
+        <div class="rounded-xl border border-amber-200 border-l-4 border-l-amber-500 bg-white p-5 shadow-sm">
+            @if($esSandbox)
+                <p class="text-sm font-medium text-amber-700">Servicios habilitados</p>
+                <p class="mt-2 text-2xl font-semibold text-gray-900">
+                    {{ collect($produccion?->servicios ?? [])->map(fn($s) => strtoupper($s))->join(' y ') ?: '—' }}
+                </p>
+                <p class="mt-1 text-sm text-gray-500">Disponibles para realizar pruebas</p>
+            @else
+                <p class="text-sm font-medium text-amber-700">Credenciales de producción</p>
+                <p class="mt-1 text-4xl font-semibold tabular-nums text-gray-900">{{ $llavesResumen->count() }}</p>
+                <p class="mt-0.5 text-sm text-gray-500">API Keys activas</p>
+            @endif
         </div>
     </div>
 
@@ -66,14 +88,14 @@
                 </h2>
                 <span class="text-sm text-gray-400">Se reinicia el día 1</span>
             </div>
-            <div class="flex flex-wrap items-center justify-center gap-10 p-8">
+            <div class="flex flex-wrap items-stretch gap-4 p-5">
                 @foreach($consumo as $servicio)
                     @include('consultas._anillo', ['servicio' => $servicio])
                 @endforeach
             </div>
         </div>
 
-        <div class="rounded-xl border border-gray-200 bg-white xl:col-span-2">
+        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm xl:col-span-2">
             <div class="flex items-center justify-between border-b border-gray-100 px-5 py-3.5">
                 <h2 class="text-xs font-semibold uppercase tracking-widest text-gray-400">Últimas consultas</h2>
                 <a href="{{ route('consultas.consultas') }}" class="text-sm font-semibold text-blue-700 hover:underline">Ver todas</a>

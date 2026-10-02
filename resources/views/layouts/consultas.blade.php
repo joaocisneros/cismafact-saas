@@ -14,9 +14,103 @@
     <title>{{ config('app.name') }} - @yield('title', 'Mi acceso a la API')</title>
     <link rel="icon" href="{{ config('platform.favicon_url', asset('assets/brand/favicon.png')) }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style>[x-cloak] { display: none !important; }</style>
+    <style>
+        [x-cloak] { display: none !important; }
+
+        /* Tema propio del portal API. Se limita a este layout para no alterar
+           Facturación ni el panel administrativo. */
+        .consultas-dark { background: #020617; color: #e2e8f0; color-scheme: dark; }
+        .consultas-dark .bg-white { background-color: #0f172a; }
+        .consultas-dark .bg-gray-100 { background-color: #020617; }
+        .consultas-dark .bg-gray-50 { background-color: #111827; }
+        .consultas-dark .bg-blue-50 { background-color: rgba(37, 99, 235, .16); }
+        .consultas-dark .bg-emerald-50 { background-color: rgba(16, 185, 129, .14); }
+        .consultas-dark .bg-violet-50 { background-color: rgba(124, 58, 237, .15); }
+        .consultas-dark .bg-amber-50 { background-color: rgba(245, 158, 11, .13); }
+        .consultas-dark .bg-amber-100 { background-color: rgba(245, 158, 11, .22); }
+        .consultas-dark .border-gray-100 { border-color: #1e293b; }
+        .consultas-dark .border-gray-200 { border-color: #263449; }
+        .consultas-dark .border-gray-300 { border-color: #3b4a60; }
+        .consultas-dark .border-blue-200 { border-color: rgba(96, 165, 250, .35); }
+        .consultas-dark .border-emerald-200 { border-color: rgba(52, 211, 153, .32); }
+        .consultas-dark .border-violet-200 { border-color: rgba(167, 139, 250, .34); }
+        .consultas-dark .border-amber-200 { border-color: rgba(251, 191, 36, .32); }
+        .consultas-dark .text-gray-900,
+        .consultas-dark .text-gray-800 { color: #f8fafc; }
+        .consultas-dark .text-gray-700 { color: #dbe4f0; }
+        .consultas-dark .text-gray-600 { color: #c0ccdc; }
+        .consultas-dark .text-gray-500 { color: #94a3b8; }
+        .consultas-dark .text-gray-400 { color: #7f8da3; }
+        .consultas-dark .text-blue-700,
+        .consultas-dark .text-blue-600 { color: #60a5fa; }
+        .consultas-dark .text-emerald-700 { color: #34d399; }
+        .consultas-dark .text-violet-700 { color: #a78bfa; }
+        .consultas-dark .text-amber-700,
+        .consultas-dark .text-amber-800 { color: #fbbf24; }
+        .consultas-dark input,
+        .consultas-dark select,
+        .consultas-dark textarea { background-color: #0b1220; border-color: #3b4a60; color: #f8fafc; }
+        .consultas-dark code,
+        .consultas-dark pre { scrollbar-color: #475569 transparent; }
+        .consultas-dark .hover\:bg-gray-50:hover,
+        .consultas-dark .hover\:bg-gray-100:hover { background-color: #1e293b; }
+        .consultas-dark .shadow-lg,
+        .consultas-dark .shadow-xl { box-shadow: 0 20px 45px rgba(0, 0, 0, .38); }
+
+        /* El aviso de suplantación necesita contraste propio: las utilidades
+           ámbar del tema claro quedaban marrón sobre marrón en modo oscuro. */
+        .consultas-dark .support-banner {
+            background: linear-gradient(90deg, #451a03, #78350f);
+            border-color: #d97706;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .28);
+        }
+        .consultas-dark .support-banner .text-amber-900 { color: #fef3c7; }
+        .consultas-dark .support-banner .text-amber-600 { color: #fbbf24; }
+        .consultas-dark .support-banner .bg-amber-700 {
+            background-color: #f59e0b;
+            color: #1c1917;
+        }
+        .consultas-dark .support-banner .hover\:bg-amber-800:hover { background-color: #fbbf24; }
+    </style>
+    <script>
+        window.copyConsultaValue = function (button, value) {
+            const label = button.querySelector('[data-copy-label]') || button;
+            const original = label.textContent.trim() || 'Copiar';
+            const done = function () {
+                label.textContent = 'Copiado';
+                const previousColor = button.style.backgroundColor;
+                button.style.backgroundColor = '#059669';
+                setTimeout(function () {
+                    label.textContent = original;
+                    button.style.backgroundColor = previousColor;
+                }, 1500);
+            };
+            const fallback = function () {
+                const field = document.createElement('textarea');
+                field.value = String(value);
+                field.setAttribute('readonly', '');
+                field.style.position = 'fixed';
+                field.style.left = '-9999px';
+                document.body.appendChild(field);
+                field.select();
+                field.setSelectionRange(0, field.value.length);
+                let copied = false;
+                try { copied = document.execCommand('copy'); } catch (error) {}
+                field.remove();
+                if (copied) return done();
+                label.textContent = 'No se pudo copiar';
+                setTimeout(function () { label.textContent = original; }, 2000);
+            };
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(String(value)).then(done).catch(fallback);
+            } else {
+                fallback();
+            }
+        };
+    </script>
 </head>
-<body class="bg-gray-100 text-gray-900 antialiased">
+<body class="consultas-dark bg-gray-100 text-gray-900 antialiased">
 
 {{-- La barra para volver a la propia cuenta.
 
@@ -54,6 +148,10 @@
 
             <x-consultas-enlace ruta="consultas.consultas" texto="Mis consultas">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.2-5.2M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/>
+            </x-consultas-enlace>
+
+            <x-consultas-enlace ruta="consultas.probar" texto="Probar API">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3h6m-5 0v5l-5 9a2 2 0 001.7 3h10.6a2 2 0 001.7-3l-5-9V3M8 14h8"/>
             </x-consultas-enlace>
 
             <p class="px-2 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-widest text-gray-400">Ayuda</p>
@@ -151,6 +249,7 @@
                 'consultas.credenciales' => 'Mi API',
                 'consultas.consumo' => 'Consumo',
                 'consultas.consultas' => 'Consultas',
+                'consultas.probar' => 'Probar API',
                 'consultas.documentacion' => 'Docs',
             ] as $ruta => $texto)
                 <a href="{{ route($ruta) }}"

@@ -143,7 +143,7 @@
 
     <div class="bg-white rounded-xl shadow-sm p-6">
         <h2 class="text-lg font-semibold text-gray-800 mb-4">Últimos Documentos</h2>
-        @if($ultimasFacturas->count() > 0 || $ultimasBoletas->count() > 0)
+        @if($ultimosDocumentos->isNotEmpty())
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead>
@@ -151,27 +151,34 @@
                             <th class="pb-3 font-medium">Tipo</th>
                             <th class="pb-3 font-medium">Serie</th>
                             <th class="pb-3 font-medium">Número</th>
+                            <th class="pb-3 font-medium">Emitido por</th>
                             <th class="pb-3 font-medium">Fecha</th>
                             <th class="pb-3 font-medium">Total</th>
                             <th class="pb-3 font-medium">Estado SUNAT</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($ultimasFacturas->take(3) as $doc)
+                        @foreach($ultimosDocumentos as $doc)
                         <tr class="border-b hover:bg-gray-50">
-                            <td class="py-3"><span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">Factura</span></td>
+                            <td class="py-3">
+                                @if($doc instanceof \App\Models\Invoice)
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">Factura</span>
+                                @else
+                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Boleta</span>
+                                @endif
+                            </td>
                             <td class="py-3">{{ $doc->serie }}</td>
                             <td class="py-3">{{ $doc->numero_completo }}</td>
-                            <td class="py-3 text-gray-500">{{ $doc->fecha_emision?->format('d/m/Y') ?? '-' }}</td>
-                            <td class="py-3">S/ {{ number_format($doc->mto_imp_venta, 2) }}</td>
-                            <td class="py-3"><x-status-badge :status="$doc->estado_sunat" /></td>
-                        </tr>
-                        @endforeach
-                        @foreach($ultimasBoletas->take(3) as $doc)
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="py-3"><span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Boleta</span></td>
-                            <td class="py-3">{{ $doc->serie }}</td>
-                            <td class="py-3">{{ $doc->numero_completo }}</td>
+                            <td class="py-3">
+                                @if($doc->createdBy)
+                                    <p class="font-medium text-gray-800">{{ $doc->createdBy->name }}</p>
+                                    <span class="text-xs {{ $doc->createdBy->role?->name === 'company_admin' ? 'text-indigo-600' : 'text-gray-500' }}">{{ $doc->createdBy->role?->name === 'company_admin' ? 'Dueño' : 'Empleado' }}</span>
+                                @elseif($doc->api_key_id)
+                                    <span class="rounded bg-violet-50 px-2 py-1 text-xs text-violet-700">API</span>
+                                @else
+                                    <span class="text-xs text-gray-400">Sin identificar</span>
+                                @endif
+                            </td>
                             <td class="py-3 text-gray-500">{{ $doc->fecha_emision?->format('d/m/Y') ?? '-' }}</td>
                             <td class="py-3">S/ {{ number_format($doc->mto_imp_venta, 2) }}</td>
                             <td class="py-3"><x-status-badge :status="$doc->estado_sunat" /></td>

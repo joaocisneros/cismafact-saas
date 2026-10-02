@@ -17,10 +17,11 @@ class CompanyController extends Controller
     /**
      * Listar todas las empresas
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         try {
             $companies = Company::active()
+                ->whereKey((int) $request->attributes->get('api_company')->id)
                 ->with(['branches'])
                 ->select([
                     'id', 'ruc', 'razon_social', 'nombre_comercial', 
@@ -52,6 +53,15 @@ class CompanyController extends Controller
      */
     public function store(StoreCompanyRequest $request): JsonResponse
     {
+        // Una llave empresarial administra su propia empresa, no crea tenants.
+        // El alta global se realiza desde el panel de Super Admin.
+        if (! $request->user()?->hasRole('super_admin')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para crear empresas.',
+            ], 403);
+        }
+
         try {
             $validatedData = $this->processRequestData($request);
             $company = Company::create($validatedData);

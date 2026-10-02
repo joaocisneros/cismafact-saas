@@ -4,8 +4,8 @@
 
 @section('content')
 <div class="mb-6">
-    <h2 class="text-2xl font-bold text-gray-800">Bienvenido de nuevo</h2>
-    <p class="text-sm text-gray-500 mt-1">Ingresa tus credenciales para acceder a tu panel.</p>
+    <h2 class="text-2xl font-bold text-gray-800">Accede a tus servicios</h2>
+    <p class="text-sm text-gray-500 mt-1">Una sola cuenta para Facturación electrónica y API RUC/DNI.</p>
 </div>
 
 <form method="POST" action="{{ route('login.post') }}" x-data="{ show: false }">

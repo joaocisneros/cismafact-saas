@@ -31,30 +31,39 @@
             </a>
         </div>
 
-        <div class="relative z-10">
-            {{-- Por esta puerta entran los dos servicios.
+        <div class="relative z-10 max-w-xl">
+            <span class="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-blue-50">
+                Plataforma empresarial
+            </span>
+            <h1 class="mt-5 text-4xl font-bold leading-tight">Facturación electrónica <span class="text-blue-300">·</span><br>API RUC/DNI</h1>
+            <p class="mt-4 max-w-lg text-blue-100">Emite comprobantes electrónicos y realiza consultas de RUC y DNI desde una sola plataforma.</p>
 
-                 Antes hablaba solo de emitir comprobantes, y quien habia
-                 contratado las consultas de RUC y DNI llegaba a una pantalla
-                 que no mencionaba lo suyo por ningun lado. Se nombran los dos,
-                 sin dejar de decir lo que de verdad distingue: que va directo a
-                 SUNAT y con el certificado de cada uno. --}}
-            <h1 class="text-4xl font-bold leading-tight">Facturación y consultas<br>directo a SUNAT</h1>
-            <p class="mt-4 text-blue-100 max-w-md">Emite tus comprobantes con tu propio certificado y consulta RUC y DNI desde tu sistema. Sin intermediarios.</p>
+            <div class="mt-8 grid gap-3 sm:grid-cols-2">
+                <div class="rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur-sm">
+                    <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-700">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 2h9l5 5v15H6zM14 2v6h6M9 13h6M9 17h4"/>
+                        </svg>
+                    </div>
+                    <h2 class="font-semibold text-white">Facturación electrónica</h2>
+                    <p class="mt-1 text-sm leading-5 text-blue-100">Emite facturas, boletas, notas y guías directamente a SUNAT.</p>
+                </div>
 
-            <ul class="mt-8 space-y-3 text-blue-50">
-                @foreach([
-                    'Todos tus comprobantes, con su estado real en SUNAT',
-                    'Firmas con tu propio certificado digital',
-                    'Consulta RUC y DNI desde tu sistema',
-                    'API REST para integrar tu negocio',
-                ] as $item)
-                    <li class="flex items-center gap-3">
-                        <span class="flex-shrink-0 w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-sm">✓</span>
-                        {{ $item }}
-                    </li>
-                @endforeach
-            </ul>
+                <div class="rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur-sm">
+                    <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-indigo-700">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="m20 20-4-4M8 11h6M11 8v6"/>
+                        </svg>
+                    </div>
+                    <h2 class="font-semibold text-white">API RUC y DNI</h2>
+                    <p class="mt-1 text-sm leading-5 text-blue-100">Consulta datos y conecta la API REST con tu sistema o negocio.</p>
+                </div>
+            </div>
+
+            <div class="mt-5 flex items-center gap-2 text-sm text-blue-100">
+                <svg class="h-5 w-5 shrink-0 text-emerald-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6"/></svg>
+                Un solo acceso para todos los servicios contratados por tu empresa.
+            </div>
         </div>
 
         <p class="relative z-10 text-sm text-blue-200">© {{ date('Y') }} {{ config('app.name') }}. Hecho en Perú 🇵🇪</p>
@@ -68,7 +77,7 @@
                 <img src="{{ config('platform.logo_url', asset('assets/brand/cisma-fact.png')) }}"
                      alt="{{ config('app.name') }}"
                      class="mx-auto h-auto w-40 max-w-full">
-                <p class="mt-2 text-sm text-gray-500">Facturación electrónica y consultas SUNAT</p>
+                <p class="mt-2 text-sm text-gray-500">Facturación electrónica y API RUC/DNI</p>
             </div>
 
             {{-- Tarjeta --}}

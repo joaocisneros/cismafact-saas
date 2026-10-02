@@ -73,11 +73,10 @@ class AccesoConsultasController extends Controller
             ]);
         }
 
-        // Solo las de produccion: las de Sandbox son para probar y no dan
-        // acceso al sistema, asi que aunque llegaran en la peticion no se
-        // asignan.
+        // El mismo panel sirve para revisar Producción y Sandbox. Cada llave
+        // conserva su entorno, así que el cliente puede probar y luego pasar
+        // a producción sin recibir una segunda cuenta.
         ConsultaLlave::whereIn('id', $datos['llaves'])
-            ->where('entorno', 'produccion')
             ->update(['usuario_id' => $usuario->id, 'titular_email' => $datos['correo']]);
 
         return back()->with('acceso_creado', [

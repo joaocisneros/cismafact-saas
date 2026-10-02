@@ -169,27 +169,51 @@
               }
               if (this.toastMessage) this.hideToastLater();
               window.copyCompanyCredential = (button, value) => {
+                  const label = button.querySelector('[data-copy-label]');
+                  const originalHtml = button.innerHTML;
+                  const original = (label?.textContent || button.textContent).trim() || 'Copiar';
                   const done = () => {
-                      const original = button.textContent;
-                      button.textContent = 'Copiado';
-                      setTimeout(() => { button.textContent = original || 'Copiar'; }, 1500);
+                      if (label) label.textContent = 'Copiado';
+                      else button.textContent = 'Copiado';
+                      setTimeout(() => {
+                          if (label) label.textContent = original;
+                          else button.innerHTML = originalHtml;
+                      }, 1500);
+                  };
+                  const fallback = () => {
+                      const input = document.createElement('textarea');
+                      input.value = value;
+                      input.setAttribute('readonly', '');
+                      input.style.position = 'fixed';
+                      input.style.left = '-9999px';
+                      input.style.opacity = '0';
+                      document.body.appendChild(input);
+                      input.focus();
+                      input.select();
+                      input.setSelectionRange(0, input.value.length);
+
+                      let copied = false;
+                      try { copied = document.execCommand('copy'); } catch (error) {}
+                      document.body.removeChild(input);
+
+                      if (copied) {
+                          done();
+                          return;
+                      }
+
+                      if (label) label.textContent = 'No se pudo copiar';
+                      else button.textContent = 'No se pudo copiar';
+                      setTimeout(() => {
+                          if (label) label.textContent = original;
+                          else button.innerHTML = originalHtml;
+                      }, 2000);
                   };
 
                   if (navigator.clipboard && window.isSecureContext) {
-                      navigator.clipboard.writeText(value).then(done);
-                      return;
+                      navigator.clipboard.writeText(String(value)).then(done).catch(fallback);
+                  } else {
+                      fallback();
                   }
-
-                  const input = document.createElement('textarea');
-                  input.value = value;
-                  input.style.position = 'fixed';
-                  input.style.opacity = '0';
-                  document.body.appendChild(input);
-                  input.focus();
-                  input.select();
-                  document.execCommand('copy');
-                  document.body.removeChild(input);
-                  done();
               };
           },
           loadAdminModal(url, title) {
@@ -320,6 +344,7 @@
             ['label' => 'Mi Empresa', 'route' => 'empresa.company.edit', 'active' => 'empresa.company.*', 'color' => 'text-emerald-600', 'icon' => 'M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M9 7h2m-2 4h2m-2 4h2m7 6v-8h2a2 2 0 012 2v6'],
             ['label' => 'Clientes', 'route' => 'empresa.clients.index', 'active' => 'empresa.clients.*', 'color' => 'text-violet-600', 'icon' => 'M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-2a4 4 0 10-8 0 4 4 0 008 0zm6-3a4 4 0 11-8 0 4 4 0 018 0z'],
             ['label' => 'Usuarios', 'route' => 'empresa.usuarios.index', 'active' => 'empresa.usuarios.*', 'color' => 'text-violet-600', 'icon' => 'M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-2a4 4 0 10-8 0 4 4 0 008 0zm6-3a4 4 0 11-8 0 4 4 0 018 0z'],
+            ['label' => 'Ventas por usuario', 'route' => 'empresa.rendimiento.index', 'active' => 'empresa.rendimiento.*', 'color' => 'text-amber-600', 'icon' => 'M4 19V9m5 10V5m5 14v-7m5 7V3'],
             ['label' => 'Sucursales', 'route' => 'empresa.branches.index', 'active' => 'empresa.branches.*', 'color' => 'text-rose-600', 'icon' => 'M3 21h18M5 21V7l7-4 7 4v14M9 9h1m-1 4h1m-1 4h1m4-8h1m-1 4h1m-1 4h1'],
             ['label' => 'Correlativos', 'route' => 'empresa.correlatives.index', 'active' => 'empresa.correlatives.*', 'color' => 'text-orange-600', 'icon' => 'M7 20l4-16m2 16l4-16M6 9h14M4 15h14'],
             ['label' => 'Comprobantes', 'active' => 'empresa.facturas.*|empresa.boletas.*|empresa.notas-credito.*|empresa.notas-debito.*|empresa.guias.*', 'color' => 'text-sky-600', 'icon' => 'M7 3h7l5 5v13H7V3zm7 0v5h5M9 13h8M9 17h8', 'children' => [
@@ -360,6 +385,7 @@
                 'empresa.api-keys.index',
                 'empresa.plan.index',
                 'empresa.usuarios.index',
+                'empresa.rendimiento.index',
             ];
 
             $menuItems = array_values(array_filter(

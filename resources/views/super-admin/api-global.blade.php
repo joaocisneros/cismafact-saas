@@ -154,13 +154,10 @@
                                      repetirlo dejaba dos columnas con el mismo numero.
                                      Lo que no se veia es si hoy hay movimiento.
 
-                                     Los errores del mes van aqui tambien: es donde se
-                                     mira cuando algo va mal. --}}
+                                     El detalle de errores se conserva en "Registro de
+                                     llamadas", sin mezclarlo con el consumo diario. --}}
                                 <td class="px-4 py-3">
                                     <span class="font-medium text-gray-900">{{ number_format($e['hoy']) }}</span>
-                                    @if($e['errores'] > 0)
-                                        <p class="text-xs font-semibold text-red-600">{{ number_format($e['errores']) }} con error este mes</p>
-                                    @endif
                                 </td>
 
                                 {{-- Una credencial habilitada que no se usa nunca es

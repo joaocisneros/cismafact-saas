@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'company.active' => \App\Http\Middleware\EnsureCompanyIsActive::class,
             'api.key' => \App\Http\Middleware\AuthenticateApiKey::class,
+            'api.tenant' => \App\Http\Middleware\EnsureApiTenantOwnership::class,
             // Aparte de api.key a proposito: consultar y emitir se venden
             // por separado y no deben compartir llave. Ver el middleware.
             'llave.consulta' => \App\Http\Middleware\AutenticarLlaveConsulta::class,
