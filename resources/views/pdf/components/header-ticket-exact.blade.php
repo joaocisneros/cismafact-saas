@@ -2,8 +2,11 @@
 {{-- Props: $company, $document, $tipo_documento_nombre --}}
 
 @php
-    // Logo PROPIO de cada empresa. Si no tiene, no se muestra logo.
-    $logoSrc = null;
+    // Marca temporal para empresas nuevas; el logo propio siempre tiene prioridad.
+    $logoPredeterminado = public_path('assets/brand/cisma-fact.png');
+    $logoSrc = file_exists($logoPredeterminado)
+        ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPredeterminado))
+        : null;
     if (!empty($company->logo_path) && \Illuminate\Support\Facades\Storage::disk('public')->exists($company->logo_path)) {
         $logoAbs = \Illuminate\Support\Facades\Storage::disk('public')->path($company->logo_path);
         $logoExt = strtolower(pathinfo($logoAbs, PATHINFO_EXTENSION));

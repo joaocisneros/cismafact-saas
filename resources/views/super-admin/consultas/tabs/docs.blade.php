@@ -28,7 +28,9 @@
 <div class="space-y-5"
      x-data="{
          llaveId: '',
+         filtro: '',
          secreto: '',
+         mostrarSecreto: false,
          copiado: null,
          llaves: @js($paraEntregar),
          enlaceDocs: @js(route('docs.consultas')),
@@ -36,6 +38,32 @@
 
          llave() {
              return this.llaves.find(l => String(l.id) === String(this.llaveId)) ?? null;
+         },
+
+         etiquetaLlave(l = this.llave()) {
+             if (! l) return '';
+             const entorno = l.entorno === 'sandbox' ? 'SANDBOX' : 'PROD';
+             return '[' + entorno + '] ' + (l.titular || 'Sin titular') + ' — ' + l.nombre;
+         },
+
+         seleccionarLlave(l) {
+             this.llaveId = String(l.id);
+             this.filtro = this.etiquetaLlave(l);
+         },
+
+         llavesFiltradas(entorno) {
+             const termino = this.filtro.trim().toLocaleLowerCase('es');
+
+             return this.llaves.filter(l => {
+                 if (l.entorno !== entorno) return false;
+                 if (! termino) return true;
+
+                 return [l.titular, l.nombre, l.plan, l.entorno, ...(l.servicios ?? [])]
+                     .filter(Boolean)
+                     .join(' ')
+                     .toLocaleLowerCase('es')
+                     .includes(termino);
+             });
          },
 
          /* El mensaje se arma con la llave elegida: nada que rellenar a mano y
@@ -107,11 +135,20 @@
 
     {{-- 1. Entregar: es a lo que se entra a esta pestaña, asi que va primero --}}
     <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div class="border-b border-gray-200 px-5 py-4">
-            <h2 class="text-sm font-semibold text-gray-900">Entregar a un cliente</h2>
+        <div class="flex flex-col gap-4 border-b border-gray-200 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+            <h2 class="text-base font-semibold text-gray-900">Compartir acceso con un cliente</h2>
             <p class="mt-0.5 text-xs text-gray-500">
-                Elige su llave y el mensaje se escribe solo, con su clave dentro.
+                Prepara y envía sus credenciales sin redactar el mensaje manualmente.
             </p>
+            </div>
+            <ol class="flex items-center gap-2 text-[11px] font-medium text-gray-500" aria-label="Pasos para entregar credenciales">
+                <li class="flex items-center gap-1.5"><span class="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white">1</span>Seleccionar</li>
+                <li class="h-px w-5 bg-gray-200"></li>
+                <li class="flex items-center gap-1.5"><span class="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-gray-600">2</span>Revisar</li>
+                <li class="h-px w-5 bg-gray-200"></li>
+                <li class="flex items-center gap-1.5"><span class="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-gray-600">3</span>Enviar</li>
+            </ol>
         </div>
 
         {{-- Los datos a un lado y lo que se va a mandar al otro, para verlo
@@ -125,16 +162,71 @@
 
             <div class="lg:col-span-2">
                 <div>
-                    <label for="llave-entrega" class="block text-sm font-medium text-gray-900">¿A qué cliente?</label>
-                    <select id="llave-entrega" x-model="llaveId"
-                            class="mt-2 w-full rounded-lg border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="">Elige una llave…</option>
-                        @foreach($paraEntregar as $l)
-                            <option value="{{ $l['id'] }}">
-                                {{ $l['titular'] ?: 'Sin titular' }} — {{ $l['nombre'] }}{{ $l['entorno'] === 'sandbox' ? ' (prueba)' : '' }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <div class="flex min-h-6 items-center justify-between gap-3">
+                        <label for="llave-entrega" class="block text-sm font-medium text-gray-900">¿A qué cliente?</label>
+                        <template x-if="llave()">
+                            <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                                  :class="llave().entorno === 'sandbox' ? 'bg-violet-100 text-violet-700' : 'bg-blue-100 text-blue-700'"
+                                  x-text="llave().entorno === 'sandbox' ? 'SANDBOX · PRUEBAS' : 'PRODUCCIÓN'"></span>
+                        </template>
+                    </div>
+                    <div class="relative mt-2" x-data="{ abierto: false }"
+                         @click.outside="abierto = false; filtro = etiquetaLlave()"
+                         @keydown.escape.window="abierto = false; filtro = etiquetaLlave()">
+                        <div class="relative">
+                            <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="m20 20-4-4"/></svg>
+                            <input id="llave-entrega" type="search" x-model="filtro"
+                                   @focus="filtro = ''; abierto = true"
+                                   @click="filtro = ''; abierto = true"
+                                   @input="abierto = true"
+                                   placeholder="Escribe el cliente o el nombre de la llave…"
+                                   role="combobox" :aria-expanded="abierto" aria-controls="lista-llaves"
+                                   class="w-full rounded-lg border-gray-300 py-2.5 pl-9 pr-10 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <button type="button" @click="abierto = ! abierto; if (abierto) { filtro = ''; $nextTick(() => $el.previousElementSibling.focus()) }"
+                                    class="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-gray-400 hover:text-gray-700"
+                                    aria-label="Mostrar todas las llaves">
+                                <svg class="h-4 w-4 transition" :class="abierto && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg>
+                            </button>
+                        </div>
+
+                        <div id="lista-llaves" x-cloak x-show="abierto" x-transition.origin.top
+                             class="absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-xl">
+                            <template x-if="llavesFiltradas('produccion').length">
+                                <div>
+                                    <p class="sticky top-0 bg-blue-50 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-blue-700">Producción · credenciales reales</p>
+                                    <template x-for="l in llavesFiltradas('produccion')" :key="'prod-' + l.id">
+                                        <button type="button" @click="seleccionarLlave(l); abierto = false"
+                                                class="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm hover:bg-blue-50"
+                                                :class="String(llaveId) === String(l.id) && 'bg-blue-50'">
+                                            <span class="min-w-0"><span class="block truncate font-medium text-gray-800" x-text="l.titular || 'Sin titular'"></span><span class="block truncate text-xs text-gray-500" x-text="l.nombre"></span></span>
+                                            <span class="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">PROD</span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <template x-if="llavesFiltradas('sandbox').length">
+                                <div>
+                                    <p class="sticky top-0 bg-violet-50 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-violet-700">Sandbox · solo pruebas</p>
+                                    <template x-for="l in llavesFiltradas('sandbox')" :key="'sandbox-' + l.id">
+                                        <button type="button" @click="seleccionarLlave(l); abierto = false"
+                                                class="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm hover:bg-violet-50"
+                                                :class="String(llaveId) === String(l.id) && 'bg-violet-50'">
+                                            <span class="min-w-0"><span class="block truncate font-medium text-gray-800" x-text="l.titular || 'Sin titular'"></span><span class="block truncate text-xs text-gray-500" x-text="l.nombre"></span></span>
+                                            <span class="shrink-0 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700">SANDBOX</span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <template x-if="! llavesFiltradas('produccion').length && ! llavesFiltradas('sandbox').length">
+                                <p class="px-4 py-8 text-center text-sm text-gray-500">No se encontraron llaves con esa búsqueda.</p>
+                            </template>
+
+                            <div class="sticky bottom-0 border-t border-gray-100 bg-white px-3 py-2 text-[11px] text-gray-500"
+                                 x-text="(llavesFiltradas('produccion').length + llavesFiltradas('sandbox').length) + ' resultado(s)'"></div>
+                        </div>
+                    </div>
                     @if($paraEntregar->isEmpty())
                         <p class="mt-2 text-xs text-gray-500">
                             Todavía no hay ninguna llave. Se crean en <span class="font-medium">Mis APIs</span>.
@@ -146,9 +238,14 @@
                     <label for="secreto-entrega" class="block text-sm font-medium text-gray-900">
                         API Secret <span class="font-normal text-gray-400">(opcional)</span>
                     </label>
-                    <input id="secreto-entrega" type="text" x-model="secreto" autocomplete="off"
-                           placeholder="Pégalo aquí"
-                           class="mt-2 w-full rounded-lg border-gray-300 px-3 py-2 font-mono text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <div class="relative mt-2">
+                        <input id="secreto-entrega" :type="mostrarSecreto ? 'text' : 'password'" x-model="secreto" autocomplete="off"
+                               placeholder="Pégalo aquí"
+                               class="w-full rounded-lg border-gray-300 py-2 pl-3 pr-20 font-mono text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <button type="button" @click="mostrarSecreto = ! mostrarSecreto"
+                                class="absolute inset-y-0 right-0 px-3 text-xs font-medium text-blue-600 hover:text-blue-800"
+                                x-text="mostrarSecreto ? 'Ocultar' : 'Mostrar'"></button>
+                    </div>
                     <p class="mt-2 flex items-start gap-1.5 text-xs leading-relaxed text-gray-500">
                         <svg class="mt-px h-3.5 w-3.5 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -162,19 +259,25 @@
                 <div class="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200">
                     <div class="flex h-9 shrink-0 items-center justify-between border-b border-gray-100 bg-gray-50 px-4">
                         <span class="text-xs font-medium text-gray-600">Así le llegará</span>
-                        <template x-if="llave() && llave().entorno === 'sandbox'">
-                            <span class="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">Llave de prueba</span>
+                        <template x-if="llave()">
+                            <span class="rounded-full px-2 py-0.5 text-xs font-semibold"
+                                  :class="llave().entorno === 'sandbox' ? 'bg-violet-100 text-violet-700' : 'bg-blue-100 text-blue-700'"
+                                  x-text="llave().entorno === 'sandbox' ? 'Sandbox · sin cuota real' : 'Producción · usa cuota'"></span>
                         </template>
                     </div>
 
                     <template x-if="llaveId">
-                        <pre class="h-[19rem] shrink-0 overflow-auto whitespace-pre-wrap p-4 text-xs leading-relaxed text-gray-700"
+                        <pre class="h-[22rem] shrink-0 overflow-auto whitespace-pre-wrap p-4 text-xs leading-relaxed text-gray-700"
                              x-text="mensaje()"></pre>
                     </template>
 
                     <template x-if="! llaveId">
-                        <div class="flex h-[19rem] shrink-0 items-center justify-center px-4 text-center">
-                            <p class="text-xs text-gray-400">Elige un cliente y aquí sale su mensaje.</p>
+                        <div class="flex h-[22rem] shrink-0 flex-col items-center justify-center px-4 text-center">
+                            <span class="flex h-11 w-11 items-center justify-center rounded-full bg-blue-50 text-blue-500">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h.01M12 10h.01M16 10h.01M9 16l-4 3v-4a7 7 0 117 3h-1"/></svg>
+                            </span>
+                            <p class="mt-3 text-sm font-medium text-gray-600">Vista previa del mensaje</p>
+                            <p class="mt-1 max-w-xs text-xs text-gray-400">Selecciona una llave para generar el texto que recibirá el cliente.</p>
                         </div>
                     </template>
 
@@ -184,7 +287,7 @@
                          cuando se ocultaba, la tarjeta perdia su alto de golpe
                          y subia y bajaba al elegir en el desplegable. Sin llave
                          los botones se ven apagados y no responden. --}}
-                    <div class="flex h-14 shrink-0 items-center gap-2 overflow-hidden border-t border-gray-200 bg-gray-50 px-4"
+                    <div class="flex min-h-14 shrink-0 flex-wrap items-center gap-2 border-t border-gray-200 bg-gray-50 px-4 py-2"
                          :class="llaveId || 'pointer-events-none opacity-40'"
                          :aria-hidden="llaveId ? 'false' : 'true'">
                         <a :href="whatsapp()" target="_blank" rel="noopener"

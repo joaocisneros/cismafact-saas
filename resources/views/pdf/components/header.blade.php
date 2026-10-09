@@ -2,9 +2,12 @@
 {{-- Props: $company, $document, $tipo_documento_nombre, $fecha_emision, $format --}}
 
 @php
-    // Logo PROPIO de cada empresa (subido en su configuración). Si no tiene logo,
-    // no se muestra ninguno (antes se usaba un archivo fijo igual para todas).
-    $logoSrc = null;
+    // Si la empresa aún no subió su marca, el comprobante usa temporalmente el
+    // logo de Cisma Fact. En cuanto carga uno propio, este bloque lo reemplaza.
+    $logoPredeterminado = public_path('assets/brand/cisma-fact.png');
+    $logoSrc = file_exists($logoPredeterminado)
+        ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPredeterminado))
+        : null;
     if (!empty($company->logo_path) && \Illuminate\Support\Facades\Storage::disk('public')->exists($company->logo_path)) {
         $logoAbs = \Illuminate\Support\Facades\Storage::disk('public')->path($company->logo_path);
         $logoExt = strtolower(pathinfo($logoAbs, PATHINFO_EXTENSION));

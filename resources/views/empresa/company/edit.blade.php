@@ -124,7 +124,7 @@
                         @if($company->logo_path)
                             <img src="{{ asset('storage/' . $company->logo_path) }}" alt="Logo de la empresa" class="max-h-full max-w-full object-contain">
                         @else
-                            <span class="text-xs text-gray-400">Sin logo</span>
+                            <img src="{{ asset('assets/brand/cisma-fact.png') }}" alt="Logo predeterminado de Cisma Fact" class="max-h-full max-w-full object-contain p-3">
                         @endif
                     </div>
 
@@ -134,6 +134,8 @@
                     <p class="mt-1.5 text-xs text-gray-500">
                         @if($company->logo_path)
                             Si no eliges ninguno, se mantiene el actual.
+                        @else
+                            Se usa temporalmente el logo de Cisma Fact. Al subir el tuyo, se reemplazará automáticamente.
                         @endif
                         Usa una imagen pequeña (unos 300&times;300&nbsp;px): va incrustada en cada PDF.
                     </p>

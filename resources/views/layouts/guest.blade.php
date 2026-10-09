@@ -71,7 +71,7 @@
 
     {{-- Formulario (derecha) --}}
     <main class="flex w-full items-center justify-center p-6 sm:p-8 lg:w-1/2">
-        <div class="w-full max-w-lg">
+        <div class="w-full @yield('guest_width', 'max-w-lg')">
             {{-- Logo --}}
             <div class="mb-5 text-center">
                 <img src="{{ config('platform.logo_url', asset('assets/brand/cisma-fact.png')) }}"

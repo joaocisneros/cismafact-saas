@@ -274,44 +274,47 @@
         </div>
     </section>
 
-    {{-- Para desarrolladores / Para empresas --}}
+    {{-- Dos canales del mismo servicio: integración o uso directo desde la web. --}}
     <section class="bg-gray-50 py-16">
         <div class="max-w-6xl mx-auto px-6">
-            <h2 class="text-3xl font-bold text-center text-gray-900">Dos formas de emitir con Cisma Fact</h2>
-            <p class="text-center text-gray-500 mt-2">Elige la que mejor se adapte a tu negocio.</p>
+            <h2 class="text-3xl font-bold text-center text-gray-900">Elige cómo quieres emitir</h2>
+            <p class="text-center text-gray-500 mt-2">Conecta tu sistema mediante API o trabaja directamente desde Cisma Fact Online.</p>
 
             <div class="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8">
-                {{-- Para desarrolladores --}}
+                {{-- Integración por API --}}
                 <div class="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col">
                     <div class="h-36 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-6xl">👨‍💻</div>
                     <div class="p-7 flex flex-col flex-1">
-                        <h3 class="text-2xl font-light text-gray-900">Para <span class="font-bold text-blue-600">desarrolladores</span></h3>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-blue-600">Para sistemas propios</p>
+                        <h3 class="mt-2 text-2xl font-bold text-gray-900">Integración por API</h3>
                         <p class="mt-3 text-gray-600 leading-relaxed">
-                            Si tienes un software, tienda online, POS o ERP en <strong>cualquier lenguaje de programación</strong>,
-                            intégralo con nuestra <strong>API REST</strong> y emite documentos electrónicos en cuestión de minutos.
+                            Si ya utilizas un software, tienda online, POS o ERP, conéctalo con nuestra <strong>API REST</strong>
+                            para emitir documentos electrónicos desde tu propio sistema.
                         </p>
                         <p class="mt-3 text-gray-600 leading-relaxed">
-                            Te damos <strong>documentación con ejemplos</strong> en PHP, Laravel y JavaScript, además de una
-                            <strong>colección Postman</strong> para que pruebes la integración sin escribir una sola línea.
+                            Consulta la documentación, ejemplos en PHP y JavaScript y la colección Postman para validar tu integración.
                         </p>
-                        <a href="{{ route('register') }}" class="mt-5 inline-block self-start px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">Probar API de facturación</a>
+                        <div class="mt-5 flex flex-wrap gap-3">
+                            <button type="button" onclick="document.getElementById('registro-rapido').showModal()" class="rounded-lg bg-blue-600 px-6 py-2.5 font-medium text-white hover:bg-blue-700">Crear cuenta de prueba</button>
+                            <a href="{{ route('docs') }}" class="rounded-lg border border-blue-200 bg-blue-50 px-5 py-2.5 font-medium text-blue-700 hover:bg-blue-100">Ver documentación</a>
+                        </div>
                     </div>
                 </div>
 
-                {{-- Para empresas --}}
+                {{-- Uso directo desde la web --}}
                 <div class="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col">
                     <div class="h-36 bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white text-6xl">🏢</div>
                     <div class="p-7 flex flex-col flex-1">
-                        <h3 class="text-2xl font-light text-gray-900">Para <span class="font-bold text-emerald-600">empresas</span></h3>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-emerald-600">Sin sistema propio</p>
+                        <h3 class="mt-2 text-2xl font-bold text-gray-900">Facturación desde la web</h3>
                         <p class="mt-3 text-gray-600 leading-relaxed">
-                            ¿No tienes un sistema de ventas? Usa <strong>Cisma Fact Online</strong>: emite facturas, boletas,
-                            notas de crédito/débito y guías de remisión directamente desde tu navegador.
+                            Usa <strong>Cisma Fact Online</strong> desde tu navegador para emitir facturas, boletas,
+                            notas de crédito/débito y guías de remisión.
                         </p>
                         <p class="mt-3 text-gray-600 leading-relaxed">
-                            <strong>Sin instalar nada y sin conocimientos técnicos.</strong> Solo cargas tu certificado,
-                            registras tus clientes y series, y empiezas a emitir el mismo día.
+                            <strong>Sin instalar programas ni realizar una integración.</strong> Registra clientes, administra series y revisa el estado de tus comprobantes en un solo panel.
                         </p>
-                        <a href="{{ route('register') }}" class="mt-5 inline-block self-start px-6 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700">Probar Facturación</a>
+                        <button type="button" onclick="document.getElementById('registro-rapido').showModal()" class="mt-5 inline-block self-start rounded-lg bg-emerald-600 px-6 py-2.5 font-medium text-white hover:bg-emerald-700">Probar facturación web</button>
                     </div>
                 </div>
             </div>
@@ -319,43 +322,130 @@
     </section>
 
     {{-- Planes --}}
-    <section id="planes" class="max-w-6xl mx-auto px-6 py-20">
-        <span class="block text-center text-sm font-semibold uppercase tracking-wide text-blue-600">Precios claros</span>
-        <h2 id="planes-facturacion" class="mt-2 text-3xl font-bold text-center text-gray-900">Planes de Facturación electrónica</h2>
-        <p class="text-center text-gray-500 mt-2">Elige el plan según el volumen y el equipo de tu empresa.</p>
+    <section id="planes" class="border-y border-gray-100 bg-gray-50 py-20 text-gray-900">
+        <div class="mx-auto max-w-6xl px-6">
+            <div class="mx-auto max-w-2xl text-center">
+                <span class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Planes de facturación</span>
+                <h2 id="planes-facturacion" class="mt-3 text-3xl font-bold sm:text-4xl">Elige según el ritmo de tu empresa</h2>
+                <p class="mt-3 text-gray-600">Precios mensuales y límites transparentes. Puedes comenzar gratis y cambiar de plan cuando lo necesites.</p>
+            </div>
 
-        <div class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-            @forelse($plans as $plan)
-                <div class="relative rounded-2xl border border-gray-200 bg-white p-6 flex flex-col {{ (float) $plan->monthly_price > 0 ? 'shadow-sm' : '' }}">
-                    <h3 class="text-lg font-semibold text-gray-900">{{ $plan->name }}</h3>
-                    <p class="mt-3">
-                        <span class="text-3xl font-bold text-gray-900">S/ {{ number_format($plan->monthly_price, 2) }}</span>
-                        <span class="text-gray-500 text-sm">/mes</span>
-                    </p>
-                    <ul class="mt-5 space-y-2 text-sm text-gray-600 flex-1">
-                        <li>✔ {{ $plan->monthly_document_limit ? number_format($plan->monthly_document_limit) : 'Ilimitados' }} documentos/mes</li>
-                        <li>✔ {{ $plan->user_limit ? $plan->user_limit : 'Ilimitados' }} usuarios</li>
-                        <li>✔ {{ $plan->api_request_limit ? number_format($plan->api_request_limit) : 'Ilimitadas' }} llamadas API/mes</li>
-                        <li>{{ $plan->support_included ? '✔ Soporte incluido' : '✖ Sin soporte' }}</li>
-                    </ul>
-                    @if ((float) $plan->monthly_price <= 0)
-                        <a href="{{ route('register') }}" class="mt-6 rounded-lg bg-blue-600 px-4 py-2.5 text-center font-medium text-white hover:bg-blue-700">Comenzar prueba gratuita</a>
-                    @else
-                        <button type="button"
-                                data-plan="{{ $plan->name }}"
-                                data-precio="S/ {{ number_format($plan->monthly_price, 2) }} al mes"
-                                onclick="window.dispatchEvent(new CustomEvent('solicitar-plan', { detail: { nombre: this.dataset.plan, precio: this.dataset.precio } }))"
-                                class="mt-6 rounded-lg bg-blue-600 px-4 py-2.5 text-center font-medium text-white hover:bg-blue-700">
-                            Solicitar plan {{ $plan->name }}
-                        </button>
-                    @endif
+            <div class="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+                @forelse($plans as $plan)
+                    @php
+                        $destacado = strtolower((string) $plan->code) === 'business';
+                        $gratuito = (float) $plan->monthly_price <= 0;
+                    @endphp
+                    <article class="relative flex flex-col rounded-3xl border p-7 transition duration-200 hover:-translate-y-1 {{ $destacado ? 'border-indigo-400 bg-white shadow-xl shadow-indigo-100/70 ring-1 ring-indigo-100' : 'border-gray-200 bg-white shadow-sm hover:border-blue-200 hover:shadow-lg' }}">
+                        @if($destacado)
+                            <span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-indigo-500 px-4 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg">Más elegido</span>
+                        @endif
+
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-[0.16em] {{ $destacado ? 'text-indigo-600' : 'text-gray-500' }}">{{ $plan->name }}</p>
+                                <p class="mt-4 flex items-end gap-2">
+                                    <span class="text-4xl font-bold tracking-tight">S/ {{ number_format((float) $plan->monthly_price, 0) }}</span>
+                                    @unless($gratuito)<span class="pb-1 text-sm text-gray-500">/ mes</span>@endunless
+                                </p>
+                                <p class="mt-1 text-xs text-gray-500">{{ $gratuito ? 'Sin costo mensual' : 'Plan mensual' }}</p>
+                            </div>
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl {{ $destacado ? 'bg-indigo-600 text-white' : 'bg-blue-50 text-blue-600' }}">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            </span>
+                        </div>
+
+                        <div class="my-6 h-px bg-gray-100"></div>
+                        <ul class="flex-1 space-y-4 text-sm text-gray-700">
+                            @foreach([
+                                ($plan->monthly_document_limit ? number_format($plan->monthly_document_limit) : 'Sin límite') . ' comprobantes al mes',
+                                ($plan->user_limit ? number_format($plan->user_limit) : 'Sin límite de') . ' ' . ($plan->user_limit === 1 ? 'usuario' : 'usuarios'),
+                                ($plan->api_request_limit ? number_format($plan->api_request_limit) : 'Sin límite de') . ' solicitudes API al mes',
+                                'Soporte: ' . ($plan->support_included ?: 'No incluido'),
+                                'XML, PDF y respuesta CDR',
+                            ] as $beneficio)
+                                <li class="flex items-start gap-3">
+                                    <svg class="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                    <span>{{ $beneficio }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+
+                        @if($gratuito)
+                            <button type="button" onclick="document.getElementById('registro-rapido').showModal()" class="mt-8 rounded-xl border border-gray-200 bg-gray-100 px-5 py-3 text-center text-sm font-semibold text-gray-800 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">Comenzar gratis</button>
+                        @else
+                            <button type="button"
+                                    data-plan="{{ $plan->name }}"
+                                    data-precio="S/ {{ number_format($plan->monthly_price, 2) }} al mes"
+                                    onclick="window.dispatchEvent(new CustomEvent('solicitar-plan', { detail: { nombre: this.dataset.plan, precio: this.dataset.precio } }))"
+                                    class="mt-8 rounded-xl px-5 py-3 text-center text-sm font-semibold text-white transition {{ $destacado ? 'bg-indigo-600 shadow-lg shadow-indigo-200 hover:bg-indigo-700' : 'bg-blue-600 shadow-sm hover:bg-blue-700' }}">
+                                Elegir {{ $plan->name }}
+                            </button>
+                        @endif
+                    </article>
+                @empty
+                    <p class="col-span-3 rounded-2xl border border-gray-200 bg-white p-8 text-center text-gray-500">Pronto publicaremos nuestros planes.</p>
+                @endforelse
+            </div>
+
+            @if($plans->isNotEmpty())
+                <div class="mt-12 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <div class="border-b border-gray-100 px-6 py-5">
+                        <h3 class="text-lg font-bold text-gray-900">Compara los planes</h3>
+                        <p class="mt-1 text-sm text-gray-500">Revisa los límites vigentes antes de elegir.</p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[720px] text-left text-sm">
+                            <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                                <tr>
+                                    <th class="px-6 py-4 font-semibold">Característica</th>
+                                    @foreach($plans as $plan)
+                                        <th class="px-5 py-4 text-center font-semibold {{ strtolower((string) $plan->code) === 'business' ? 'text-indigo-600' : '' }}">
+                                            {{ $plan->name }}
+                                            <span class="mt-0.5 block normal-case tracking-normal text-gray-400">S/ {{ number_format((float) $plan->monthly_price, 0) }}{{ (float) $plan->monthly_price > 0 ? ' / mes' : '' }}</span>
+                                        </th>
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 text-gray-700">
+                                <tr>
+                                    <th class="px-6 py-4 font-medium text-gray-900">Comprobantes electrónicos</th>
+                                    @foreach($plans as $plan)<td class="px-5 py-4 text-center">{{ $plan->monthly_document_limit ? number_format($plan->monthly_document_limit) . ' / mes' : 'Sin límite' }}</td>@endforeach
+                                </tr>
+                                <tr class="bg-gray-50/60">
+                                    <th class="px-6 py-4 font-medium text-gray-900">Usuarios</th>
+                                    @foreach($plans as $plan)<td class="px-5 py-4 text-center">{{ $plan->user_limit ? number_format($plan->user_limit) : 'Sin límite' }}</td>@endforeach
+                                </tr>
+                                <tr>
+                                    <th class="px-6 py-4 font-medium text-gray-900">Solicitudes API de facturación</th>
+                                    @foreach($plans as $plan)<td class="px-5 py-4 text-center">{{ $plan->api_request_limit ? number_format($plan->api_request_limit) . ' / mes' : 'Sin límite' }}</td>@endforeach
+                                </tr>
+                                <tr class="bg-gray-50/60">
+                                    <th class="px-6 py-4 font-medium text-gray-900">XML, PDF y respuesta CDR</th>
+                                    @foreach($plans as $plan)<td class="px-5 py-4 text-center"><span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">✓</span></td>@endforeach
+                                </tr>
+                                <tr>
+                                    <th class="px-6 py-4 font-medium text-gray-900">Reporte CSV para contador</th>
+                                    @foreach($plans as $plan)<td class="px-5 py-4 text-center"><span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">✓</span></td>@endforeach
+                                </tr>
+                                <tr class="bg-gray-50/60">
+                                    <th class="px-6 py-4 font-medium text-gray-900">
+                                        Consulta RUC/DNI desde el panel
+                                        <span class="mt-0.5 block text-xs font-normal text-gray-500">Para completar datos de clientes dentro del sistema</span>
+                                    </th>
+                                    @foreach($plans as $plan)<td class="px-5 py-4 text-center"><span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">✓</span></td>@endforeach
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            @empty
-                <p class="col-span-3 text-center text-gray-500">Pronto publicaremos nuestros planes.</p>
-            @endforelse
-        </div>
 
-        <div id="sandbox" class="mt-14 overflow-hidden rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-blue-50">
+            @endif
+        </div>
+    </section>
+
+    <section class="mx-auto max-w-6xl px-6 py-16">
+        <div id="sandbox" class="overflow-hidden rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-blue-50">
             <div class="grid items-center gap-8 p-7 lg:grid-cols-[1fr_auto] lg:p-9">
                 <div>
                     <div class="flex flex-wrap items-center gap-2"><span class="text-sm font-semibold uppercase tracking-wide text-indigo-700">API RUC/DNI</span><span class="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-amber-700 shadow-sm">Solo Sandbox por ahora</span></div>
@@ -421,12 +511,182 @@
         </div>
     </section>
 
-    {{-- Footer --}}
-    <footer class="border-t border-gray-100 py-8">
-        <div class="max-w-6xl mx-auto px-6 text-center text-sm text-gray-500">
-            © {{ date('Y') }} Cisma Fact — Facturación Electrónica. Hecho en Perú 🇵🇪
+    {{-- Footer: solo servicios y canales disponibles actualmente. --}}
+    <footer class="bg-slate-950 text-slate-300">
+        <div class="mx-auto grid max-w-6xl gap-8 px-6 py-10 sm:grid-cols-2 lg:grid-cols-[1.35fr_1fr_1fr_1fr]">
+            <div>
+                <a href="{{ route('landing') }}" class="inline-flex items-center rounded-xl bg-white px-3 py-2" aria-label="Ir al inicio de Cisma Fact">
+                    <img src="{{ config('platform.logo_url', asset('assets/brand/cisma-fact.png')) }}"
+                         alt="{{ config('app.name', 'Cisma Fact') }}"
+                         class="h-9 w-auto max-w-[180px] object-contain">
+                </a>
+                <p class="mt-3 max-w-xs text-sm leading-6 text-slate-400">
+                    Facturación electrónica y consultas API de RUC y DNI para empresas peruanas, desde una plataforma centralizada.
+                </p>
+                <div class="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-300">
+                    <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                    Integración con SUNAT disponible
+                </div>
+            </div>
+
+            <div>
+                <h3 class="font-semibold text-white">Soluciones</h3>
+                <ul class="mt-3 space-y-2.5 text-sm text-slate-400">
+                    <li><a href="{{ route('landing') }}#facturacion" class="transition hover:text-white">Facturación electrónica</a></li>
+                    <li><a href="{{ route('landing') }}#api-ruc-dni" class="transition hover:text-white">API RUC y DNI</a></li>
+                    <li><a href="{{ route('landing') }}#planes" class="transition hover:text-white">Planes disponibles</a></li>
+                    <li><a href="{{ route('landing') }}#sandbox" class="transition hover:text-white">Acceso Sandbox</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="font-semibold text-white">Desarrolladores</h3>
+                <ul class="mt-3 space-y-2.5 text-sm text-slate-400">
+                    <li><a href="{{ route('docs') }}" class="transition hover:text-white">API de facturación</a></li>
+                    <li><a href="{{ route('docs.consultas') }}" class="transition hover:text-white">API RUC/DNI</a></li>
+                    <li><a href="{{ route('register') }}" class="transition hover:text-white">Crear una cuenta</a></li>
+                    <li><a href="{{ route('login') }}" class="transition hover:text-white">Iniciar sesión</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="font-semibold text-white">Ayuda y contacto</h3>
+                <ul class="mt-3 space-y-2.5 text-sm text-slate-400">
+                    <li><a href="https://wa.me/51921676408" target="_blank" rel="noopener noreferrer" class="transition hover:text-white">WhatsApp: +51 921 676 408</a></li>
+                    <li><a href="mailto:sistemasdesk04@gmail.com" class="break-all transition hover:text-white">sistemasdesk04@gmail.com</a></li>
+                    <li><a href="{{ route('landing') }}#contacto" class="transition hover:text-white">Contactar soporte</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="border-t border-white/10">
+            <div class="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                <p>© {{ date('Y') }} Cisma Fact Perú. Todos los derechos reservados.</p>
+                <nav class="flex flex-wrap items-center gap-x-5 gap-y-2" aria-label="Información legal">
+                    <a href="{{ route('legal.privacidad') }}" class="transition hover:text-slate-200">Privacidad</a>
+                    <a href="{{ route('legal.terminos') }}" class="transition hover:text-slate-200">Términos</a>
+                    <a href="{{ route('legal.seguridad') }}" class="inline-flex items-center gap-1.5 transition hover:text-slate-200">
+                        <svg class="h-3.5 w-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0-1.105.895-2 2-2s2 .895 2 2v2m-8 0v-2a4 4 0 118 0v2m-9 0h10a1 1 0 011 1v6a1 1 0 01-1 1H7a1 1 0 01-1-1v-6a1 1 0 011-1z"/></svg>
+                        Seguridad y conexión HTTPS
+                    </a>
+                </nav>
+            </div>
         </div>
     </footer>
+
+    {{-- Registro rápido. Comparte exactamente la misma ruta y validaciones que /register. --}}
+    <dialog id="registro-rapido"
+            class="m-auto w-[calc(100%-2rem)] max-w-2xl overflow-hidden rounded-2xl bg-white p-0 text-left shadow-2xl backdrop:bg-slate-950/60"
+            onclick="if (event.target === this) this.close()">
+        <div class="flex max-h-[calc(100vh-2rem)] flex-col">
+            <div class="flex items-start justify-between border-b border-gray-100 px-6 py-5 sm:px-7">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">Plan Free</span>
+                        <span class="text-xs text-gray-500">Sin costo mensual</span>
+                    </div>
+                    <h2 class="mt-3 text-2xl font-bold text-gray-900">Crea tu cuenta</h2>
+                    <p class="mt-1 text-sm text-gray-500">Empieza en modo de pruebas, sin certificado.</p>
+                </div>
+                <button type="button" onclick="document.getElementById('registro-rapido').close()" class="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700" aria-label="Cerrar registro">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="overflow-y-auto px-6 py-5 sm:px-7">
+                @if($errors->any() && old('registro_modal'))
+                    <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        Revisa los campos marcados para poder crear tu cuenta.
+                    </div>
+                @endif
+
+                <form method="POST" action="{{ route('register.post') }}" class="space-y-4">
+                    @csrf
+                    <input type="hidden" name="registro_modal" value="1">
+
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <label for="modal-name" class="mb-1.5 block text-sm font-medium text-gray-700">Tu nombre</label>
+                            <input id="modal-name" name="name" type="text" value="{{ old('name') }}" required maxlength="255" autocomplete="name" placeholder="Juan Pérez"
+                                   class="w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 {{ $errors->has('name') && old('registro_modal') ? 'border-red-400' : 'border-gray-300' }}">
+                            @if(old('registro_modal')) @error('name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror @endif
+                        </div>
+                        <div>
+                            <label for="modal-razon" class="mb-1.5 block text-sm font-medium text-gray-700">Razón social</label>
+                            <input id="modal-razon" name="razon_social" type="text" value="{{ old('razon_social') }}" required maxlength="255" autocomplete="organization" placeholder="Mi Empresa S.A.C."
+                                   class="w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 {{ $errors->has('razon_social') && old('registro_modal') ? 'border-red-400' : 'border-gray-300' }}">
+                            @if(old('registro_modal')) @error('razon_social')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror @endif
+                        </div>
+                        <div>
+                            <label for="modal-ruc" class="mb-1.5 block text-sm font-medium text-gray-700">RUC</label>
+                            <input id="modal-ruc" name="ruc" type="text" value="{{ old('ruc') }}" required maxlength="11" inputmode="numeric" pattern="\d{11}" placeholder="20123456789"
+                                   class="w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 {{ $errors->has('ruc') && old('registro_modal') ? 'border-red-400' : 'border-gray-300' }}">
+                            @if(old('registro_modal')) @error('ruc')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror @endif
+                        </div>
+                        <div>
+                            <label for="modal-email" class="mb-1.5 block text-sm font-medium text-gray-700">Correo <span class="font-normal text-gray-400">— será tu usuario</span></label>
+                            <input id="modal-email" name="email" type="email" value="{{ old('email') }}" required autocomplete="email" placeholder="tucorreo@empresa.com"
+                                   class="w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 {{ $errors->has('email') && old('registro_modal') ? 'border-red-400' : 'border-gray-300' }}">
+                            @if(old('registro_modal')) @error('email')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror @endif
+                        </div>
+                        <div>
+                            <label for="modal-password" class="mb-1.5 block text-sm font-medium text-gray-700">Contraseña</label>
+                            <div class="relative">
+                                <input id="modal-password" name="password" type="password" required autocomplete="new-password" placeholder="Mínimo 8 caracteres"
+                                       class="w-full rounded-lg border py-2.5 pl-3.5 pr-11 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 {{ $errors->has('password') && old('registro_modal') ? 'border-red-400' : 'border-gray-300' }}">
+                                <button type="button" data-password-toggle="modal-password" class="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-gray-400 transition hover:text-blue-600" aria-label="Mostrar contraseña" aria-pressed="false">
+                                    <svg data-eye-closed class="hidden h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    <svg data-eye-open class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18M10.585 10.587a2 2 0 002.828 2.828M9.878 4.242A9.95 9.95 0 0112 4c4.478 0 8.268 2.943 9.542 7a9.98 9.98 0 01-2.293 3.95M6.61 6.61A9.96 9.96 0 002.458 11c1.274 4.057 5.065 7 9.542 7a9.95 9.95 0 004.132-.895"/></svg>
+                                </button>
+                            </div>
+                            @if(old('registro_modal')) @error('password')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror @endif
+                        </div>
+                        <div>
+                            <label for="modal-password-confirmation" class="mb-1.5 block text-sm font-medium text-gray-700">Confirmar contraseña</label>
+                            <div class="relative">
+                                <input id="modal-password-confirmation" name="password_confirmation" type="password" required autocomplete="new-password" placeholder="Repite la contraseña"
+                                       class="w-full rounded-lg border border-gray-300 py-2.5 pl-3.5 pr-11 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                                <button type="button" data-password-toggle="modal-password-confirmation" class="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-gray-400 transition hover:text-blue-600" aria-label="Mostrar contraseña" aria-pressed="false">
+                                    <svg data-eye-closed class="hidden h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    <svg data-eye-open class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18M10.585 10.587a2 2 0 002.828 2.828M9.878 4.242A9.95 9.95 0 0112 4c4.478 0 8.268 2.943 9.542 7a9.98 9.98 0 01-2.293 3.95M6.61 6.61A9.96 9.96 0 002.458 11c1.274 4.057 5.065 7 9.542 7a9.95 9.95 0 004.132-.895"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-xs leading-5 text-gray-500">Al crear tu cuenta aceptas nuestros <a href="{{ route('legal.terminos') }}" target="_blank" class="font-medium text-blue-600 hover:underline">Términos</a> y la <a href="{{ route('legal.privacidad') }}" target="_blank" class="font-medium text-blue-600 hover:underline">Política de privacidad</a>.</p>
+                    <button type="submit" class="w-full rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-700">Crear mi cuenta gratis</button>
+                </form>
+
+                <div class="mt-4 flex flex-col items-center justify-between gap-2 border-t border-gray-100 pt-4 text-sm sm:flex-row">
+                    <p class="text-gray-600">¿Ya tienes cuenta? <a href="{{ route('login') }}" class="font-semibold text-blue-600 hover:text-blue-700">Inicia sesión</a></p>
+                    <a href="{{ route('register') }}" class="text-gray-500 hover:text-gray-800">Abrir formulario completo</a>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+    @if($errors->any() && old('registro_modal'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => document.getElementById('registro-rapido')?.showModal());
+        </script>
+    @endif
+
+    <script>
+        document.querySelectorAll('[data-password-toggle]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const input = document.getElementById(button.dataset.passwordToggle);
+                if (!input) return;
+
+                const visible = input.type === 'text';
+                input.type = visible ? 'password' : 'text';
+                button.setAttribute('aria-pressed', String(!visible));
+                button.setAttribute('aria-label', visible ? 'Mostrar contraseña' : 'Ocultar contraseña');
+                button.querySelector('[data-eye-closed]')?.classList.toggle('hidden', visible);
+                button.querySelector('[data-eye-open]')?.classList.toggle('hidden', !visible);
+            });
+        });
+    </script>
 
     @include('partials.asistente-web')
 

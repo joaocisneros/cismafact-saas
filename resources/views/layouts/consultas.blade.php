@@ -57,20 +57,19 @@
         .consultas-dark .shadow-lg,
         .consultas-dark .shadow-xl { box-shadow: 0 20px 45px rgba(0, 0, 0, .38); }
 
-        /* El aviso de suplantación necesita contraste propio: las utilidades
-           ámbar del tema claro quedaban marrón sobre marrón en modo oscuro. */
+        /* Mantiene el aviso de soporte dentro de la paleta azul del panel. */
         .consultas-dark .support-banner {
-            background: linear-gradient(90deg, #451a03, #78350f);
-            border-color: #d97706;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, .28);
+            background: linear-gradient(90deg, #eff6ff, #dbeafe);
+            border-color: #60a5fa;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, .18);
         }
-        .consultas-dark .support-banner .text-amber-900 { color: #fef3c7; }
-        .consultas-dark .support-banner .text-amber-600 { color: #fbbf24; }
-        .consultas-dark .support-banner .bg-amber-700 {
-            background-color: #f59e0b;
-            color: #1c1917;
+        .consultas-dark .support-banner .text-blue-900 { color: #1e3a8a; }
+        .consultas-dark .support-banner .text-blue-600 { color: #2563eb; }
+        .consultas-dark .support-banner .bg-blue-600 {
+            background-color: #2563eb;
+            color: #ffffff;
         }
-        .consultas-dark .support-banner .hover\:bg-amber-800:hover { background-color: #fbbf24; }
+        .consultas-dark .support-banner .hover\:bg-blue-700:hover { background-color: #1d4ed8; }
     </style>
     <script>
         window.copyConsultaValue = function (button, value) {

@@ -56,6 +56,11 @@ Route::view('/docs', 'docs')->name('docs');
 // con el sistema, asi que no tiene por que leerse la de emision para empezar.
 Route::view('/docs/ruc-dni', 'docs-consultas')->name('docs.consultas');
 
+// Información pública y verificable sobre el uso de la plataforma.
+Route::view('/privacidad', 'legal.privacidad')->name('legal.privacidad');
+Route::view('/terminos', 'legal.terminos')->name('legal.terminos');
+Route::view('/seguridad', 'legal.seguridad')->name('legal.seguridad');
+
 // Sitemap para buscadores (usa el dominio real automaticamente)
 Route::get('/sitemap.xml', function () {
     $urls = [

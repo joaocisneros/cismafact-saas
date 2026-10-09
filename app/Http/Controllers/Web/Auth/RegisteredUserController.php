@@ -157,7 +157,7 @@ class RegisteredUserController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return back()->withInput($request->only('razon_social', 'ruc', 'email'))
+            return back()->withInput($request->only('name', 'razon_social', 'ruc', 'email', 'registro_modal'))
                          ->withErrors(['email' => 'No se pudo crear la cuenta. Intenta nuevamente o escribe a soporte.']);
         }
     }
