@@ -517,6 +517,47 @@
                             ->limit(5)
                             ->get();
                         $totalPendientes = \App\Models\Ticket::whereIn('status', ['open', 'in_progress'])->count();
+
+                        // Se calculan en vivo para que el administrador vea el
+                        // vencimiento aun si la tarea diaria todavia no corrio.
+                        $suscripcionesPorVencer = \App\Models\Subscription::with([
+                                'company:id,razon_social,ruc',
+                                'plan:id,name',
+                            ])
+                            ->whereIn('status', ['trial', 'active'])
+                            ->whereNotNull('ends_at')
+                            ->whereBetween('ends_at', [today(), today()->addDays(7)])
+                            ->orderBy('ends_at')
+                            ->limit(5)
+                            ->get();
+                        $totalSuscripcionesPorVencer = \App\Models\Subscription::query()
+                            ->whereIn('status', ['trial', 'active'])
+                            ->whereNotNull('ends_at')
+                            ->whereBetween('ends_at', [today(), today()->addDays(7)])
+                            ->count();
+
+                        // Credenciales RUC/DNI: se avisan con 30 dias porque
+                        // tanto produccion como sandbox pueden dejar una
+                        // integracion sin servicio al llegar su fecha.
+                        $llavesConsultaPorVencer = \App\Models\ConsultaLlave::with([
+                                'empresa:id,razon_social,ruc',
+                                'plan:id,nombre',
+                            ])
+                            ->where('activa', true)
+                            ->whereNotNull('expira_en')
+                            ->whereBetween('expira_en', [today(), today()->addDays(30)])
+                            ->orderBy('expira_en')
+                            ->limit(5)
+                            ->get();
+                        $totalLlavesConsultaPorVencer = \App\Models\ConsultaLlave::query()
+                            ->where('activa', true)
+                            ->whereNotNull('expira_en')
+                            ->whereBetween('expira_en', [today(), today()->addDays(30)])
+                            ->count();
+
+                        $totalAtencion = $totalPendientes
+                            + $totalSuscripcionesPorVencer
+                            + $totalLlavesConsultaPorVencer;
                     }
                     $ultimas = $usuarioActual && ! $usuarioActual->accedeAlPanelAdmin()
                         ? $usuarioActual->notifications()->latest()->limit(5)->get()
@@ -537,19 +578,18 @@
                     </a>
                 @endunless
 
-                {{-- Tickets pendientes: lo unico que le llega al administrador y
-                     necesita respuesta. Enlaza directo al detalle. --}}
+                {{-- Pendientes administrativos calculados en vivo. --}}
                 @if($isSuperAdmin)
                     <div x-data="{ avisos: false }" @click.outside="avisos = false" class="relative">
-                        <button type="button" @click="avisos = ! avisos" title="Tickets pendientes"
+                        <button type="button" @click="avisos = ! avisos" title="Notificaciones"
                                 class="relative flex h-9 w-9 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700">
-                            <span class="sr-only">Tickets pendientes</span>
+                            <span class="sr-only">Notificaciones</span>
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                             </svg>
-                            @if(($totalPendientes ?? 0) > 0)
+                            @if(($totalAtencion ?? 0) > 0)
                                 <span class="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-xs font-semibold text-white">
-                                    {{ $totalPendientes > 9 ? '9+' : $totalPendientes }}
+                                    {{ $totalAtencion > 9 ? '9+' : $totalAtencion }}
                                 </span>
                             @endif
                         </button>
@@ -558,14 +598,60 @@
                              class="absolute right-0 mt-2 w-80 rounded-lg border border-gray-200 bg-white py-1.5 shadow-lg">
                             <div class="border-b border-gray-100 px-4 py-2.5">
                                 <p class="text-sm font-medium text-gray-800">
-                                    Tickets pendientes
-                                    @if(($totalPendientes ?? 0) > 0)
-                                        <span class="text-gray-400">({{ $totalPendientes }})</span>
+                                    Notificaciones
+                                    @if(($totalAtencion ?? 0) > 0)
+                                        <span class="text-gray-400">({{ $totalAtencion }})</span>
                                     @endif
                                 </p>
                             </div>
 
-                            @forelse($ticketsPendientes as $ticket)
+                            @foreach(($suscripcionesPorVencer ?? collect()) as $suscripcionAviso)
+                                @php
+                                    $diasRestantes = (int) today()->diffInDays($suscripcionAviso->ends_at, false);
+                                    $venceTexto = $diasRestantes === 0
+                                        ? 'Vence hoy'
+                                        : ($diasRestantes === 1 ? 'Vence mañana' : "Vence en {$diasRestantes} días");
+                                @endphp
+                                <button type="button"
+                                        @click="avisos = false; window.openAdminModal('{{ route('super-admin.subscriptions.edit', $suscripcionAviso) }}', 'Editar suscripción')"
+                                        class="block w-full border-b border-gray-50 px-4 py-2.5 text-left text-sm hover:bg-amber-50/60">
+                                    <span class="flex items-start gap-2.5">
+                                        <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        </span>
+                                        <span class="min-w-0 flex-1">
+                                            <span class="block truncate font-medium text-gray-800">{{ $suscripcionAviso->company?->razon_social ?? 'Empresa eliminada' }}</span>
+                                            <span class="block text-xs font-medium {{ $diasRestantes <= 1 ? 'text-red-600' : 'text-amber-700' }}">{{ $venceTexto }} · {{ $suscripcionAviso->ends_at->format('d/m/Y') }}</span>
+                                            <span class="block truncate text-[11px] text-gray-400">{{ $suscripcionAviso->plan?->name ?? 'Sin plan' }} · {{ $suscripcionAviso->company?->ruc ?? '' }}</span>
+                                        </span>
+                                    </span>
+                                </button>
+                            @endforeach
+
+                            @foreach(($llavesConsultaPorVencer ?? collect()) as $llaveAviso)
+                                @php
+                                    $diasLlave = (int) today()->diffInDays($llaveAviso->expira_en, false);
+                                    $venceLlave = $diasLlave === 0
+                                        ? 'Vence hoy'
+                                        : ($diasLlave === 1 ? 'Vence mañana' : "Vence en {$diasLlave} días");
+                                    $esProduccion = $llaveAviso->entorno === 'produccion';
+                                @endphp
+                                <a href="{{ route('super-admin.consultas', ['tab' => 'apis']) }}"
+                                   class="block border-b border-gray-50 px-4 py-2.5 text-sm hover:bg-blue-50/60">
+                                    <span class="flex items-start gap-2.5">
+                                        <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full {{ $esProduccion ? 'bg-blue-100 text-blue-700' : 'bg-violet-100 text-violet-700' }}">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                                        </span>
+                                        <span class="min-w-0 flex-1">
+                                            <span class="block truncate font-medium text-gray-800">API RUC/DNI · {{ $llaveAviso->nombreDelTitular() }}</span>
+                                            <span class="block text-xs font-medium {{ $diasLlave <= 1 ? 'text-red-600' : 'text-amber-700' }}">{{ $venceLlave }} · {{ $llaveAviso->expira_en->format('d/m/Y') }}</span>
+                                            <span class="block truncate text-[11px] text-gray-400">{{ $esProduccion ? 'Producción' : 'Sandbox' }} · {{ $llaveAviso->nombre }}</span>
+                                        </span>
+                                    </span>
+                                </a>
+                            @endforeach
+
+                            @foreach($ticketsPendientes as $ticket)
                                 @php
                                     $colorPrioridad = match($ticket->priority) {
                                         'high' => 'bg-red-50 text-red-700',
@@ -587,12 +673,20 @@
                                         </span>
                                     </span>
                                 </button>
-                            @empty
-                                <p class="px-4 py-6 text-center text-sm text-gray-500">Nada pendiente.</p>
-                            @endforelse
+                            @endforeach
 
-                            <a href="{{ route('super-admin.support') }}"
-                               class="block px-4 py-2.5 text-center text-sm text-blue-600 hover:bg-gray-50">Ir a Soporte</a>
+                            @if(($suscripcionesPorVencer ?? collect())->isEmpty()
+                                && ($llavesConsultaPorVencer ?? collect())->isEmpty()
+                                && $ticketsPendientes->isEmpty())
+                                <p class="px-4 py-6 text-center text-sm text-gray-500">Nada pendiente.</p>
+                            @endif
+
+                            <div class="grid grid-cols-2 border-t border-gray-100">
+                                <a href="{{ route('super-admin.subscriptions.index') }}"
+                                   class="px-3 py-2.5 text-center text-xs font-medium text-blue-600 hover:bg-gray-50">Ver suscripciones</a>
+                                <a href="{{ route('super-admin.support') }}"
+                                   class="border-l border-gray-100 px-3 py-2.5 text-center text-xs font-medium text-blue-600 hover:bg-gray-50">Ver soporte</a>
+                            </div>
                         </div>
                     </div>
                 @endif

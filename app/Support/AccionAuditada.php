@@ -38,6 +38,7 @@ class AccionAuditada
 
         'super-admin.consultas.llaves.guardar' => 'Creó una API Key de RUC y DNI',
         'super-admin.consultas.llaves.regenerar' => 'Generó un secret nuevo de RUC y DNI',
+        'super-admin.consultas.llaves.renovar' => 'Renovó la vigencia de una API Key de RUC y DNI',
         'super-admin.consultas.llaves.borrar' => 'Eliminó una API Key de RUC y DNI',
         'super-admin.consultas.llaves.alternar' => 'Bloqueó o desbloqueó una API Key de RUC y DNI',
         'super-admin.consultas.apis.alternar' => 'Activó o desactivó un proveedor de consultas',

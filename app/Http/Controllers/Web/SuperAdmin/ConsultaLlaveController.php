@@ -203,6 +203,29 @@ class ConsultaLlaveController extends Controller
         ]);
     }
 
+    /** Extiende la vigencia sin cambiar la API Key ni su secreto. */
+    public function renovar(Request $request, ConsultaLlave $llave)
+    {
+        $datos = $request->validate([
+            'meses' => ['required', 'integer', Rule::in([1, 3, 6, 12])],
+        ]);
+
+        $meses = (int) $datos['meses'];
+        $base = $llave->expira_en && $llave->expira_en->isFuture()
+            ? $llave->expira_en->copy()
+            : today();
+        $nuevaFecha = $base->addMonthsNoOverflow($meses);
+
+        $llave->update([
+            'expira_en' => $nuevaFecha,
+            'activa' => true,
+        ]);
+
+        return back()->with('success', "Vigencia renovada por {$meses} "
+            . ($meses === 1 ? 'mes' : 'meses')
+            . " hasta el {$nuevaFecha->format('d/m/Y')}. La API Key y el secreto no cambiaron.");
+    }
+
     /**
      * Borra de una vez las llaves de sandbox ya vencidas.
      *

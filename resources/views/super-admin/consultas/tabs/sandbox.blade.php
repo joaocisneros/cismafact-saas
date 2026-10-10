@@ -2,7 +2,7 @@
      Un sandbox devuelve datos de ejemplo y no gasta cuota, asi que quien lo usa
      esta integrando, no consumiendo. Mezclarlas con las de produccion enturbia
      las dos preguntas: "a quien le cobro" y "quien esta probando". --}}
-<div x-data="{ nueva: false, detalle: null, llave: null }">
+<div x-data="{ nueva: false, detalle: null, llave: null, renovacion: null }">
 
     @if($creada = session('llave_creada'))
         <div x-data="{ abierto: true }" x-show="abierto" x-cloak
@@ -202,6 +202,22 @@
                                         <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Activa</span>
                                         <p class="mt-0.5 text-xs text-gray-400">sin caducidad</p>
                                     @endif
+                                    @if($l->expira_en && $l->expira_en->lte(today()->addDays(30)))
+                                        <button type="button"
+                                                @click="renovacion = {{ Illuminate\Support\Js::from([
+                                                    'id' => $l->id,
+                                                    'titular' => $l->nombreDelTitular(),
+                                                    'entorno' => 'Sandbox',
+                                                    'plan' => $l->plan?->nombre ?? 'Free',
+                                                    'expira' => $l->expira_en->format('d/m/Y'),
+                                                    'base' => ($l->expira_en->isFuture() ? $l->expira_en : today())->toDateString(),
+                                                    'precio' => 0,
+                                                    'a_medida' => false,
+                                                ]) }}"
+                                                class="mt-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+                                            Renovar
+                                        </button>
+                                    @endif
                                 </td>
 
                                 <td class="whitespace-nowrap px-5 py-3">
@@ -224,7 +240,7 @@
                                              cambiarle la caducidad a una llave ya
                                              creada, que es justo lo que se toca
                                              cuando alguien sigue integrando. --}}
-                                        <x-icon-action icon="editar" label="Editar" color="slate" type="button"
+                                        <x-icon-action icon="editar" label="Editar o renovar vigencia" color="slate" type="button"
                                                        @click="llave = {{ Illuminate\Support\Js::from([
                                                            'id' => $l->id,
                                                            'nombre' => $l->nombre,
@@ -244,7 +260,7 @@ El actual deja de funcionar en cuanto se guarde, así que hay que pasarle el nue
 
 ¿Seguir?')">
                                             @csrf
-                                            <x-icon-action icon="renovar" label="Generar un secreto nuevo" color="slate" />
+                                            <x-icon-action icon="clave" label="Cambiar secreto API (no renueva la vigencia)" color="violet" />
                                         </form>
 
                                         <form method="POST" action="{{ route('super-admin.consultas.llaves.alternar', $l) }}">
@@ -577,4 +593,5 @@ El historial no se puede recuperar.
         </div>
     </div>
 
+    @include('super-admin.consultas.tabs._renovar')
 </div>

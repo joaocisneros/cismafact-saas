@@ -24,7 +24,7 @@
     $primerPlan = $planesDePago->first()?->id;
 @endphp
 
-<div x-data="{ llave: null, nueva: false, detalle: null }">
+<div x-data="{ llave: null, nueva: false, detalle: null, renovacion: null }">
 
     @if($nueva = session('llave_creada'))
         {{-- En modal y no como cartel: el secreto solo se enseña una vez y hay
@@ -228,6 +228,22 @@
                                             sin caducidad
                                         @endif
                                     </p>
+                                    @if($l->expira_en && $l->expira_en->lte(today()->addDays(30)))
+                                        <button type="button"
+                                                @click="renovacion = {{ Illuminate\Support\Js::from([
+                                                    'id' => $l->id,
+                                                    'titular' => $l->nombreDelTitular(),
+                                                    'entorno' => 'Producción',
+                                                    'plan' => $l->plan?->nombre ?? 'Sin plan',
+                                                    'expira' => $l->expira_en->format('d/m/Y'),
+                                                    'base' => ($l->expira_en->isFuture() ? $l->expira_en : today())->toDateString(),
+                                                    'precio' => $l->precioMensual(),
+                                                    'a_medida' => (bool) $l->plan?->a_medida,
+                                                ]) }}"
+                                                class="mt-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+                                            Renovar
+                                        </button>
+                                    @endif
                                 </td>
 
                                 <td class="px-5 py-3">
@@ -253,7 +269,7 @@
                                                            'ultimo_uso' => $l->ultimo_uso_en?->format('d/m/Y H:i'),
                                                        ]) }}" />
 
-                                        <x-icon-action icon="editar" label="Editar" color="slate" type="button"
+                                        <x-icon-action icon="editar" label="Editar o renovar vigencia" color="slate" type="button"
                                                        @click="llave = {{ Illuminate\Support\Js::from([
                                                            'id' => $l->id,
                                                            'nombre' => $l->nombre,
@@ -279,7 +295,7 @@
 
                     ¿Seguir?')">
                                             @csrf
-                                            <x-icon-action icon="renovar" label="Generar un secreto nuevo" color="slate" />
+                                            <x-icon-action icon="clave" label="Cambiar secreto API (no renueva la vigencia)" color="violet" />
                                         </form>
 
                                         <form method="POST" action="{{ route('super-admin.consultas.llaves.alternar', $l) }}">
@@ -793,4 +809,5 @@
         </div>
     </div>
 
+    @include('super-admin.consultas.tabs._renovar')
 </div>

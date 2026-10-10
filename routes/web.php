@@ -302,6 +302,7 @@ Route::prefix('super-admin')
         Route::post('/consultas/llaves', [SuperAdminConsultaLlaveController::class, 'store'])->name('consultas.llaves.guardar');
         Route::put('/consultas/llaves/{llave}', [SuperAdminConsultaLlaveController::class, 'update'])->name('consultas.llaves.actualizar');
         Route::post('/consultas/llaves/{llave}/alternar', [SuperAdminConsultaLlaveController::class, 'alternar'])->name('consultas.llaves.alternar');
+        Route::post('/consultas/llaves/{llave}/renovar', [SuperAdminConsultaLlaveController::class, 'renovar'])->name('consultas.llaves.renovar');
 
         // El secreto, solo cuando se pide: mandarlo con el listado lo dejaria
         // a la vista de todas las llaves en cada carga de la pagina.
