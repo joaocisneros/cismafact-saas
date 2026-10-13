@@ -1,25 +1,37 @@
-<template x-if="renovacion">
-    <div class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4"
-         @keydown.escape.window="renovacion = null">
-        <div class="my-auto w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-xl"
-             @click.outside="renovacion = null"
-             x-data="{
-                 meses: 1,
-                 nuevaFecha() {
-                     const p = renovacion.base.split('-').map(Number);
+<div x-data="{
+         renovacion: null,
+         meses: 1,
+         abrir(datos) {
+             this.renovacion = datos;
+             this.meses = 1;
+         },
+         nuevaFecha() {
+                     if (!this.renovacion?.base) return '';
+                     const p = this.renovacion.base.split('-').map(Number);
                      const destino = p[1] - 1 + this.meses;
                      const ultimo = new Date(Date.UTC(p[0], destino + 1, 0)).getUTCDate();
                      const d = new Date(Date.UTC(p[0], destino, Math.min(p[2], ultimo)));
                      return d.toISOString().slice(0, 10);
                  },
                  fechaLegible() {
+                     if (!this.renovacion) return '';
                      const [y, m, d] = this.nuevaFecha().split('-');
                      return `${d}/${m}/${y}`;
                  },
                  dinero(valor) {
                      return 'S/ ' + Number(valor || 0).toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                  }
-             }">
+     }"
+     @abrir-renovacion.window="abrir($event.detail)"
+     @keydown.escape.window="renovacion = null">
+    {{-- El contenido se crea solo despues de elegir una llave. Con x-show se
+         evaluaban renovacion.id y renovacion.base mientras aun eran null, lo
+         que detenia Alpine y hacia que el enlace pareciera no responder. --}}
+    <template x-if="renovacion">
+        <div class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4"
+             x-transition.opacity>
+            <div class="my-auto w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-xl"
+                 @click.outside="renovacion = null">
             <form method="POST" :action="'{{ url('super-admin/consultas/llaves') }}/' + renovacion.id + '/renovar'">
                 @csrf
                 <div class="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4">
@@ -74,6 +86,7 @@
                     <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Confirmar renovación</button>
                 </div>
             </form>
+            </div>
         </div>
-    </div>
-</template>
+    </template>
+</div>

@@ -204,7 +204,7 @@
                                     @endif
                                     @if($l->expira_en && $l->expira_en->lte(today()->addDays(30)))
                                         <button type="button"
-                                                @click="renovacion = {{ Illuminate\Support\Js::from([
+                                                @click="$dispatch('abrir-renovacion', {{ Illuminate\Support\Js::from([
                                                     'id' => $l->id,
                                                     'titular' => $l->nombreDelTitular(),
                                                     'entorno' => 'Sandbox',
@@ -213,7 +213,7 @@
                                                     'base' => ($l->expira_en->isFuture() ? $l->expira_en : today())->toDateString(),
                                                     'precio' => 0,
                                                     'a_medida' => false,
-                                                ]) }}"
+                                                ]) }})"
                                                 class="mt-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline">
                                             Renovar
                                         </button>

@@ -3,6 +3,9 @@
 namespace App\Http\Middleware;
 
 use App\Models\AuditLog;
+use App\Models\Company;
+use App\Models\User;
+use App\Support\AuditContext;
 use App\Support\Impersonation;
 use Closure;
 use Illuminate\Http\Request;
@@ -44,20 +47,31 @@ class AuditAdminActions
 
         $enSoporte = Impersonation::activa();
 
-        // En el panel de empresa este middleware solo debe actuar durante una
-        // sesion de soporte: registrar cada accion de cada cliente llenaria la
-        // tabla sin aportar nada.
-        if (! $enSoporte && ! $request->user()?->hasRole('super_admin')) {
-            return $response;
-        }
-
         try {
             $parameters = $request->route()?->parameters() ?? [];
             $subject = collect($parameters)->first(fn ($value) => is_object($value) && isset($value->id));
+            $companyId = $subject instanceof Company
+                ? $subject->id
+                : ($subject?->company_id ?? $request->user()?->company_id);
+            $company = $subject instanceof Company
+                ? $subject
+                : ($companyId ? Company::find($companyId) : null);
+            $actor = $enSoporte
+                ? User::find(Impersonation::idSuplantador())
+                : $request->user();
+            $safeInput = $this->sanitizeInput($request->except(self::SENSITIVE_FIELDS));
+            $context = AuditContext::capture(
+                $request->route()?->getName(),
+                $safeInput,
+                $subject,
+                $company,
+                $actor,
+            );
 
             AuditLog::create([
                 'user_id' => $request->user()?->id,
-                'company_id' => $subject?->company_id ?? $request->user()?->company_id,
+                ...$context,
+                'company_id' => $companyId,
                 'action' => match ($request->method()) {
                     'POST' => 'create_or_action',
                     'PUT', 'PATCH' => 'update',
@@ -74,8 +88,8 @@ class AuditAdminActions
                     ? '[SOPORTE: ' . Impersonation::nombreSuplantador() . '] ' . $request->route()?->getName()
                     : $request->route()?->getName(),
                 'data' => $enSoporte
-                    ? $request->except(self::SENSITIVE_FIELDS) + ['_impersonador_id' => Impersonation::idSuplantador()]
-                    : $request->except(self::SENSITIVE_FIELDS),
+                    ? $safeInput + ['_impersonador_id' => Impersonation::idSuplantador()]
+                    : $safeInput,
                 'ip_address' => $request->ip(),
                 'user_agent' => mb_substr((string) $request->userAgent(), 0, 500),
                 'response_status' => $response->getStatusCode(),
@@ -85,5 +99,24 @@ class AuditAdminActions
         }
 
         return $response;
+    }
+
+    /** Elimina secretos aunque lleguen dentro de estructuras anidadas. */
+    private function sanitizeInput(array $input): array
+    {
+        $sensitive = array_map('strtolower', self::SENSITIVE_FIELDS);
+
+        foreach ($input as $key => $value) {
+            if (in_array(strtolower((string) $key), $sensitive, true)) {
+                unset($input[$key]);
+                continue;
+            }
+
+            if (is_array($value)) {
+                $input[$key] = $this->sanitizeInput($value);
+            }
+        }
+
+        return $input;
     }
 }

@@ -18,6 +18,106 @@ use App\Models\AuditLog;
  */
 class AccionAuditada
 {
+    /** @var array<int, \App\Models\User|null> */
+    private static array $actoresAnteriores = [];
+
+    public static function nombreActor(AuditLog $log): string
+    {
+        return $log->actor_name
+            ?: $log->actor?->name
+            ?: self::actorAnterior($log)?->name
+            ?: self::quienEstabaDetras($log)
+            ?: ($log->user?->name ?? 'Sistema');
+    }
+
+    public static function correoActor(AuditLog $log): ?string
+    {
+        return $log->actor_email
+            ?: $log->actor?->email
+            ?: self::actorAnterior($log)?->email
+            ?: (! self::enSoporte($log) ? $log->user?->email : null);
+    }
+
+    /** @return array{nombre:string,correo:?string}|null */
+    public static function cuentaUtilizada(AuditLog $log): ?array
+    {
+        if (! self::enSoporte($log) || ! $log->user) {
+            return null;
+        }
+
+        return [
+            'nombre' => $log->user->name,
+            'correo' => $log->user->email,
+        ];
+    }
+
+    /** @return array{tipo:string,navegador:string,sistema:string} */
+    public static function dispositivo(AuditLog $log): array
+    {
+        $agent = (string) $log->user_agent;
+
+        $tipo = match (true) {
+            preg_match('/iPad|Tablet/i', $agent) === 1 => 'Tablet',
+            preg_match('/Android|iPhone|iPod|Mobile/i', $agent) === 1 => 'Móvil',
+            $agent === '' => 'No identificado',
+            default => 'Computadora',
+        };
+
+        $navegador = match (true) {
+            str_contains($agent, 'Edg/') => 'Edge',
+            str_contains($agent, 'OPR/') || str_contains($agent, 'Opera') => 'Opera',
+            str_contains($agent, 'Chrome/') || str_contains($agent, 'CriOS/') => 'Chrome',
+            str_contains($agent, 'Firefox/') || str_contains($agent, 'FxiOS/') => 'Firefox',
+            str_contains($agent, 'Safari/') => 'Safari',
+            $agent === '' => 'Sin navegador',
+            default => 'Otro navegador',
+        };
+
+        $sistema = match (true) {
+            str_contains($agent, 'Windows') => 'Windows',
+            str_contains($agent, 'Android') => 'Android',
+            preg_match('/iPhone|iPad|iPod/i', $agent) === 1 => 'iOS',
+            preg_match('/Macintosh|Mac OS X/i', $agent) === 1 => 'macOS',
+            str_contains($agent, 'Linux') => 'Linux',
+            default => 'Sistema desconocido',
+        };
+
+        return compact('tipo', 'navegador', 'sistema');
+    }
+
+    /** @return array{servicio:string,entorno:?string,tipo:?string} */
+    public static function contexto(AuditLog $log): array
+    {
+        $service = $log->service_context ?: AuditContext::service((string) $log->route_name);
+        $environment = $log->environment_context;
+
+        if (! $environment) {
+            $fromData = data_get($log->data, 'entorno');
+            $environment = in_array($fromData, ['sandbox', 'beta'], true)
+                ? 'sandbox'
+                : ($fromData === 'produccion' ? 'produccion' : null);
+        }
+
+        if (! $environment && $service === 'facturacion' && $log->company) {
+            $environment = $log->company->modo_produccion ? 'produccion' : 'beta';
+        }
+
+        return [
+            'servicio' => match ($service) {
+                'api_ruc_dni' => 'API RUC y DNI',
+                'facturacion' => 'Facturación electrónica',
+                default => 'Gestión empresarial',
+            },
+            'entorno' => match ($environment) {
+                'produccion' => 'Producción',
+                'sandbox' => 'Sandbox',
+                'beta' => 'Beta',
+                default => null,
+            },
+            'tipo' => $log->event_type,
+        ];
+    }
+
     /**
      * Las que no se adivinan por su nombre, o que merecen decirse de otra
      * forma. Van primero: si la ruta esta aqui, se usa esta frase.
@@ -50,11 +150,16 @@ class AccionAuditada
         'super-admin.companies.toggle-status' => 'Activó o suspendió una empresa',
         'super-admin.companies.toggle-demo' => 'Marcó o desmarcó una empresa como demo',
         'super-admin.users.toggle-active' => 'Activó o bloqueó un usuario',
+        'super-admin.users.restore' => 'Restauró un usuario eliminado',
         'super-admin.plans.toggle' => 'Activó o desactivó un plan',
         'super-admin.support.close' => 'Cerró un ticket de soporte',
+        'super-admin.support.priority' => 'Cambió la prioridad de un ticket de soporte',
         'super-admin.payments.confirm' => 'Confirmó un pago',
         'super-admin.payments.refund' => 'Devolvió un pago',
         'super-admin.padron.importar' => 'Importó el padrón de SUNAT',
+        'super-admin.documents.consult' => 'Consultó el estado de un comprobante en SUNAT',
+        'super-admin.contactos.atender' => 'Marcó una solicitud de contacto como atendida',
+        'super-admin.contactos.borrar' => 'Eliminó una solicitud de contacto',
 
         'empresa.api-keys.store' => 'Creó una credencial de API',
         'empresa.api-keys.regenerate' => 'Generó un secret nuevo para su credencial',
@@ -65,6 +170,29 @@ class AccionAuditada
         'empresa.sunat-config.test' => 'Probó la conexión con SUNAT',
         'empresa.sunat-config.go-production' => 'Pasó su facturación a producción',
         'empresa.usuarios.store' => 'Creó un usuario de su empresa',
+
+        'empresa.rendimiento.configuracion' => 'Guardó la configuración de metas y comisiones',
+        'empresa.rendimiento.comisiones.actualizar' => 'Actualizó el estado de una comisión',
+        'empresa.rendimiento.comisiones.restablecer' => 'Eliminó la configuración de metas y comisiones',
+        'empresa.rendimiento.comisiones.historial.limpiar' => 'Eliminó el historial de comisiones',
+
+        'empresa.branches.store' => 'Creó una sucursal',
+        'empresa.branches.update' => 'Modificó una sucursal',
+        'empresa.branches.destroy' => 'Eliminó una sucursal',
+        'empresa.branches.toggle' => 'Activó o desactivó una sucursal',
+        'empresa.clients.store' => 'Creó un cliente',
+        'empresa.clients.update' => 'Modificó un cliente',
+        'empresa.clients.destroy' => 'Eliminó un cliente',
+        'empresa.correlatives.store' => 'Creó un correlativo',
+        'empresa.correlatives.destroy' => 'Eliminó un correlativo',
+        'empresa.company.update' => 'Modificó los datos de la empresa',
+        'empresa.profile.update' => 'Modificó su perfil',
+        'empresa.usuarios.update' => 'Modificó un usuario de su empresa',
+        'empresa.usuarios.toggle-active' => 'Activó o bloqueó un usuario de su empresa',
+        'empresa.notas-credito.store' => 'Creó una nota de crédito',
+        'empresa.notas-credito.send-sunat' => 'Envió una nota de crédito a SUNAT',
+        'empresa.notas-debito.store' => 'Creó una nota de débito',
+        'empresa.notas-debito.send-sunat' => 'Envió una nota de débito a SUNAT',
 
         'super-admin.users.reset-password' => 'Cambió la contraseña de un usuario',
         'super-admin.users.toggle-lock' => 'Bloqueó o liberó el acceso de un usuario',
@@ -77,6 +205,23 @@ class AccionAuditada
         'super-admin.consultas.llaves.actualizar' => 'Modificó una API Key de RUC y DNI',
         'super-admin.consultas.cache.vaciar' => 'Vació la caché de consultas',
         'super-admin.padron.probar' => 'Probó una búsqueda en el padrón',
+        'super-admin.consultas.acceso.crear' => 'Creó el acceso de un cliente al panel de RUC y DNI',
+        'super-admin.consultas.acceso.clave' => 'Generó una contraseña nueva para el panel de RUC y DNI',
+        'super-admin.consultas.acceso.quitar' => 'Eliminó el acceso de un cliente al panel de RUC y DNI',
+        'super-admin.consultas.acceso.entrar' => 'Entró como soporte al panel del cliente de RUC y DNI',
+        'super-admin.consultas.llaves.limpiar-vencidas' => 'Eliminó las API Keys de RUC y DNI vencidas',
+
+        'empresa.facturas.send-sunat' => 'Envió una factura a SUNAT',
+        'empresa.boletas.send-sunat' => 'Envió una boleta a SUNAT',
+        'empresa.guias.registrar-baja' => 'Registró la baja de una guía de remisión',
+        'empresa.guias.send-sunat' => 'Envió una guía de remisión a SUNAT',
+        'empresa.guias.check-status' => 'Consultó el estado de una guía de remisión',
+        'empresa.anulaciones.check-status' => 'Consultó el estado de una anulación',
+        'empresa.resumenes.check-status' => 'Consultó el estado de un resumen diario',
+        'empresa.notifications.read-all' => 'Marcó todas sus notificaciones como leídas',
+        'empresa.profile.two-factor' => 'Cambió la verificación en dos pasos de su cuenta',
+        'empresa.support.reply' => 'Respondió a un ticket de soporte',
+        'empresa.support.reopen' => 'Reabrió un ticket de soporte',
     ];
 
     /** Que se hizo, por el ultimo trozo del nombre de la ruta. */
@@ -127,6 +272,11 @@ class AccionAuditada
         'boletas' => 'una boleta',
         'guias' => 'una guía de remisión',
         'notas' => 'una nota',
+        'notas-credito' => 'una nota de crédito',
+        'notas-debito' => 'una nota de débito',
+        'contactos' => 'una solicitud de contacto',
+        'rendimiento' => 'las metas y comisiones',
+        'comisiones' => 'las comisiones',
         'sunat-config' => 'la configuración de SUNAT',
     ];
 
@@ -170,8 +320,32 @@ class AccionAuditada
         'facturas' => 'Comprobantes',
         'boletas' => 'Comprobantes',
         'notas' => 'Comprobantes',
+        'notas-credito' => 'Comprobantes',
+        'notas-debito' => 'Comprobantes',
+        'contactos' => 'Contactos',
         'guias' => 'Comprobantes',
         'notifications' => 'Avisos',
+        'rendimiento' => 'Ventas por usuario',
+    ];
+
+    /** Nombres legibles para modelos que puedan aparecer en rutas nuevas. */
+    private const SUJETOS = [
+        'User' => 'un usuario',
+        'Company' => 'una empresa',
+        'Client' => 'un cliente',
+        'Branch' => 'una sucursal',
+        'Correlative' => 'un correlativo',
+        'Document' => 'un comprobante',
+        'Invoice' => 'una factura',
+        'Boleta' => 'una boleta',
+        'CreditNote' => 'una nota de crédito',
+        'DebitNote' => 'una nota de débito',
+        'DispatchGuide' => 'una guía de remisión',
+        'SupportTicket' => 'un ticket de soporte',
+        'Subscription' => 'una suscripción',
+        'Payment' => 'un pago',
+        'ApiKey' => 'una credencial de API',
+        'ConsultaLlave' => 'una API Key de RUC y DNI',
     ];
 
     /** La pantalla donde paso, tal como se llama en el menu. */
@@ -262,7 +436,14 @@ class AccionAuditada
             }
         }
 
-        return $cosa ? $verbo . ' ' . $cosa : $verbo . ' algo';
+        if (! $cosa && $log->subject_type) {
+            $subject = class_basename((string) $log->subject_type);
+            $cosa = self::SUJETOS[$subject] ?? null;
+        }
+
+        return $cosa
+            ? $verbo . ' ' . $cosa
+            : $verbo . ' una configuración del sistema';
     }
 
     /** Cuando no hay nada mejor, al menos que no salga en ingles. */
@@ -328,5 +509,20 @@ class AccionAuditada
         }
 
         return preg_match('/^\[SOPORTE: (.+?)\]/', (string) $log->description, $m) ? $m[1] : null;
+    }
+
+    /** Recupera al actor de registros anteriores a actor_user_id. */
+    private static function actorAnterior(AuditLog $log): ?\App\Models\User
+    {
+        if (! self::enSoporte($log)) {
+            return null;
+        }
+
+        $id = (int) data_get($log->data, '_impersonador_id', 0);
+        if ($id <= 0) {
+            return null;
+        }
+
+        return self::$actoresAnteriores[$id] ??= \App\Models\User::find($id);
     }
 }

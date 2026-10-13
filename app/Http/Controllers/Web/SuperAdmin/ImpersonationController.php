@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Web\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
-use App\Models\Company;
 use App\Models\User;
+use App\Support\AuditContext;
+use App\Models\Company;
 use App\Support\Impersonation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -189,8 +190,16 @@ class ImpersonationController extends Controller
     private function registrar(Request $request, string $accion, ?Company $company, int $superAdminId, array $data): void
     {
         try {
+            $actor = User::find($superAdminId);
             AuditLog::create([
                 'user_id' => $superAdminId,
+                ...AuditContext::capture(
+                    $request->route()?->getName(),
+                    $data,
+                    $company,
+                    $company,
+                    $actor,
+                ),
                 'company_id' => $company?->id,
                 'action' => $accion,
                 'method' => $request->method(),

@@ -361,8 +361,8 @@ Route::prefix('super-admin')
 // EMPRESA
 // ========================
 Route::prefix('empresa')
-    // 'audit.admin' aqui solo graba cuando hay una sesion de soporte abierta:
-    // asi queda registro de lo que el Super Admin hace dentro de la empresa.
+    // Registra los cambios de cada usuario y distingue cuando el Super Admin
+    // actua dentro de la empresa mediante una sesion de soporte.
     ->middleware(['auth', 'role:company_admin,company_user', 'company.active', 'audit.admin'])
     ->name('empresa.')
     ->group(function () {

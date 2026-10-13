@@ -17,11 +17,22 @@ class AuditController extends Controller
         $query = AuditLog::query()
             ->with([
                 'user:id,name,email',
-                'company:id,razon_social,ruc',
+                'actor:id,name,email',
+                'company:id,razon_social,ruc,modo_produccion',
             ]);
 
         if ($request->filled('user_id')) {
-            $query->where('user_id', $request->integer('user_id'));
+            $userId = $request->integer('user_id');
+            $query->where(function ($responsable) use ($userId) {
+                $responsable->where('actor_user_id', $userId)
+                    ->orWhere(function ($legacy) use ($userId) {
+                        $legacy->whereNull('actor_user_id')
+                            ->where(function ($legacyActor) use ($userId) {
+                                $legacyActor->where('user_id', $userId)
+                                    ->orWhere('data->_impersonador_id', $userId);
+                            });
+                    });
+            });
         }
 
         if ($request->filled('company_id')) {
@@ -54,6 +65,11 @@ class AuditController extends Controller
                 $auditQuery->where('route_name', 'like', "%{$search}%")
                     ->orWhere('path', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('actor_name', 'like', "%{$search}%")
+                    ->orWhere('actor_email', 'like', "%{$search}%")
+                    ->orWhere('target_email', 'like', "%{$search}%")
+                    ->orWhere('target_name', 'like', "%{$search}%")
+                    ->orWhere('event_type', 'like', "%{$search}%")
                     ->when($nombres->isNotEmpty(), fn ($q) => $q->orWhereIn('route_name', $nombres))
                     ->when($piezas->isNotEmpty(), fn ($q) => $piezas->each(
                         fn ($p) => $q->orWhere('route_name', 'like', "%{$p}%")

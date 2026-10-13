@@ -11,6 +11,11 @@ class AuditLog extends Model
 
     protected $fillable = [
         'user_id',
+        'actor_user_id',
+        'actor_name',
+        'actor_email',
+        'target_email',
+        'target_name',
         'company_id',
         'action',
         'method',
@@ -19,6 +24,9 @@ class AuditLog extends Model
         'subject_type',
         'subject_id',
         'description',
+        'service_context',
+        'environment_context',
+        'event_type',
         'data',
         'ip_address',
         'user_agent',
@@ -33,6 +41,12 @@ class AuditLog extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** Persona real que ejecutó la acción, incluso durante soporte. */
+    public function actor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'actor_user_id');
     }
 
     public function company(): BelongsTo
