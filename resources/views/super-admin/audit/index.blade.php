@@ -54,20 +54,20 @@
         </div>
     </form>
 
-    <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+    <div x-data x-init="$nextTick(() => { $el.scrollLeft = 0 })" class="overflow-x-auto rounded-lg border border-gray-200 bg-white">
         {{-- Las columnas conservan siempre el mismo ancho. Al filtrar cambian
              los registros, pero nunca la posición de la información. --}}
-        <table class="w-full min-w-[1840px] table-fixed divide-y divide-gray-200 text-sm">
+        <table class="w-full min-w-[1600px] table-fixed divide-y divide-gray-200 text-sm">
             <colgroup>
-                <col class="w-[150px]">
-                <col class="w-[250px]">
-                <col class="w-[280px]">
+                <col class="w-[140px]">
+                <col class="w-[205px]">
+                <col class="w-[245px]">
+                <col class="w-[170px]">
                 <col class="w-[190px]">
+                <col class="w-[175px]">
                 <col class="w-[220px]">
-                <col class="w-[190px]">
-                <col class="w-[260px]">
-                <col class="w-[200px]">
-                <col class="w-[100px]">
+                <col class="w-[170px]">
+                <col class="w-[85px]">
             </colgroup>
             <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
                 <tr>
