@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Support\SunatCdr;
+
 use App\Support\CertificadoDigital;
 use App\Models\Company;
 use App\Models\Branch;
@@ -222,24 +224,31 @@ class DocumentService
                 $document->xml_path = $xmlPath;
             }
             
+            $cdrAccepted = $result['success']
+                && $result['cdr_zip']
+                && SunatCdr::isAccepted($result['cdr_response']);
+
+            // El CDR se conserva incluso cuando SUNAT rechaza el comprobante:
+            // contiene el codigo y la explicacion necesarios para corregirlo.
             if ($result['success'] && $result['cdr_zip']) {
                 $cdrPath = $this->fileService->saveCdr($document, $result['cdr_zip']);
                 $document->cdr_path = $cdrPath;
-                
+            }
+
+            if ($cdrAccepted) {
                 $document->estado_sunat = 'ACEPTADO';
-                $document->respuesta_sunat = json_encode([
-                    'id' => $result['cdr_response']->getId(),
-                    'code' => $result['cdr_response']->getCode(),
-                    'description' => $result['cdr_response']->getDescription(),
-                    'notes' => $result['cdr_response']->getNotes(),
-                ]);
+                $document->respuesta_sunat = json_encode(SunatCdr::payload($result['cdr_response']));
             } else {
                 $document->estado_sunat = 'RECHAZADO';
                 
                 $errorCode = 'UNKNOWN';
                 $errorMessage = 'Error desconocido';
                 
-                if (is_object($result['error'])) {
+                if ($result['success'] && $result['cdr_response']) {
+                    $cdrPayload = SunatCdr::payload($result['cdr_response']);
+                    $errorCode = (string) ($cdrPayload['code'] ?? 'CDR_RECHAZADO');
+                    $errorMessage = (string) ($cdrPayload['description'] ?? 'SUNAT rechazó el comprobante');
+                } elseif (is_object($result['error'])) {
                     if (method_exists($result['error'], 'getCode')) {
                         $errorCode = $result['error']->getCode();
                     } elseif (property_exists($result['error'], 'code')) {
@@ -262,7 +271,7 @@ class DocumentService
             $document->save();
             
             // Obtener hash del XML (no-crítico, puede fallar sin problema)
-            if ($result['success'] && $result['cdr_zip']) {
+            if ($cdrAccepted) {
                 try {
                     $xmlSigned = $greenterService->getXmlSigned($greenterDocument);
                     if ($xmlSigned) {
@@ -275,9 +284,12 @@ class DocumentService
             }
             
             return [
-                'success' => $result['success'],
+                'success' => $cdrAccepted,
                 'document' => $document,
-                'error' => $result['success'] ? null : $result['error']
+                'error' => $cdrAccepted ? null : (object) [
+                    'code' => $errorCode ?? 'CDR_RECHAZADO',
+                    'message' => $errorMessage ?? 'SUNAT rechazó el comprobante',
+                ]
             ];
             
         } catch (Exception $e) {
@@ -768,29 +780,35 @@ class DocumentService
             
             if ($result['success'] && $result['cdr_response']) {
                 // Guardar CDR
-                $cdrPath = $this->fileService->saveCdr($summary, $result['cdr_zip']);
+                $cdrPath = $result['cdr_zip']
+                    ? $this->fileService->saveCdr($summary, $result['cdr_zip'])
+                    : null;
+                $cdrAccepted = SunatCdr::isAccepted($result['cdr_response']);
                 
                 // Actualizar estado
                 $summary->update([
                     'cdr_path' => $cdrPath,
-                    'estado_proceso' => 'COMPLETADO',
-                    'estado_sunat' => 'ACEPTADO',
-                    'respuesta_sunat' => json_encode([
-                        'code' => $result['cdr_response']->getCode(),
-                        'description' => $result['cdr_response']->getDescription()
-                    ])
+                    'estado_proceso' => $cdrAccepted ? 'COMPLETADO' : 'ERROR',
+                    'estado_sunat' => $cdrAccepted ? 'ACEPTADO' : 'RECHAZADO',
+                    'respuesta_sunat' => json_encode(SunatCdr::payload($result['cdr_response']))
                 ]);
 
                 // Una boleta se anula por Resumen, no por Comunicacion de Baja.
                 // Si el resumen aceptado llevaba lineas con estado 3, esas
                 // boletas quedan anuladas ante SUNAT y hay que marcarlas aqui:
                 // si no, seguirian declarandose en el Registro de Ventas.
-                $this->marcarBoletasAnuladasPorResumen($summary);
+                if ($cdrAccepted) {
+                    $this->marcarBoletasAnuladasPorResumen($summary);
+                }
 
                 return [
-                    'success' => true,
+                    'success' => $cdrAccepted,
                     'document' => $summary->fresh(),
-                    'cdr_response' => $result['cdr_response']
+                    'cdr_response' => $result['cdr_response'],
+                    'error' => $cdrAccepted ? null : (object) [
+                        'code' => SunatCdr::payload($result['cdr_response'])['code'],
+                        'message' => SunatCdr::payload($result['cdr_response'])['description'],
+                    ],
                 ];
             } else {
                 // Error en la consulta
@@ -1833,9 +1851,10 @@ class DocumentService
             
             if ($result->isSuccess()) {
                 $cdr = $result->getCdrResponse();
+                $cdrAccepted = SunatCdr::isAccepted($cdr);
                 Log::info("Estado obtenido exitosamente", [
-                    'code' => $cdr->getCode(),
-                    'description' => $cdr->getDescription()
+                    'code' => SunatCdr::payload($cdr)['code'],
+                    'description' => SunatCdr::payload($cdr)['description'],
                 ]);
                 
                 // Guardar CDR
@@ -1848,17 +1867,18 @@ class DocumentService
                 // Actualizar estado
                 $guide->update([
                     'cdr_path' => $cdrPath,
-                    'estado_sunat' => 'ACEPTADO',
-                    'respuesta_sunat' => json_encode([
-                        'code' => $cdr->getCode(),
-                        'description' => $cdr->getDescription()
-                    ])
+                    'estado_sunat' => $cdrAccepted ? 'ACEPTADO' : 'RECHAZADO',
+                    'respuesta_sunat' => json_encode(SunatCdr::payload($cdr))
                 ]);
                 
                 return [
-                    'success' => true,
+                    'success' => $cdrAccepted,
                     'document' => $guide->fresh(),
-                    'cdr_response' => $cdr
+                    'cdr_response' => $cdr,
+                    'error' => $cdrAccepted ? null : (object) [
+                        'code' => SunatCdr::payload($cdr)['code'],
+                        'message' => SunatCdr::payload($cdr)['description'],
+                    ],
                 ];
             } else {
                 // Error en la consulta
@@ -2130,22 +2150,31 @@ class DocumentService
                 $retention->xml_path = $this->fileService->saveXml($retention, $result['xml'], 'retention');
             }
             
+            $cdrAccepted = $result['success']
+                && $result['cdr_zip']
+                && SunatCdr::isAccepted($result['cdr_response']);
+
             if ($result['success'] && $result['cdr_zip']) {
                 $retention->cdr_path = $this->fileService->saveCdr($retention, $result['cdr_zip'], 'retention');
                 $retention->hash_cdr = $result['cdr_response']->getId() ?? '';
-                $retention->estado_sunat = 'ACEPTADO';
-            } else {
-                $retention->estado_sunat = 'RECHAZADO';
             }
+            $retention->estado_sunat = $cdrAccepted ? 'ACEPTADO' : 'RECHAZADO';
             
             $retention->save();
             
             return [
-                'success' => $result['success'],
+                'success' => $cdrAccepted,
                 'document' => $retention->fresh(['company', 'branch', 'proveedor']),
                 'cdr_response' => $result['cdr_response'] ?? null,
-                'error' => $result['error'] ?? null,
-                'respuesta_sunat' => $result['error'] ? json_encode($result['error']) : null
+                'error' => $cdrAccepted ? null : ($result['error'] ?? (object) [
+                    'code' => SunatCdr::payload($result['cdr_response'] ?? null)['code'],
+                    'message' => SunatCdr::payload($result['cdr_response'] ?? null)['description'],
+                ]),
+                'respuesta_sunat' => json_encode(
+                    $result['cdr_response']
+                        ? SunatCdr::payload($result['cdr_response'])
+                        : $result['error']
+                )
             ];
 
         } catch (Exception $e) {
@@ -2275,26 +2304,18 @@ class DocumentService
                 $cdrResponse = $result['cdr_response'];
                 $estado = 'PROCESANDO';
                 
-                if ($cdrResponse && method_exists($cdrResponse, 'getDescription') && $cdrResponse->getDescription() !== null) {
-                    if (strpos($cdrResponse->getDescription(), 'aceptad') !== false) {
-                        $estado = 'ACEPTADO';
-                        
-                        // Guardar CDR
-                        if ($result['cdr_zip']) {
-                            $cdrPath = $this->fileService->saveCdr($voidedDocument, $result['cdr_zip']);
-                            $voidedDocument->cdr_path = $cdrPath;
-                        }
-                    } elseif (strpos($cdrResponse->getDescription(), 'rechazad') !== false) {
-                        $estado = 'RECHAZADO';
+                if ($cdrResponse) {
+                    $estado = SunatCdr::isAccepted($cdrResponse) ? 'ACEPTADO' : 'RECHAZADO';
+
+                    if ($result['cdr_zip']) {
+                        $cdrPath = $this->fileService->saveCdr($voidedDocument, $result['cdr_zip']);
+                        $voidedDocument->cdr_path = $cdrPath;
                     }
                 }
                 
                 $voidedDocument->update([
                     'estado_sunat' => $estado,
-                    'respuesta_sunat' => $cdrResponse ? json_encode([
-                        'code' => $cdrResponse->getCode(),
-                        'description' => $cdrResponse->getDescription()
-                    ]) : null,
+                    'respuesta_sunat' => $cdrResponse ? json_encode(SunatCdr::payload($cdrResponse)) : null,
                     'cdr_path' => $voidedDocument->cdr_path
                 ]);
 
@@ -2306,8 +2327,12 @@ class DocumentService
                 }
 
                 return [
-                    'success' => true,
-                    'document' => $voidedDocument->fresh()
+                    'success' => $estado === 'ACEPTADO',
+                    'document' => $voidedDocument->fresh(),
+                    'error' => $estado === 'RECHAZADO' ? (object) [
+                        'code' => SunatCdr::payload($cdrResponse)['code'],
+                        'message' => SunatCdr::payload($cdrResponse)['description'],
+                    ] : null,
                 ];
             } else {
                 return [

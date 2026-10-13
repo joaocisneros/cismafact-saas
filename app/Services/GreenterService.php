@@ -691,8 +691,9 @@ class GreenterService
     public function sendRetention($retention)
     {
         try {
-            // Configurar endpoint específico para retenciones
-            $this->see->setService(SunatEndpoints::RETENCION_BETA);
+            // Retenciones usan un servicio distinto al de facturas. Respetar el
+            // ambiente de la empresa evita enviar documentos reales a Beta.
+            $this->see->setService(self::retentionEndpointFor($this->company->modo_produccion));
             
             $result = $this->see->send($retention);
             
@@ -715,6 +716,13 @@ class GreenterService
                 ]
             ];
         }
+    }
+
+    public static function retentionEndpointFor(bool $production): string
+    {
+        return $production
+            ? SunatEndpoints::RETENCION_PRODUCCION
+            : SunatEndpoints::RETENCION_BETA;
     }
 
     /**
