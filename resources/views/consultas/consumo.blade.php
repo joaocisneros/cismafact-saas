@@ -49,6 +49,10 @@
 <div class="mt-4 rounded-xl bg-blue-50 px-5 py-4 text-[15px] text-gray-700">
     <p class="mb-1"><strong class="text-gray-900">Las consultas sin ficha no gastan cuota.</strong>
        Si preguntas por un DNI que no existe en RENIEC, no se te descuenta.</p>
-    <p>Tampoco gastan las que se responden con datos de una consulta tuya anterior.</p>
+    {{-- Decia que tampoco gastaban las que salian de una consulta anterior,
+         y no era asi: la API descuenta toda consulta que entrega la ficha,
+         venga del proveedor o de lo ya guardado. Lo guardado es un ahorro
+         con el proveedor, no un descuento para el cliente. --}}
+    <p>Solo descuentan las consultas que te devuelven datos.</p>
 </div>
 @endsection

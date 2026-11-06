@@ -102,6 +102,34 @@ class ConsultaController extends Controller
             return $this->error("Tu plan no incluye la consulta de {$slug}.", 403);
         }
 
+        /*
+         * El corte al llegar al tope.
+         *
+         * Se fue sin querer junto con el codigo de los datos de ejemplo, que
+         * venia justo encima: desde entonces el contador subia en el panel
+         * pero nadie paraba en el numero, ni las llaves de prueba en sus 20
+         * ni las de pago en su plan. Va antes de consultar, para no gastar una
+         * llamada al proveedor que no se va a entregar.
+         *
+         * No hace falta reiniciar nada a fin de mes: se cuenta desde el dia 1,
+         * asi que el mes nuevo empieza solo en cero.
+         */
+        $usadas = $this->usadas($llave->id, $api->id);
+
+        if ($usadas >= $tope) {
+            // Se anota como fallida, que no descuenta: asi el corte se ve en el
+            // historial y en la auditoria, y no solo lo sabe quien lo recibio.
+            $this->anotar($llave, $api->id, $slug, $numero, 'agotado', false, 0, 'Cupo del mes agotado.');
+
+            return response()->json([
+                'success' => false,
+                'message' => "Has agotado las {$tope} consultas de {$slug} de tu plan este mes.",
+                'usadas' => $usadas,
+                'limite_mensual' => $tope,
+                'renueva' => now()->startOfMonth()->addMonth()->toDateString(),
+            ], 429);
+        }
+
         $empezo = microtime(true);
 
         $r = $slug === 'ruc'

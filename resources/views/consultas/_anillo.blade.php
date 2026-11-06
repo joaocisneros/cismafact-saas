@@ -25,4 +25,11 @@
         <span class="text-gray-500">Disponible</span>
         <span class="font-semibold tabular-nums text-gray-700">{{ number_format($servicio['restantes']) }}</span>
     </div>
+    {{-- Con el cupo en cero la API ya responde 429: que se lea aqui tambien,
+         y cuando vuelve, para que no parezca una averia. --}}
+    @if($servicio['tope'] > 0 && $servicio['restantes'] === 0)
+        <p class="mt-2 rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700">
+            Agotado este mes · se renueva el {{ now()->startOfMonth()->addMonth()->format('d/m/Y') }}
+        </p>
+    @endif
 </div>

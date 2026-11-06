@@ -229,18 +229,14 @@ class PanelController extends Controller
         foreach (Api::whereIn('slug', $servicios)->get() as $api) {
             $tope = $llaves->sum(fn ($llave) => $llave->topeDe($api));
 
-            $consulta = DB::table('consultas_consumo')
+            // Lo mismo que cuenta la API para cortar. Aqui se contaban tambien
+            // las que volvieron sin ficha, que no descuentan: el medidor podia
+            // marcar 20 de 20 mientras la API seguia respondiendo, y el cliente
+            // no sabia a cual creer.
+            $usadas = \App\Models\ConsultaLlave::consumoQueGastaCuota()
                 ->whereIn('llave_id', $llaves->pluck('id'))
                 ->where('api_id', $api->id)
-                ->where('created_at', '>=', now()->startOfMonth());
-
-            // En Producción solo se enseña lo que consume cuota. En Sandbox
-            // todas las llamadas son pruebas y deben verse como realizadas.
-            if ($llaves->contains(fn ($llave) => $llave->entorno === 'produccion')) {
-                $consulta->where('fuente', '!=', 'modo prueba');
-            }
-
-            $usadas = $consulta->count();
+                ->count();
 
             $salida[] = [
                 'slug' => $api->slug,
