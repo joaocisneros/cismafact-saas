@@ -51,10 +51,46 @@ class AccionAuditada
         ];
     }
 
+    /**
+     * De dónde sale la fila: del panel o de las tablas que se juntan en
+     * AuditoriaUnificada. Un AuditLog cargado sin pasar por ahí es del panel.
+     */
+    public static function fuente(AuditLog $log): string
+    {
+        return (string) ($log->getAttribute('fuente') ?: 'panel');
+    }
+
+    public static function porApi(AuditLog $log): bool
+    {
+        return in_array(self::fuente($log), ['api_facturacion', 'api_consultas'], true)
+            && $log->route_name !== 'api.consultas.interna';
+    }
+
+    /** Programas que llaman a la API: no son navegadores y no dicen su sistema. */
+    private const CLIENTES_API = [
+        'PostmanRuntime' => 'Postman',
+        'insomnia' => 'Insomnia',
+        'curl/' => 'curl',
+        'GuzzleHttp' => 'PHP (Guzzle)',
+        'python-requests' => 'Python',
+        'axios/' => 'Node.js (axios)',
+        'node-fetch' => 'Node.js',
+        'okhttp' => 'Android / Java',
+        'Java/' => 'Java',
+        'Dart/' => 'Flutter',
+        '.NET' => '.NET',
+    ];
+
     /** @return array{tipo:string,navegador:string,sistema:string} */
     public static function dispositivo(AuditLog $log): array
     {
         $agent = (string) $log->user_agent;
+
+        foreach (self::CLIENTES_API as $marca => $programa) {
+            if (stripos($agent, $marca) !== false) {
+                return ['tipo' => 'Integración', 'navegador' => $programa, 'sistema' => 'llamada directa'];
+            }
+        }
 
         $tipo = match (true) {
             preg_match('/iPad|Tablet/i', $agent) === 1 => 'Tablet',
@@ -106,6 +142,7 @@ class AccionAuditada
             'servicio' => match ($service) {
                 'api_ruc_dni' => 'API RUC y DNI',
                 'facturacion' => 'Facturación electrónica',
+                'acceso' => 'Acceso al sistema',
                 default => 'Gestión empresarial',
             },
             'entorno' => match ($environment) {
@@ -351,6 +388,17 @@ class AccionAuditada
     /** La pantalla donde paso, tal como se llama en el menu. */
     public static function modulo(AuditLog $log): string
     {
+        $porFuente = match (self::fuente($log)) {
+            'acceso' => 'Inicio de sesión',
+            'api_facturacion' => 'API Facturación',
+            'api_consultas' => $log->route_name === 'api.consultas.interna' ? 'Clientes' : 'API RUC y DNI',
+            default => null,
+        };
+
+        if ($porFuente) {
+            return $porFuente;
+        }
+
         $ruta = (string) ($log->route_name ?: $log->path);
         $piezas = preg_split('#[./]#', $ruta) ?: [];
 
@@ -366,7 +414,15 @@ class AccionAuditada
     /** Si lo hizo el dueño desde su panel, o el Super Admin desde el suyo. */
     public static function panel(AuditLog $log): string
     {
-        return str_starts_with((string) $log->route_name, 'empresa.')
+        if (self::fuente($log) === 'acceso') {
+            return 'Formulario de ingreso';
+        }
+
+        if (self::porApi($log)) {
+            return 'Integración por API';
+        }
+
+        return str_starts_with((string) $log->route_name, 'empresa.') || $log->route_name === 'api.consultas.interna'
             ? 'Panel de la empresa'
             : 'Panel del Super Admin';
     }
@@ -405,6 +461,19 @@ class AccionAuditada
     public static function describir(AuditLog $log): string
     {
         $ruta = $log->route_name;
+
+        switch ($ruta) {
+            case 'login.correcto':
+                return 'Inició sesión en el panel';
+            case 'login.fallido':
+                return 'Intentó entrar con una contraseña incorrecta';
+            case 'api.consultas':
+                return 'Consultó un ' . ($log->event_type ?: 'documento') . ' por la API';
+            case 'api.consultas.interna':
+                return 'Consultó un ' . ($log->event_type ?: 'documento') . ' al registrar un cliente';
+            case 'api.facturacion':
+                return self::describirApiFacturacion($log);
+        }
 
         if ($ruta && isset(self::FRASES[$ruta])) {
             return self::FRASES[$ruta];
@@ -446,6 +515,82 @@ class AccionAuditada
             : $verbo . ' una configuración del sistema';
     }
 
+    /** Lo que se envía por la API, por el primer trozo de la dirección. */
+    private const RECURSOS_API = [
+        'facturas' => ['una factura', 'sus facturas'],
+        'invoices' => ['una factura', 'sus facturas'],
+        'boletas' => ['una boleta', 'sus boletas'],
+        'notas-credito' => ['una nota de crédito', 'sus notas de crédito'],
+        'credit-notes' => ['una nota de crédito', 'sus notas de crédito'],
+        'notas-debito' => ['una nota de débito', 'sus notas de débito'],
+        'debit-notes' => ['una nota de débito', 'sus notas de débito'],
+        'guias-remision' => ['una guía de remisión', 'sus guías de remisión'],
+        'dispatch-guides' => ['una guía de remisión', 'sus guías de remisión'],
+        'resumenes' => ['un resumen diario', 'sus resúmenes diarios'],
+        'daily-summaries' => ['un resumen diario', 'sus resúmenes diarios'],
+        'anulaciones' => ['una comunicación de baja', 'sus comunicaciones de baja'],
+        'voided-documents' => ['una comunicación de baja', 'sus comunicaciones de baja'],
+        'consulta-cpe' => ['una consulta de comprobante', 'el estado de un comprobante'],
+        'series' => ['una serie', 'sus series'],
+        'sucursales' => ['una sucursal', 'sus sucursales'],
+        'clientes' => ['un cliente', 'sus clientes'],
+        'clients' => ['un cliente', 'sus clientes'],
+        'buscar-documento' => ['una búsqueda', 'un RUC o DNI'],
+    ];
+
+    /** Direcciones que no son un tipo de comprobante: tienen su propia frase. */
+    private const LECTURAS_API = [
+        'panel' => 'Consultó los indicadores de su panel por API',
+        'empresa' => 'Consultó los datos de su empresa por API',
+        'config' => 'Consultó su configuración por API',
+        'consultas/cuota' => 'Consultó su cuota de RUC y DNI por API',
+        'consultas/ruc' => 'Consultó un RUC por API',
+        'consultas/dni' => 'Consultó un DNI por API',
+        'resumenes/pendientes' => 'Consultó las boletas pendientes de resumen por API',
+        'voided-documents/documents-for-voiding' => 'Consultó los comprobantes que puede anular por API',
+    ];
+
+    /**
+     * «POST api/boletas» no dice nada a quien no programa: se dice qué se hizo.
+     * Lo que manda es el método y el primer trozo de la dirección; lo que va
+     * detrás (el id, «download-pdf») solo matiza.
+     */
+    private static function describirApiFacturacion(AuditLog $log): string
+    {
+        $piezas = array_values(array_filter(explode('/', (string) $log->path)));
+        $piezas = array_values(array_diff($piezas, ['api', 'v1']));
+        $direccion = implode('/', $piezas);
+
+        foreach (self::LECTURAS_API as $inicio => $frase) {
+            if ($direccion === $inicio || str_starts_with($direccion, $inicio . '/')) {
+                return $frase;
+            }
+        }
+
+        [$una, $varias] = self::RECURSOS_API[$piezas[0] ?? ''] ?? [null, null];
+
+        if (! $una) {
+            return 'Usó la API: ' . $log->method . ' /' . $log->path;
+        }
+
+        $resto = implode('/', array_slice($piezas, 1));
+        $metodo = strtoupper((string) $log->method);
+
+        return match (true) {
+            str_contains($resto, 'pdf') => 'Descargó el PDF de ' . $una . ' por API',
+            str_contains($resto, 'xml') => 'Descargó el XML de ' . $una . ' por API',
+            str_contains($resto, 'cdr') => 'Descargó el CDR de ' . $una . ' por API',
+            str_contains($resto, 'send') || str_contains($resto, 'enviar') => 'Envió ' . $una . ' a SUNAT por API',
+            str_contains($resto, 'status') || str_contains($resto, 'estado') => 'Consultó el estado de ' . $una . ' por API',
+            $metodo === 'POST' && $resto === '' => 'Emitió ' . $una . ' por API',
+            $metodo === 'GET' && $resto === '' => 'Consultó ' . $varias . ' por API',
+            $metodo === 'GET' => 'Consultó ' . $una . ' por API',
+            $metodo === 'DELETE' => 'Eliminó ' . $una . ' por API',
+            in_array($metodo, ['PUT', 'PATCH'], true) => 'Modificó ' . $una . ' por API',
+            default => 'Usó la API sobre ' . $una,
+        };
+    }
+
     /** Cuando no hay nada mejor, al menos que no salga en ingles. */
     private static function porMetodo(AuditLog $log): string
     {
@@ -469,6 +614,17 @@ class AccionAuditada
     public static function resultado(AuditLog $log): array
     {
         $codigo = (int) $log->response_status;
+
+        if ($log->route_name === 'login.fallido') {
+            return ['texto' => 'Rechazado', 'tono' => 'text-amber-700',
+                'detalle' => 'La contraseña no coincidía: no llegó a entrar.'];
+        }
+
+        // En una consulta, que el número no exista no es un fallo del sistema.
+        if (self::fuente($log) === 'api_consultas' && $codigo !== 200) {
+            return ['texto' => 'Sin resultado', 'tono' => 'text-amber-700',
+                'detalle' => $log->description ?: 'No se encontraron datos para ese número.'];
+        }
 
         return match (true) {
             $codigo === 0 => ['texto' => 'Sin registrar', 'tono' => 'text-gray-400',

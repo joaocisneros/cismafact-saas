@@ -3,81 +3,47 @@
 namespace App\Http\Controllers\Web\SuperAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\User;
+use App\Support\AuditoriaUnificada;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class AuditController extends Controller
 {
+    private const POR_PAGINA = 20;
+
     public function index(Request $request): View
     {
-        $query = AuditLog::query()
+        $filtros = [
+            'user_id' => $request->filled('user_id') ? $request->integer('user_id') : null,
+            'company_id' => $request->filled('company_id') ? $request->integer('company_id') : null,
+            'action' => $request->input('action'),
+            'date_from' => $request->input('date_from'),
+            'date_to' => $request->input('date_to'),
+            'search' => $request->string('search')->trim()->toString() ?: null,
+            'fuente' => array_key_exists((string) $request->input('fuente'), AuditoriaUnificada::FUENTES)
+                ? $request->input('fuente') : null,
+            'entorno' => array_key_exists((string) $request->input('entorno'), AuditoriaUnificada::ENTORNOS)
+                ? $request->input('entorno') : null,
+        ];
+
+        // Cada fuente solo necesita traer hasta el final de la página pedida,
+        // más una fila para saber si hay siguiente.
+        $pagina = max(1, Paginator::resolveCurrentPage());
+        $tope = $pagina * self::POR_PAGINA + 1;
+
+        $logs = AuditoriaUnificada::consulta($filtros, $tope)
             ->with([
                 'user:id,name,email',
                 'actor:id,name,email',
                 'company:id,razon_social,ruc,modo_produccion',
-            ]);
-
-        if ($request->filled('user_id')) {
-            $userId = $request->integer('user_id');
-            $query->where(function ($responsable) use ($userId) {
-                $responsable->where('actor_user_id', $userId)
-                    ->orWhere(function ($legacy) use ($userId) {
-                        $legacy->whereNull('actor_user_id')
-                            ->where(function ($legacyActor) use ($userId) {
-                                $legacyActor->where('user_id', $userId)
-                                    ->orWhere('data->_impersonador_id', $userId);
-                            });
-                    });
-            });
-        }
-
-        if ($request->filled('company_id')) {
-            $query->where('company_id', $request->integer('company_id'));
-        }
-
-        if ($request->filled('action')) {
-            $query->where('action', $request->input('action'));
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->input('date_from'));
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->input('date_to'));
-        }
-
-        if ($search = $request->string('search')->trim()->toString()) {
-            // Tambien por lo que se lee en pantalla: la frase y el nombre de
-            // la pantalla se arman al pintarlos, asi que se traducen al reves
-            // y se buscan las rutas que los dicen. Sin esto, buscar «secret» o
-            // «Configuración» no daba ningun resultado.
-            $rutas = \App\Support\AccionAuditada::rutasQueDicen($search);
-            $piezas = collect($rutas)->filter(fn ($r) => str_starts_with($r, '__'))
-                ->map(fn ($r) => substr($r, 2));
-            $nombres = collect($rutas)->reject(fn ($r) => str_starts_with($r, '__'));
-
-            $query->where(function ($auditQuery) use ($search, $nombres, $piezas) {
-                $auditQuery->where('route_name', 'like', "%{$search}%")
-                    ->orWhere('path', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%")
-                    ->orWhere('actor_name', 'like', "%{$search}%")
-                    ->orWhere('actor_email', 'like', "%{$search}%")
-                    ->orWhere('target_email', 'like', "%{$search}%")
-                    ->orWhere('target_name', 'like', "%{$search}%")
-                    ->orWhere('event_type', 'like', "%{$search}%")
-                    ->when($nombres->isNotEmpty(), fn ($q) => $q->orWhereIn('route_name', $nombres))
-                    ->when($piezas->isNotEmpty(), fn ($q) => $piezas->each(
-                        fn ($p) => $q->orWhere('route_name', 'like', "%{$p}%")
-                    ));
-            });
-        }
-
-        $logs = $query->latest('created_at')->simplePaginate(20)->withQueryString();
+            ])
+            ->orderByDesc('created_at')
+            ->simplePaginate(self::POR_PAGINA)
+            ->withQueryString();
 
         $companies = Cache::remember('audit_company_options', now()->addMinutes(10), fn () => Company::orderBy('razon_social')
             ->limit(300)
@@ -87,6 +53,9 @@ class AuditController extends Controller
             ->limit(300)
             ->get(['id', 'name', 'email']));
 
-        return view('super-admin.audit.index', compact('logs', 'companies', 'users'));
+        $fuentes = AuditoriaUnificada::FUENTES;
+        $entornos = AuditoriaUnificada::ENTORNOS;
+
+        return view('super-admin.audit.index', compact('logs', 'companies', 'users', 'fuentes', 'entornos'));
     }
 }
