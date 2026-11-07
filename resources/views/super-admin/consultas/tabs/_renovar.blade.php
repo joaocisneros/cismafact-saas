@@ -28,10 +28,14 @@
          evaluaban renovacion.id y renovacion.base mientras aun eran null, lo
          que detenia Alpine y hacia que el enlace pareciera no responder. --}}
     <template x-if="renovacion">
+        {{-- Se cierra al pulsar el fondo, no con @click.outside: la ventana
+             nace con x-if en el mismo clic de «Renovar», y ese clic, al seguir
+             subiendo hasta document, contaba ya como «fuera» y la cerraba
+             antes de verse. Parecia que el enlace no hacia nada. --}}
         <div class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/50 p-4"
-             x-transition.opacity>
-            <div class="my-auto w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-xl"
-                 @click.outside="renovacion = null">
+             x-transition.opacity
+             @click.self="renovacion = null">
+            <div class="my-auto w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-xl">
             <form method="POST" :action="'{{ url('super-admin/consultas/llaves') }}/' + renovacion.id + '/renovar'">
                 @csrf
                 <div class="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4">
